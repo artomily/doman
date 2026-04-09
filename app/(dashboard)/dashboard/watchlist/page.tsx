@@ -55,7 +55,7 @@ export default function WatchlistPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="mx-auto grid max-w-2xl gap-4">
         {watchlistData.map((item, i) => {
           const diff = item.score - item.prevScore;
           const isUp = diff > 0;

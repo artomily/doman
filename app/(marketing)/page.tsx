@@ -11,6 +11,7 @@ import {
   Zap,
   Lock,
   MonitorSmartphone,
+  ArrowDownLeft,
 } from "lucide-react";
 
 /* ───────── Hero ───────── */
@@ -88,7 +89,7 @@ function About() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-6 w-6 items-center justify-center rounded bg-accent">
-            <span className="text-[10px] font-bold text-black">W</span>
+            {/* <span className="text-[10px] font-bold text-black">W</span> */}
           </div>
           <span className="text-xs uppercase tracking-wider text-muted">
             About · Wallo
@@ -120,19 +121,19 @@ const useCases = [
     label: "DEFI NEWBIE",
     tag: "SAFETY",
     description: "Simple safe/unsafe signals before every transaction",
-    color: "from-green-900/40 to-emerald-950/60",
+    color: "from-zinc-800/50 to-zinc-900/70",
   },
   {
     label: "ACTIVE TRADER",
     tag: "SPEED",
     description: "Quick trust checks that don't interrupt your workflow",
-    color: "from-accent/20 to-green-900/40",
+    color: "from-zinc-800/50 to-zinc-900/70",
   },
   {
     label: "NFT COLLECTOR",
     tag: "PROTECTION",
     description: "Scan domains and mint pages before connecting",
-    color: "from-emerald-800/30 to-green-950/50",
+    color: "from-zinc-800/50 to-zinc-900/70",
   },
   {
     label: "DEVELOPER",
@@ -162,7 +163,7 @@ function UseCases() {
           {useCases.map((uc) => (
             <div
               key={uc.label}
-              className={`group relative overflow-hidden rounded-2xl border border-card-border bg-gradient-to-br ${uc.color} p-8 transition-all hover:border-accent/30 md:p-10`}
+              className={`group relative overflow-hidden rounded-2xl border border-card-border bg-linear-to-br ${uc.color} p-8 transition-all hover:border-accent/30 md:p-10`}
             >
               <div className="mb-6 flex items-center justify-between">
                 <span className="text-xs font-medium text-muted">
@@ -192,31 +193,31 @@ const features = [
     num: "01",
     title: "TRUST SCORE ENGINE",
     desc: "Analyze transaction history, funding sources, community signals, and contract risk.",
-    icon: Shield,
+    icon: ArrowDownLeft,
   },
   {
     num: "02",
     title: "ADDRESS CHECKER",
     desc: "Input any address or domain and get an instant safety assessment.",
-    icon: Search,
+    icon: ArrowDownLeft,
   },
   {
     num: "03",
     title: "CONTRACT INSPECTOR",
     desc: "Decode smart contracts and detect risky approval patterns.",
-    icon: FileCode,
+    icon: ArrowDownLeft,
   },
   {
     num: "04",
     title: "BROWSER EXTENSION",
     desc: "Real-time scanning and warning overlays while you browse.",
-    icon: MonitorSmartphone,
+    icon: ArrowDownLeft,
   },
   {
     num: "05",
     title: "PUBLIC API",
     desc: "Programmatic access to trust scores for developers and partners.",
-    icon: Globe,
+    icon: ArrowDownLeft,
   },
 ];
 
@@ -226,7 +227,7 @@ function Features() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-12 flex items-center gap-3">
           <div className="flex h-6 w-6 items-center justify-center rounded bg-accent">
-            <span className="text-[10px] font-bold text-black">W</span>
+            {/* <span className="text-[10px] font-bold text-black">W</span> */}
           </div>
           <span className="text-xs uppercase tracking-wider text-muted">
             Services · Wallo
@@ -243,7 +244,7 @@ function Features() {
           {features.map((f) => (
             <div
               key={f.num}
-              className="group flex items-center justify-between border-t border-card-border py-8 transition-colors hover:bg-surface/50 md:py-10"
+              className="group flex items-center justify-between border-t border-card-border px-4 py-8 transition-colors hover:bg-surface/50 md:py-12"
             >
               <div className="flex items-center gap-6 md:gap-10">
                 <span className="text-sm text-muted">{f.num}</span>
@@ -257,7 +258,7 @@ function Features() {
                 </div>
               </div>
               <f.icon
-                size={24}
+                size={64}
                 className="text-muted transition-colors group-hover:text-accent"
               />
             </div>
@@ -313,7 +314,7 @@ function Advantage() {
               <div className="absolute inset-0 rounded-full border-2 border-card-border" />
               <div className="absolute inset-6 rounded-full border-2 border-accent/30" />
               <div className="absolute inset-12 rounded-full border-2 border-accent/50" />
-              <div className="absolute inset-[4.5rem] rounded-full bg-accent/20" />
+              <div className="absolute inset-18 rounded-full bg-accent/20" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-4xl font-bold text-accent">85</span>
               </div>
