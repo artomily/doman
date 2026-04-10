@@ -20,8 +20,8 @@ function Hero() {
     <section className="relative overflow-hidden bg-background">
       {/* Abstract gradient background */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -left-1/4 h-[800px] w-[800px] rounded-full bg-accent/10 blur-[120px]" />
-        <div className="absolute -bottom-1/2 -right-1/4 h-[600px] w-[600px] rounded-full bg-green-600/10 blur-[100px]" />
+        <div className="absolute -top-1/2 -left-1/4 h-200 w-200 rounded-full bg-accent/10 blur-[120px]" />
+        <div className="absolute -bottom-1/2 -right-1/4 h-150 w-150 rounded-full bg-green-600/10 blur-[100px]" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-6 pb-24 pt-20 md:pb-32 md:pt-28">
@@ -34,7 +34,7 @@ function Hero() {
         </div>
 
         {/* Hero visual placeholder */}
-        <div className="relative mb-16 h-[300px] overflow-hidden rounded-3xl border border-card-border bg-gradient-to-br from-accent/20 via-green-900/30 to-background md:h-[400px]">
+        <div className="relative mb-16 h-75 overflow-hidden rounded-3xl border border-card-border bg-linear-to-br from-accent/20 via-green-900/30 to-background md:h-100">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(190,255,0,0.15),transparent_60%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(0,200,100,0.1),transparent_50%)]" />
           <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
@@ -371,7 +371,7 @@ function ProductHighlights() {
         <div className="grid gap-8 md:grid-cols-2">
           {/* Trust Engine */}
           <div className="overflow-hidden rounded-2xl border border-card-border">
-            <div className="bg-gradient-to-br from-accent/10 to-green-900/20 p-8 md:p-10">
+            <div className="bg-linear-to-br from-accent/10 to-green-900/20 p-8 md:p-10">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1 text-xs text-accent">
                 <Zap size={12} /> Engine
               </div>
@@ -391,7 +391,7 @@ function ProductHighlights() {
 
           {/* Extension */}
           <div className="overflow-hidden rounded-2xl border border-card-border">
-            <div className="bg-gradient-to-br from-zinc-800/40 to-zinc-900/60 p-8 md:p-10">
+            <div className="bg-linear-to-br from-zinc-800/40 to-zinc-900/60 p-8 md:p-10">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-zinc-700/50 px-3 py-1 text-xs text-zinc-300">
                 <MonitorSmartphone size={12} /> Browser
               </div>
