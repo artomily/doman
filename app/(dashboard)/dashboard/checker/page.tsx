@@ -45,7 +45,7 @@ export default function CheckerPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           Address & Domain Checker

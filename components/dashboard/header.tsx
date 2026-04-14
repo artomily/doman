@@ -4,7 +4,7 @@ import { Bell, Search } from "lucide-react";
 
 export function DashboardHeader() {
   return (
-    <header className="flex h-16 items-center justify-between border-b border-card-border bg-card px-6">
+    <header className="flex h-16 items-center justify-between border-b border-card-border bg-card px-6 sticky top-0 z-10">
       {/* Left spacer for mobile hamburger */}
       <div className="w-10 lg:hidden" />
 

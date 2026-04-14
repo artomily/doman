@@ -41,9 +41,9 @@ export function Navbar() {
 
         {/* Desktop CTA */}
         <div className="hidden items-center gap-3 md:flex">
-          <Button variant="secondary" size="sm" href="/dashboard">
+          {/* <Button variant="secondary" size="sm" href="/dashboard">
             Dashboard
-          </Button>
+          </Button> */}
           <Button size="sm" href="/dashboard/checker">
             Launch App
           </Button>
@@ -74,9 +74,9 @@ export function Navbar() {
               </a>
             ))}
             <div className="mt-2 flex flex-col gap-2">
-              <Button variant="secondary" size="sm" href="/dashboard">
+              {/* <Button variant="secondary" size="sm" href="/dashboard">
                 Dashboard
-              </Button>
+              </Button> */}
               <Button size="sm" href="/dashboard/checker">
                 Launch App
               </Button>

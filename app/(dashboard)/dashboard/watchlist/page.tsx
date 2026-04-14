@@ -42,7 +42,7 @@ const watchlistData = [
 
 export default function WatchlistPage() {
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Watchlist</h1>
@@ -55,7 +55,7 @@ export default function WatchlistPage() {
         </Button>
       </div>
 
-      <div className="mx-auto grid max-w-2xl gap-4">
+      <div className="grid gap-4">
         {watchlistData.map((item, i) => {
           const diff = item.score - item.prevScore;
           const isUp = diff > 0;

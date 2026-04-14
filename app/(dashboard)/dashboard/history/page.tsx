@@ -62,7 +62,7 @@ const historyData = [
 
 export default function HistoryPage() {
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Check History</h1>
         <p className="mt-1 text-sm text-muted">
