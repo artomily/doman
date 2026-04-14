@@ -21,23 +21,47 @@ const footerLinks = {
   ],
 };
 
+const topNavLinks = [
+  { label: "Product", href: "#features" },
+  { label: "Company", href: "#about" },
+  { label: "Resources", href: "#" },
+  { label: "Contact", href: "#contact" },
+];
+
 export function Footer() {
   return (
     <footer id="contact" className="border-t border-card-border bg-background">
-      <div className="mx-auto max-w-7xl px-6 py-16">
-        {/* Top section — logo large */}
-        <div className="mb-16">
-          <h2 className="text-6xl font-bold tracking-tighter md:text-8xl">
-            WAL<span className="text-accent">L</span>O
-          </h2>
-          <p className="mt-4 max-w-md text-sm text-muted">
-            Web3 security platform that helps you avoid scams before you
-            interact with wallets, addresses, and crypto websites.
-          </p>
+      <div className="mx-auto max-w-7xl px-6 pt-12">
+        {/* Top menu row */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-card-border pb-8">
+          <nav className="flex flex-wrap gap-6 md:gap-10">
+            {topNavLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="text-xs font-medium uppercase tracking-wider text-muted transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+          <a
+            href="mailto:hello@wallo.xyz"
+            className="text-xs text-muted transition-colors hover:text-foreground"
+          >
+            hello@wallo.xyz
+          </a>
         </div>
 
-        {/* Links grid */}
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+        {/* Big brand name — centered */}
+        <div className="overflow-hidden py-6 text-center md:py-8">
+          <h2 className="text-[22vw] font-bold leading-none tracking-tighter">
+            WAL<span className="text-accent">L</span>O
+          </h2>
+        </div>
+
+        {/* Links grid below the brand name */}
+        <div className="grid grid-cols-2 gap-8 border-t border-card-border pt-10 md:grid-cols-4">
           {Object.entries(footerLinks).map(([title, links]) => (
             <div key={title}>
               <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted">
@@ -58,7 +82,7 @@ export function Footer() {
             </div>
           ))}
 
-          {/* Contact column */}
+          {/* Connect column */}
           <div>
             <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted">
               Connect
@@ -100,8 +124,8 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-card-border pt-8 md:flex-row">
+        {/* Copyright bar */}
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-card-border py-8 md:flex-row">
           <p className="text-xs text-muted">
             © 2026 Wallo. All rights reserved.
           </p>

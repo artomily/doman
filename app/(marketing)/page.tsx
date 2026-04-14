@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Shield,
@@ -12,6 +13,7 @@ import {
   Lock,
   MonitorSmartphone,
   ArrowDownLeft,
+  Plus,
 } from "lucide-react";
 
 /* ───────── Hero ───────── */
@@ -26,17 +28,31 @@ function Hero() {
 
       <div className="relative mx-auto max-w-7xl px-6 pb-24 pt-20 md:pb-32 md:pt-28">
         {/* Top nav row */}
-        <div className="mb-16 flex flex-wrap items-center justify-between gap-4 border-b border-card-border pb-4 text-xs uppercase tracking-wider text-muted">
+        <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-card-border pb-4 text-xs uppercase tracking-wider text-muted">
           <span>How It Works</span>
           <span>SEO</span>
           <span>Marketing</span>
           <span>Connect Us</span>
         </div>
 
+        {/* Brand wordmark */}
+        <div className="mb-10 flex items-center justify-between">
+          <Plus size={20} strokeWidth={1.5} className="text-muted/50" />
+          <p className="text-center text-7xl font-bold tracking-tighter md:text-9xl lg:text-[10rem]">
+            WAL<span className="text-accent">L</span>O
+          </p>
+          <Plus size={20} strokeWidth={1.5} className="text-muted/50" />
+        </div>
+
         {/* Hero visual placeholder */}
-        <div className="relative mb-16 h-75 overflow-hidden rounded-3xl border border-card-border bg-linear-to-br from-accent/20 via-green-900/30 to-background md:h-100">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(190,255,0,0.15),transparent_60%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(0,200,100,0.1),transparent_50%)]" />
+        <div className="relative mb-16 h-75 overflow-hidden rounded-3xl border border-card-border md:h-100">
+          <Image
+            src="/hero-bg.png"
+            alt="Wallo Hero Background"
+            fill
+            className="object-cover"
+            priority
+          />
           <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
             <div>
               <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1 text-xs text-accent">
@@ -276,24 +292,24 @@ function Manifesto() {
       <div className="mx-auto max-w-7xl px-6">
         <h2 className="text-2xl font-bold leading-[1.2] tracking-tight md:text-4xl lg:text-5xl">
           SIMPLIFYING{" "}
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-black md:h-10 md:w-10">
-            <Shield size={16} />
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-accent text-black md:h-9 md:w-9 lg:h-12 lg:w-12">
+            <Shield className="h-full w-full p-1" />
           </span>{" "}
           WEB3 MEANS{" "}
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white md:h-10 md:w-10">
-            <Lock size={16} />
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-green-600 text-white md:h-9 md:w-9 lg:h-12 lg:w-12">
+            <Lock className="h-full w-full p-1" />
           </span>{" "}
           PROTECTING USERS. BY ELIMINATING{" "}
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white md:h-10 md:w-10">
-            <AlertTriangle size={16} />
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-red-600 text-white md:h-9 md:w-9 lg:h-12 lg:w-12">
+            <AlertTriangle className="h-full w-full p-1" />
           </span>{" "}
           SCAMS AND{" "}
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500 text-black md:h-10 md:w-10">
-            <Eye size={16} />
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-yellow-500 text-black md:h-9 md:w-9 lg:h-12 lg:w-12">
+            <Eye className="h-full w-full p-1" />
           </span>{" "}
           RISKS, ONLY SAFE{" "}
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-black md:h-10 md:w-10">
-            <CheckCircle size={16} />
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-accent text-black md:h-9 md:w-9 lg:h-12 lg:w-12">
+            <CheckCircle className="h-full w-full p-1" />
           </span>{" "}
           TRANSACTIONS REMAIN.
         </h2>
