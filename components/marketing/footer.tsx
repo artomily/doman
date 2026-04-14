@@ -55,7 +55,7 @@ export function Footer() {
 
         {/* Big brand name — centered */}
         <div className="overflow-hidden py-6 text-center md:py-8">
-          <h2 className="text-[22vw] font-bold leading-none tracking-tighter">
+          <h2 className="text-[20vw] sm:text-[15vw] md:text-[20vw] font-bold leading-none tracking-tighter">
             WAL<span className="text-accent">L</span>O
           </h2>
         </div>

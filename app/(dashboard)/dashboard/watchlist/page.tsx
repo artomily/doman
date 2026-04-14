@@ -62,7 +62,7 @@ export default function WatchlistPage() {
           const isChanged = diff !== 0;
 
           return (
-            <Card key={i}>
+            <Card key={i} className="flex flex-col justify-between min-h-24">
               <div className="flex items-start justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{item.label}</p>

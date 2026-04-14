@@ -86,7 +86,7 @@ export default function DashboardPage() {
       {/* Stats grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label}>
+          <Card key={stat.label} className="flex flex-col justify-between min-h-32">
             <div className="flex items-center justify-between">
               <stat.icon size={18} className="text-muted" />
               <span
@@ -102,8 +102,10 @@ export default function DashboardPage() {
                 {stat.change}
               </span>
             </div>
-            <p className="mt-3 text-2xl font-bold">{stat.value}</p>
-            <p className="mt-1 text-xs text-muted">{stat.label}</p>
+            <div>
+              <p className="mt-3 text-2xl font-bold">{stat.value}</p>
+              <p className="mt-1 text-xs text-muted">{stat.label}</p>
+            </div>
           </Card>
         ))}
       </div>

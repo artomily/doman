@@ -36,9 +36,9 @@ function Hero() {
         </div>
 
         {/* Brand wordmark */}
-        <div className="mb-10 flex items-center justify-between">
+        <div className="py-20 flex items-center justify-between">
           <Plus size={20} strokeWidth={1.5} className="text-muted/50" />
-          <p className="text-center text-7xl font-bold tracking-tighter md:text-9xl lg:text-[10rem]">
+          <p className="text-center text-[20vw] font-bold tracking-tighter sm:text-[15vw] md:text-[20vw]">
             WAL<span className="text-accent">L</span>O
           </p>
           <Plus size={20} strokeWidth={1.5} className="text-muted/50" />
@@ -66,7 +66,7 @@ function Hero() {
         </div>
 
         {/* Main headline */}
-        <div className="max-w-5xl">
+        <div className="max-w-5xl py-80">
           <h1 className="text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
             SCAN BEFORE
             <br />

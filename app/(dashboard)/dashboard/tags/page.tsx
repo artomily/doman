@@ -92,7 +92,7 @@ export default function TagsPage() {
       {/* Address list with tags */}
       <div className="space-y-4">
         {filtered.map((entry) => (
-          <Card key={entry.address}>
+          <Card key={entry.address} className="flex flex-col justify-between min-h-24">
             <div className="flex flex-col gap-4">
               {/* Address */}
               <div className="flex items-center justify-between">
