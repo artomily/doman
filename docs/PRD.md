@@ -212,123 +212,235 @@ enum ReportStatus { PENDING, VERIFIED, REJECTED, DISPUTED }
 enum RiskLevel { LOW, MEDIUM, HIGH, CRITICAL }
 ```
 
-### Schema Changes from Original PRD
+### Entity Relationship Diagram
 
-**Removed:**
-- ❌ UserWatchlist (user said "ga perlu watchlist")
-- ❌ ScamDomainAddress (unused with all.json format)
+```
+┌──────────────┐       ┌──────────────┐       ┌──────────────┐
+│   Address    │1─────*│    Report    │1─────*│     Vote     │
+│──────────────│       │──────────────│       │──────────────│
+│ id (PK)      │       │ id (PK)      │       │ id (PK)      │
+│ address (UQ) │       │ addressId(FK)│       │ reportId (FK)│
+│ name         │       │ reporterAddr │       │ voterAddress │
+│ status       │       │ reason       │       │ vote         │
+│ riskScore    │       │ status       │       │ txHash       │
+│ category     │       │ votesFor     │       └──────────────┘
+│ source       │       │ votesAgainst │
+│ tvl          │       │ txHash       │
+│ verifiedBy   │       └──────────────┘
+│ verifiedAt   │
+└──────┬───────┘
+       │
+       │1
+       │
+       ├──*┌──────────────┐
+       │  │ AddressTag   │
+       │  │──────────────│
+       │  │ id (PK)      │
+       │  │ addressId(FK)│
+       │  │ tag          │
+       │  │ taggedBy     │
+       │  └──────────────┘
+       │
+       ├──*┌──────────────┐
+       │  │ContractScan  │
+       │  │──────────────│
+       │  │ id (PK)      │
+       │  │ addressId(FK)│
+       │  │ riskScore    │
+       │  │ riskLevel    │
+       │  │ patterns     │
+       │  │ isVerified   │
+       │  └──────────────┘
+       │
+       └──*┌──────────────┐
+          │ExternalSource│
+          │──────────────│
+          │ id (PK)      │
+          │ addressId(FK)│
+          │ source       │
+          │ sourceId     │
+          │ rawData      │
+          └──────────────┘
 
-**Added:**
-- ✅ EnsRecord - ENS name cache
-- ✅ ScamDomain - Phishing domains
-- ✅ ContractSignature - Function signatures
-- ✅ Enhanced enums (AddressType, ContractType)
-
----
-
-## 🔧 Technology Stack
-
-### Core Framework
-| Package | Version | Purpose |
-|---------|---------|---------|
-| Next.js | 16.2.3 | Full-stack framework |
-| React | 19 | UI library |
-| Prisma | 5.22.0 | ORM for PostgreSQL |
-| TypeScript | 5.x (strict) | Type safety |
-
-### Web3 & Blockchain
-| Package | Version | Purpose |
-|---------|---------|---------|
-| Viem | 2.48.0 | Web3 client |
-| Alchemy RPC | - | Base Sepolia provider |
-
-### Validation & Utils
-| Package | Version | Purpose |
-|---------|---------|---------|
-| Zod | Latest | Runtime validation |
-
-### Database
-| Service | Purpose |
-|---------|---------|
-| Supabase | PostgreSQL hosting |
-
----
-
-## 🔌 RPC Configuration
-
-### Current Setup
-
-```env
-# Base Sepolia (Alchemy)
-NEXT_PUBLIC_BASE_RPC_URL="https://base-sepolia.g.alchemy.com/v2/YOUR_KEY"
-NEXT_PUBLIC_BASE_CHAIN_ID=84532
-
-# Ethereum Mainnet (for ENS - cache only currently)
-ETHEREUM_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
+┌──────────────┐       ┌──────────────┐
+│   SyncLog    │       │ UserProfile  │
+│──────────────│       │──────────────│
+│ id (PK)      │       │ id (PK)      │
+│ source       │       │ address (UQ) │
+│ status       │       │ reportsSubm. │
+│ recordsAdded │       │ reportsVerif.│
+│ error        │       │ reputation   │
+└──────────────┘       └──────────────┘
 ```
 
-### Data Sources
-
-| Source | Type | Status | Records |
-|--------|------|--------|---------|
-| ScamSniffer | GitHub JSON | ✅ Active | 500+ addresses, 1,500+ domains |
-| DeFiLlama | API | ✅ Connected | 0 Base protocols (no data) |
-| CryptoScamDB | API | ❌ 404 Error | Deprecated |
-
 ---
 
-## 📡 API Documentation
+## 5. API Design (Next.js Route Handlers)
 
-### Address Lookup
+### 5.1 Address Endpoints
 
-**GET** `/api/v1/address/[address]`
-
-Get detailed information about an address including status, risk score, and category.
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "address": "0x...",
-    "name": "Aerodrome",
-    "status": "LEGIT",
-    "riskScore": 5,
-    "category": "DEX",
-    "tags": ["verified", "defi"],
-    "reportCount": 0
-  }
+**GET /api/v1/address/[address]**
+```
+Request: GET /api/v1/address/0x1234...abcd
+Response: {
+  address: "0x1234...abcd",
+  name: "Aerodrome",
+  status: "LEGIT",
+  riskScore: 5,
+  category: "DEX",
+  tags: ["verified", "defi"],
+  tvl: 1500000,
+  reportCount: 0,
+  lastScanned: "2026-04-15T10:00:00Z",
+  sources: ["defillama", "base"],
+  verifiedBy: "0xadmin...",
+  verifiedAt: "2026-04-01T00:00:00Z"
 }
 ```
 
-### Contract Scanning
-
-**GET** `/api/v1/scan/[address]`
-
-Scan a contract address for potential scam patterns.
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "address": "0x...",
-    "riskScore": 75,
-    "riskLevel": "HIGH",
-    "isVerified": false,
-    "patterns": [
-      {
-        "name": "Self-Destruct Capability",
-        "severity": "CRITICAL",
-        "description": "Contract contains self-destruct opcode"
-      }
-    ],
-    "similarScams": [
-      { "address": "0x...", "name": "Known Scam", "similarity": 0.85 }
-    ],
-    "reportCount": 3,
-    "scanDuration": 3290
+**GET /api/v1/dapps**
+```
+Request: GET /api/v1/dapps?status=LEGIT&category=DEX&page=1&limit=20
+Response: {
+  data: [
+    {
+      id: "clx...",
+      address: "0x...",
+      name: "Aerodrome",
+      status: "LEGIT",
+      category: "DEX",
+      riskScore: 5,
+      tvl: 1500000,
+      logoUrl: "https://..."
+    }
+  ],
+  pagination: {
+    page: 1,
+    limit: 20,
+    total: 156,
+    totalPages: 8
   }
+}
+Query params:
+  - status: LEGIT | SCAM | SUSPICIOUS | UNKNOWN
+  - category: DEFI | NFT | DEX | BRIDGE | etc
+  - search: search by name or address
+  - sort: riskScore | tvl | name | createdAt
+  - order: asc | desc
+  - page, limit
+```
+
+**GET /api/v1/search**
+```
+Request: GET /api/v1/search?q=aerodrome
+Response: {
+  results: [
+    {
+      address: "0x...",
+      name: "Aerodrome",
+      status: "LEGIT",
+      category: "DEX",
+      riskScore: 5
+    }
+  ],
+  total: 3
+}
+```
+
+### 5.2 Report Endpoints
+
+**POST /api/v1/report**
+```
+Request: {
+  address: "0x5678...efgh",
+  reason: "Token drainer, stolen funds",
+  category: "DRAINER",
+  evidenceUrl: "https://tx.example.com/0x...",
+  reporterAddress: "0xuser..."
+}
+Response: {
+  id: "clx...",
+  status: "PENDING",
+  txHash: "0x... (on-chain tx)",
+  message: "Report submitted. Awaiting community verification."
+}
+```
+
+**GET /api/v1/reports**
+```
+Request: GET /api/v1/reports?status=PENDING&page=1&limit=20
+Response: {
+  data: [
+    {
+      id: "clx...",
+      address: { name: "FakeApp", address: "0x...", status: "SUSPICIOUS" },
+      reporterAddress: "0x...",
+      reason: "Phishing",
+      category: "PHISHING",
+      votesFor: 3,
+      votesAgainst: 1,
+      createdAt: "2026-04-15T10:00:00Z"
+    }
+  ],
+  pagination: { ... }
+}
+```
+
+**POST /api/v1/reports/[id]/vote**
+```
+Request: {
+  vote: "FOR",          // FOR | AGAINST
+  voterAddress: "0x...",
+  txHash: "0x..."       // On-chain vote tx
+}
+Response: {
+  reportId: "clx...",
+  votesFor: 4,
+  votesAgainst: 1,
+  status: "PENDING"     // or "VERIFIED"/"REJECTED" if threshold reached
+}
+```
+
+### 5.3 Scanner Endpoints
+
+**GET /api/v1/scan/[address]**
+```
+Response: {
+  address: "0x...",
+  riskScore: 75,
+  riskLevel: "HIGH",
+  isVerified: false,
+  patterns: [
+    {
+      name: "Unlimited Approve",
+      severity: "HIGH",
+      description: "Contract requests unlimited token approval"
+    },
+    {
+      name: "Upgradeable Proxy",
+      severity: "MEDIUM",
+      description: "Contract owner can change implementation"
+    }
+  ],
+  similarScams: [
+    { address: "0x...", name: "KnownScam_1", similarity: 0.85 }
+  ],
+  reportCount: 3,
+  scanDuration: 2450
+}
+```
+
+**POST /api/v1/scan/batch**
+```
+Request: {
+  addresses: ["0x...", "0x...", "0x..."]
+}
+Response: {
+  results: [
+    { address: "0x...", riskScore: 75, riskLevel: "HIGH" },
+    { address: "0x...", riskScore: 10, riskLevel: "LOW" },
+    ...
+  ]
 }
 ```
 
