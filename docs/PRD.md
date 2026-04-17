@@ -22,22 +22,6 @@ Backend API for Wallo (Web3 Scam Detection Platform - Base Chain) is **COMPLETE*
 
 ---
 
-## 🎯 Implementation Summary
-
-Backend API for Wallo (Web3 Scam Detection Platform - Base Chain) is **COMPLETE** and ready for production.
-
-**Core Features Delivered:**
-- ✅ Scam address detection (500+ addresses synced)
-- ✅ Phishing domain detection (1,500+ domains synced)
-- ✅ Contract bytecode scanning with pattern detection
-- ✅ Community reporting system
-- ✅ External data sync (ScamSniffer)
-- ✅ 15+ REST API endpoints
-- ✅ PostgreSQL database with Supabase
-- ✅ Alchemy RPC integration
-
----
-
 ## 📊 Current Database Stats
 
 | Metric | Count | Source |
@@ -226,119 +210,14 @@ enum AddressType { EOA, SMART_CONTRACT, PROXY, FACTORY }
 enum ContractType { TOKEN_20, TOKEN_721, TOKEN_1155, BRIDGE, DEX, ... }
 enum ReportStatus { PENDING, VERIFIED, REJECTED, DISPUTED }
 enum RiskLevel { LOW, MEDIUM, HIGH, CRITICAL }
-## 🔌 API Endpoints (Implemented)
-
-| Method | Endpoint | Status | Description |
-|--------|----------|--------|-------------|
-| GET | `/api/health` | ✅ | Health check |
-| GET | `/api/v1/address/[address]` | ✅ | Get address details |
-| GET | `/api/v1/address/[address]/ens` | ✅ | Get ENS records for address |
-| GET | `/api/v1/resolve/[ens]` | ⚠️ | Resolve ENS → address (cache only) |
-| GET | `/api/v1/check-domain` | ✅ | Check if domain is scam |
-| GET | `/api/v1/scam-domains` | ✅ | List scam domains |
-| GET | `/api/v1/scan/[address]` | ✅ | Scan contract for patterns |
-| POST | `/api/v1/scan-batch` | ✅ | Batch scan addresses |
-| POST | `/api/v1/report` | ✅ | Submit scam report |
-| GET | `/api/v1/reports` | ✅ | List reports |
-| POST | `/api/v1/reports/[id]/vote` | ✅ | Vote on report |
-| GET | `/api/v1/search` | ✅ | Search addresses |
-| GET | `/api/v1/stats` | ✅ | Platform statistics |
-| GET | `/api/v1/leaderboard` | ✅ | User leaderboard |
-| GET | `/api/v1/leaderboard/[address]` | ✅ | User profile |
-| GET | `/api/v1/dapps` | ✅ | dApp directory |
-| POST | `/api/v1/sync` | ✅ | Trigger data sync |
-
-**Legend:** ✅ Working | ⚠️ Partial | ❌ Not Implemented
-
----
-
-## 💾 Database Schema (Prisma)
-
-### Models Implemented
-
-```prisma
-// Core Models
-model Address           // Wallet/contract addresses
-model Report            // Community scam reports
-model Vote              // Votes on reports
-model ContractScan      // Contract scan results
-model AddressTag        // User tags on addresses
-model ExternalSource    // External data source tracking
-model UserProfile      // User reputation & stats
-model SyncLog           // Data sync logs
-model EnsRecord         // ENS name resolutions
-model ScamDomain        // Phishing/scam domains
-model ContractSignature // Contract function signatures
-
-// Enums
-enum AddressStatus { LEGIT, SCAM, SUSPICIOUS, UNKNOWN }
-enum AddressType { EOA, SMART_CONTRACT, PROXY, FACTORY }
-enum ContractType { TOKEN_20, TOKEN_721, TOKEN_1155, BRIDGE, DEX, ... }
-enum ReportStatus { PENDING, VERIFIED, REJECTED, DISPUTED }
-enum RiskLevel { LOW, MEDIUM, HIGH, CRITICAL }
 ```
 
-### Entity Relationship Diagram
+### Schema Changes from Original PRD
 
-```
-┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-│   Address    │1─────*│    Report    │1─────*│     Vote     │
-│──────────────│       │──────────────│       │──────────────│
-│ id (PK)      │       │ id (PK)      │       │ id (PK)      │
-│ address (UQ) │       │ addressId(FK)│       │ reportId (FK)│
-│ name         │       │ reporterAddr │       │ voterAddress │
-│ status       │       │ reason       │       │ vote         │
-│ riskScore    │       │ status       │       │ txHash       │
-│ category     │       │ votesFor     │       └──────────────┘
-│ source       │       │ votesAgainst │
-│ tvl          │       │ txHash       │
-│ verifiedBy   │       └──────────────┘
-│ verifiedAt   │
-└──────┬───────┘
-       │
-       │1
-       │
-       ├──*┌──────────────┐
-       │  │ AddressTag   │
-       │  │──────────────│
-       │  │ id (PK)      │
-       │  │ addressId(FK)│
-       │  │ tag          │
-       │  │ taggedBy     │
-       │  └──────────────┘
-       │
-       ├──*┌──────────────┐
-       │  │ContractScan  │
-       │  │──────────────│
-       │  │ id (PK)      │
-       │  │ addressId(FK)│
-       │  │ riskScore    │
-       │  │ riskLevel    │
-       │  │ patterns     │
-       │  │ isVerified   │
-       │  └──────────────┘
-       │
-       └──*┌──────────────┐
-          │ExternalSource│
-          │──────────────│
-          │ id (PK)      │
-          │ addressId(FK)│
-          │ source       │
-          │ sourceId     │
-          │ rawData      │
-          └──────────────┘
+**Removed:**
+- ❌ UserWatchlist (user said "ga perlu watchlist")
+- ❌ ScamDomainAddress (unused with all.json format)
 
-<<<<<<< HEAD
-┌──────────────┐       ┌──────────────┐
-│   SyncLog    │       │ UserProfile  │
-│──────────────│       │──────────────│
-│ id (PK)      │       │ id (PK)      │
-│ source       │       │ address (UQ) │
-│ status       │       │ reportsSubm. │
-│ recordsAdded │       │ reportsVerif.│
-│ error        │       │ reputation   │
-└──────────────┘       └──────────────┘
-=======
 **Added:**
 - ✅ EnsRecord - ENS name cache
 - ✅ ScamDomain - Phishing domains
@@ -381,182 +260,75 @@ enum RiskLevel { LOW, MEDIUM, HIGH, CRITICAL }
 
 ```env
 # Base Sepolia (Alchemy)
-NEXT_PUBLIC_BASE_RPC_URL="https://base-sepolia.g.alchemy.com/v2/YOUR_KEY"
+NEXT_PUBLIC_BASE_RPC_URL="https://base-sepolia.g.alchemy.com/v2/Cc4KBLOc0mq_T6shftqv0"
 NEXT_PUBLIC_BASE_CHAIN_ID=84532
 
 # Ethereum Mainnet (for ENS - cache only currently)
-ETHEREUM_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
->>>>>>> 934c41e (feat: update Alchemy RPC URLs to use placeholder keys for security)
+ETHEREUM_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/Cc4KBLOc0mq_T6shftqv0"
 ```
+
+### Data Sources
+
+| Source | Type | Status | Records |
+|--------|------|--------|---------|
+| ScamSniffer | GitHub JSON | ✅ Active | 500+ addresses, 1,500+ domains |
+| DeFiLlama | API | ✅ Connected | 0 Base protocols (no data) |
+| CryptoScamDB | API | ❌ 404 Error | Deprecated |
 
 ---
 
-## 5. API Design (Next.js Route Handlers)
+## 📡 API Documentation
 
-### 5.1 Address Endpoints
+### Address Lookup
 
-**GET /api/v1/address/[address]**
-```
-Request: GET /api/v1/address/0x1234...abcd
-Response: {
-  address: "0x1234...abcd",
-  name: "Aerodrome",
-  status: "LEGIT",
-  riskScore: 5,
-  category: "DEX",
-  tags: ["verified", "defi"],
-  tvl: 1500000,
-  reportCount: 0,
-  lastScanned: "2026-04-15T10:00:00Z",
-  sources: ["defillama", "base"],
-  verifiedBy: "0xadmin...",
-  verifiedAt: "2026-04-01T00:00:00Z"
-}
-```
+**GET** `/api/v1/address/[address]`
 
-**GET /api/v1/dapps**
-```
-Request: GET /api/v1/dapps?status=LEGIT&category=DEX&page=1&limit=20
-Response: {
-  data: [
-    {
-      id: "clx...",
-      address: "0x...",
-      name: "Aerodrome",
-      status: "LEGIT",
-      category: "DEX",
-      riskScore: 5,
-      tvl: 1500000,
-      logoUrl: "https://..."
-    }
-  ],
-  pagination: {
-    page: 1,
-    limit: 20,
-    total: 156,
-    totalPages: 8
+Get detailed information about an address including status, risk score, and category.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "address": "0x...",
+    "name": "Aerodrome",
+    "status": "LEGIT",
+    "riskScore": 5,
+    "category": "DEX",
+    "tags": ["verified", "defi"],
+    "reportCount": 0
   }
 }
-Query params:
-  - status: LEGIT | SCAM | SUSPICIOUS | UNKNOWN
-  - category: DEFI | NFT | DEX | BRIDGE | etc
-  - search: search by name or address
-  - sort: riskScore | tvl | name | createdAt
-  - order: asc | desc
-  - page, limit
 ```
 
-**GET /api/v1/search**
-```
-Request: GET /api/v1/search?q=aerodrome
-Response: {
-  results: [
-    {
-      address: "0x...",
-      name: "Aerodrome",
-      status: "LEGIT",
-      category: "DEX",
-      riskScore: 5
-    }
-  ],
-  total: 3
-}
-```
+### Contract Scanning
 
-### 5.2 Report Endpoints
+**GET** `/api/v1/scan/[address]`
 
-**POST /api/v1/report**
-```
-Request: {
-  address: "0x5678...efgh",
-  reason: "Token drainer, stolen funds",
-  category: "DRAINER",
-  evidenceUrl: "https://tx.example.com/0x...",
-  reporterAddress: "0xuser..."
-}
-Response: {
-  id: "clx...",
-  status: "PENDING",
-  txHash: "0x... (on-chain tx)",
-  message: "Report submitted. Awaiting community verification."
-}
-```
+Scan a contract address for potential scam patterns.
 
-**GET /api/v1/reports**
-```
-Request: GET /api/v1/reports?status=PENDING&page=1&limit=20
-Response: {
-  data: [
-    {
-      id: "clx...",
-      address: { name: "FakeApp", address: "0x...", status: "SUSPICIOUS" },
-      reporterAddress: "0x...",
-      reason: "Phishing",
-      category: "PHISHING",
-      votesFor: 3,
-      votesAgainst: 1,
-      createdAt: "2026-04-15T10:00:00Z"
-    }
-  ],
-  pagination: { ... }
-}
-```
-
-**POST /api/v1/reports/[id]/vote**
-```
-Request: {
-  vote: "FOR",          // FOR | AGAINST
-  voterAddress: "0x...",
-  txHash: "0x..."       // On-chain vote tx
-}
-Response: {
-  reportId: "clx...",
-  votesFor: 4,
-  votesAgainst: 1,
-  status: "PENDING"     // or "VERIFIED"/"REJECTED" if threshold reached
-}
-```
-
-### 5.3 Scanner Endpoints
-
-**GET /api/v1/scan/[address]**
-```
-Response: {
-  address: "0x...",
-  riskScore: 75,
-  riskLevel: "HIGH",
-  isVerified: false,
-  patterns: [
-    {
-      name: "Unlimited Approve",
-      severity: "HIGH",
-      description: "Contract requests unlimited token approval"
-    },
-    {
-      name: "Upgradeable Proxy",
-      severity: "MEDIUM",
-      description: "Contract owner can change implementation"
-    }
-  ],
-  similarScams: [
-    { address: "0x...", name: "KnownScam_1", similarity: 0.85 }
-  ],
-  reportCount: 3,
-  scanDuration: 2450
-}
-```
-
-**POST /api/v1/scan/batch**
-```
-Request: {
-  addresses: ["0x...", "0x...", "0x..."]
-}
-Response: {
-  results: [
-    { address: "0x...", riskScore: 75, riskLevel: "HIGH" },
-    { address: "0x...", riskScore: 10, riskLevel: "LOW" },
-    ...
-  ]
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "address": "0x...",
+    "riskScore": 75,
+    "riskLevel": "HIGH",
+    "isVerified": false,
+    "patterns": [
+      {
+        "name": "Self-Destruct Capability",
+        "severity": "CRITICAL",
+        "description": "Contract contains self-destruct opcode"
+      }
+    ],
+    "similarScams": [
+      { "address": "0x...", "name": "Known Scam", "similarity": 0.85 }
+    ],
+    "reportCount": 3,
+    "scanDuration": 3290
+  }
 }
 ```
 
