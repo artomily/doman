@@ -283,6 +283,7 @@ model UserProfile {
   ensName         String?  @db.VarChar(255)
   reportsSubmitted Int     @default(0)
   reportsVerified Int      @default(0)
+  tagsSubmitted   Int      @default(0)
   reputation      Int      @default(0)
   createdAt       DateTime @default(now()) @db.Timestamptz(6)
   updatedAt       DateTime @updatedAt @db.Timestamptz(6)
@@ -290,6 +291,7 @@ model UserProfile {
   @@index([reputation])
   @@index([reportsSubmitted])
   @@index([reportsVerified])
+  @@index([tagsSubmitted])
   @@map("user_profiles")
 }
 

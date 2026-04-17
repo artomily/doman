@@ -21,6 +21,7 @@ const REWARD_POINTS = {
   VOTE_PARTICIPATION: 5, // Participated in voting
   EARLY_DETECTION: 50, // Detected scam before widespread
   STREAK_BONUS: 20, // Bonus for consecutive correct votes
+  TAG_SUBMITTED: 5, // Submitted address tag
 } as const;
 
 /**
@@ -319,6 +320,7 @@ export async function getUserProfile(userAddress: string): Promise<UserProfileDe
           ],
         },
       }),
+      tagsSubmitted: user.tagsSubmitted,
     },
     recentActivity: events,
   };
