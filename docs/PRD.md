@@ -262,6 +262,7 @@ enum RiskLevel { LOW, MEDIUM, HIGH, CRITICAL }
           │ rawData      │
           └──────────────┘
 
+<<<<<<< HEAD
 ┌──────────────┐       ┌──────────────┐
 │   SyncLog    │       │ UserProfile  │
 │──────────────│       │──────────────│
@@ -271,6 +272,55 @@ enum RiskLevel { LOW, MEDIUM, HIGH, CRITICAL }
 │ recordsAdded │       │ reportsVerif.│
 │ error        │       │ reputation   │
 └──────────────┘       └──────────────┘
+=======
+**Added:**
+- ✅ EnsRecord - ENS name cache
+- ✅ ScamDomain - Phishing domains
+- ✅ ContractSignature - Function signatures
+- ✅ Enhanced enums (AddressType, ContractType)
+
+---
+
+## 🔧 Technology Stack
+
+### Core Framework
+| Package | Version | Purpose |
+|---------|---------|---------|
+| Next.js | 16.2.3 | Full-stack framework |
+| React | 19 | UI library |
+| Prisma | 5.22.0 | ORM for PostgreSQL |
+| TypeScript | 5.x (strict) | Type safety |
+
+### Web3 & Blockchain
+| Package | Version | Purpose |
+|---------|---------|---------|
+| Viem | 2.48.0 | Web3 client |
+| Alchemy RPC | - | Base Sepolia provider |
+
+### Validation & Utils
+| Package | Version | Purpose |
+|---------|---------|---------|
+| Zod | Latest | Runtime validation |
+
+### Database
+| Service | Purpose |
+|---------|---------|
+| Supabase | PostgreSQL hosting |
+
+---
+
+## 🔌 RPC Configuration
+
+### Current Setup
+
+```env
+# Base Sepolia (Alchemy)
+NEXT_PUBLIC_BASE_RPC_URL="https://base-sepolia.g.alchemy.com/v2/YOUR_KEY"
+NEXT_PUBLIC_BASE_CHAIN_ID=84532
+
+# Ethereum Mainnet (for ENS - cache only currently)
+ETHEREUM_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
+>>>>>>> 934c41e (feat: update Alchemy RPC URLs to use placeholder keys for security)
 ```
 
 ---
