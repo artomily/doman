@@ -2,24 +2,24 @@
  * ENS Service
  *
  * Service for resolving ENS names and caching results.
- * Uses public web API for ENS resolution.
+ * Supports Base mainnet ENS resolution.
  */
 
+import { ensClient } from '@/lib/viem';
 import prisma from '@/lib/prisma';
 import type { EnsRecord } from '@prisma/client';
 
 const ENS_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const BASE_ENS_REGISTRY = '0x283af0b28c62b091ab3f7cd9e93c4a33eb20119b'; // Base ENS registry
 
 /**
  * Resolve ENS name to address
- * Note: ENS resolution requires Infura/Alchemy Web3 API with ENS support
- * For MVP, we return cached results only
  * @param ensName ENS name (e.g., "vitalik.eth" or "vitalik")
  * @returns Address or null
  */
 export async function resolveEns(ensName: string): Promise<string | null> {
   try {
-    // Normalize ENS name
+    // Normalize ENS name - ensure it ends with .eth for resolution
     let fullName = ensName.toLowerCase();
     if (!fullName.endsWith('.eth')) {
       fullName = `${fullName}.eth`;
@@ -28,7 +28,7 @@ export async function resolveEns(ensName: string): Promise<string | null> {
     // Store without .eth suffix for database lookup
     const normalizedName = fullName.replace(/\.eth$/, '');
 
-    // Check cache first - we only support cached ENS records for now
+    // Check cache first
     const cached = await prisma.ensRecord.findUnique({
       where: { ensName: normalizedName },
     });
@@ -40,9 +40,43 @@ export async function resolveEns(ensName: string): Promise<string | null> {
       }
     }
 
-    // ENS resolution not configured - requires Infura/Alchemy with Web3 API
-    // For production, set ETHEREUM_RPC_URL to Infura/Alchemy Web3 HTTP endpoint
-    return null;
+    // Resolve using viem with full name
+    const address = await ensClient.getEnsAddress({
+      name: fullName,
+    });
+
+    if (!address) {
+      return null;
+    }
+
+    // Get avatar
+    let avatar: string | null = null;
+    try {
+      avatar = await ensClient.getEnsAvatar({
+        name: fullName,
+      });
+    } catch {
+      // Avatar resolution failed, continue without it
+    }
+
+    // Upsert to database
+    await prisma.ensRecord.upsert({
+      where: { ensName: normalizedName },
+      update: {
+        addressId: address,
+        fullName,
+        avatar,
+        lastChecked: new Date(),
+      },
+      create: {
+        addressId: address,
+        ensName: normalizedName,
+        fullName,
+        avatar,
+      },
+    });
+
+    return address;
   } catch (error) {
     console.error('ENS resolution failed:', error);
     return null;
@@ -51,22 +85,50 @@ export async function resolveEns(ensName: string): Promise<string | null> {
 
 /**
  * Reverse resolve address to ENS name
- * Note: Only returns cached ENS records
  * @param address Ethereum address
  * @returns ENS name or null
  */
 export async function reverseResolveEns(address: string): Promise<string | null> {
   try {
-    // Check cache - we only support cached ENS records for now
+    // Check cache first
     const cached = await prisma.ensRecord.findFirst({
       where: { addressId: address },
     });
 
     if (cached) {
-      return cached.fullName;
+      const cacheAge = Date.now() - cached.lastChecked.getTime();
+      if (cacheAge < ENS_CACHE_DURATION) {
+        return cached.ensName;
+      }
     }
 
-    return null;
+    // Reverse resolve using viem
+    const ensName = await ensClient.getEnsName({
+      address: address as `0x${string}`,
+    });
+
+    if (!ensName) {
+      return null;
+    }
+
+    const normalizedName = ensName.toLowerCase().replace(/\.eth$/, '');
+
+    // Upsert to database
+    await prisma.ensRecord.upsert({
+      where: { ensName: normalizedName },
+      update: {
+        addressId: address,
+        fullName: ensName,
+        lastChecked: new Date(),
+      },
+      create: {
+        addressId: address,
+        ensName: normalizedName,
+        fullName: ensName,
+      },
+    });
+
+    return ensName;
   } catch (error) {
     console.error('ENS reverse resolution failed:', error);
     return null;
@@ -80,9 +142,24 @@ export async function reverseResolveEns(address: string): Promise<string | null>
  */
 export async function getEnsAvatar(identifier: string): Promise<string | null> {
   try {
-    // For now, return null - avatar resolution requires more complex setup
-    // Can be implemented later with proper ENS NFT resolution
-    return null;
+    let avatar: string | null = null;
+
+    // Check if it's an ENS name or address
+    if (identifier.includes('.')) {
+      avatar = await ensClient.getEnsAvatar({
+        name: identifier,
+      });
+    } else {
+      // For address, first get ENS name, then get avatar
+      const ensName = await reverseResolveEns(identifier);
+      if (ensName) {
+        avatar = await ensClient.getEnsAvatar({
+          name: ensName,
+        });
+      }
+    }
+
+    return avatar;
   } catch (error) {
     console.error('ENS avatar fetch failed:', error);
     return null;
@@ -133,16 +210,33 @@ export async function batchResolveEns(ensNames: string[]): Promise<Record<string
  */
 export async function refreshEnsRecord(ensName: string): Promise<boolean> {
   try {
-    const address = await resolveEns(ensName);
+    const normalizedName = ensName.toLowerCase().replace(/\.eth$/, '');
+
+    const address = await ensClient.getEnsAddress({
+      name: normalizedName,
+    });
 
     if (!address) {
       // Delete if no longer resolves
-      const normalizedName = ensName.toLowerCase().replace(/\.eth$/, '');
       await prisma.ensRecord.delete({
         where: { ensName: normalizedName },
       });
       return false;
     }
+
+    // Update cache
+    await prisma.ensRecord.upsert({
+      where: { ensName: normalizedName },
+      update: {
+        addressId: address,
+        lastChecked: new Date(),
+      },
+      create: {
+        addressId: address,
+        ensName: normalizedName,
+        fullName: `${normalizedName}.eth`,
+      },
+    });
 
     return true;
   } catch (error) {
