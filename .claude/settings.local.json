@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__next-devtools__init",
+      "mcp__next-devtools__nextjs_docs",
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run:*)",
+      "mcp__playwright__browser_navigate",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(pkill -f \"next\")",
+      "Bash(rm -rf .next)",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_close",
+      "mcp__supabase__list_tables",
+      "Bash(npx ts-node:*)",
+      "*",
+      "mcp__supabase__execute_sql",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl:*)",
+      "Bash(node:*)",
+      "Bash(pkill -f \"node\")",
+      "mcp__playwright__browser_run_code",
+      "Bash(taskkill /F /PID 61196)",
+      "Bash(tasklist)",
+      "Bash(taskkill /F /IM node.exe)",
+      "WebSearch",
+      "Bash(findstr /I \"node.exe\")",
+      "Bash(npx rimraf:*)",
+      "Bash(cmd //c \"taskkill /F /IM node.exe 2>&1\")",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(powershell -Command \"Stop-Process -Name 'node' -Force -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "mcp__playwright__browser_snapshot",
+      "mcp__supabase__apply_migration"
+    ]
+  }
+}

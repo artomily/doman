@@ -5,11 +5,12 @@
  * Uses bytecode analysis and pattern matching to calculate risk scores.
  */
 
-import { getBytecode, isContract } from '@/lib/viem';
+import { getBytecode, isContract, publicClient } from '@/lib/viem';
 import { SCAM_PATTERNS, getRiskLevelFromScore, SCAN_LIMITS } from '@/lib/constants';
 import { allScamPatterns, calculateRiskScore, getRiskLevel } from '@/config/scam-patterns';
 import type { DetectedPattern, ScanResult, QuickScanResult, SimilarScam } from '@/types/api';
 import type { RiskLevel } from '@/lib/validation';
+import type { AddressType, ContractType } from '@prisma/client';
 import prisma from '@/lib/prisma';
 
 /** Upsert a UserProfile row so the wallet is tracked. */
@@ -31,6 +32,9 @@ export async function scanContract(address: string, checkerAddress?: string): Pr
   if (!address.startsWith('0x') || address.length < 2 || address.length > 42) {
     throw new Error('Invalid address format');
   }
+
+  // Detect address type first
+  const addressTypeInfo = await detectAddressType(address);
 
   // Check if it's a contract
   const hasCode = await isContract(address);
@@ -129,20 +133,47 @@ export async function scanContract(address: string, checkerAddress?: string): Pr
     scannedAt: new Date().toISOString(),
   };
 
-  // Always save scan to DB for history tracking
-  await prisma.contractScan.create({
-    data: {
-      addressId: addressRecord.id,
-      checkerAddress: checkerAddress ?? null,
-      bytecodeHash,
-      riskScore,
-      riskLevel,
-      patterns: detectedPatterns as any,
-      isVerified: false,
-      scannerVersion: '1.0.0',
-      scanDuration: scanResult.scanDuration,
-    },
-  });
+  // Save to database if address exists
+  if (addressRecord) {
+    await prisma.contractScan.create({
+      data: {
+        addressId: addressRecord.id,
+        bytecodeHash,
+        bytecodeLength: bytecode.length / 2 - 1, // Convert hex length to bytes
+        riskScore,
+        riskLevel,
+        patterns: detectedPatterns as any, // Store as JSON
+        isVerified: false,
+        isProxy: addressTypeInfo.isProxy,
+        proxyType: addressTypeInfo.proxyType,
+        implementationAddress: addressTypeInfo.implementationAddress,
+        scannerVersion: '1.0.0',
+        scanDuration: scanResult.scanDuration,
+      },
+    });
+
+    // Update address with detected type
+    await prisma.address.update({
+      where: { id: addressRecord.id },
+      data: {
+        addressType: addressTypeInfo.addressType,
+        contractType: addressTypeInfo.contractType,
+        lastSeenAt: new Date(),
+      },
+    });
+  } else {
+    // Create address record if it doesn't exist
+    await prisma.address.create({
+      data: {
+        address,
+        addressType: addressTypeInfo.addressType,
+        contractType: addressTypeInfo.contractType,
+        status: riskScore > 70 ? 'SUSPICIOUS' : 'UNKNOWN',
+        riskScore,
+        source: 'SCANNER',
+      },
+    });
+  }
 
   return scanResult;
 }
@@ -203,6 +234,199 @@ export async function quickScan(address: string): Promise<QuickScanResult> {
       hasReports: false,
     };
   }
+}
+
+/**
+ * Detect address type (EOA, SMART_CONTRACT, PROXY, FACTORY)
+ */
+export async function detectAddressType(address: string): Promise<{
+  addressType: AddressType;
+  contractType?: ContractType;
+  isProxy: boolean;
+  proxyType?: string;
+  implementationAddress?: string;
+}> {
+  // Check if it's a contract
+  const hasCode = await isContract(address);
+
+  if (!hasCode) {
+    return {
+      addressType: 'EOA',
+      isProxy: false,
+    };
+  }
+
+  // Get bytecode for further analysis
+  const bytecode = await getBytecode(address);
+  if (!bytecode) {
+    return {
+      addressType: 'SMART_CONTRACT',
+      isProxy: false,
+    };
+  }
+
+  // Check for proxy patterns
+  const proxyInfo = await detectProxy(bytecode, address);
+
+  // Detect contract type based on bytecode and function selectors
+  const contractType = await detectContractType(bytecode);
+
+  // Check if it's a factory
+  const isFactory = await isFactoryContract(bytecode);
+
+  return {
+    addressType: proxyInfo.isProxy ? 'PROXY' : isFactory ? 'FACTORY' : 'SMART_CONTRACT',
+    contractType,
+    isProxy: proxyInfo.isProxy,
+    proxyType: proxyInfo.proxyType,
+    implementationAddress: proxyInfo.implementationAddress,
+  };
+}
+
+/**
+ * Detect if contract is a proxy and get proxy info
+ */
+async function detectProxy(bytecode: `0x${string}`, address: string): Promise<{
+  isProxy: boolean;
+  proxyType?: string;
+  implementationAddress?: string;
+}> {
+  // ERC1967 Proxy detection slots
+  const ERC1967_IMPLEMENTATION_SLOT =
+    '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+
+  try {
+    // Check ERC1967 implementation slot
+    const implementationSlot = await publicClient.getStorageAt({
+      address: address as `0x${string}`,
+      slot: ERC1967_IMPLEMENTATION_SLOT,
+    });
+
+    if (implementationSlot && implementationSlot !== '0x' && implementationSlot !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
+      // It's an ERC1967 proxy
+      const implAddress = '0x' + implementationSlot.slice(26, 66);
+      return {
+        isProxy: true,
+        proxyType: 'ERC1967',
+        implementationAddress: implAddress,
+      };
+    }
+
+    // Check for Gnosis Safe proxy pattern
+    if (bytecode.includes('0xd9e67be')) { // Gnosis Safe master copy signature
+      return {
+        isProxy: true,
+        proxyType: 'GNOSIS_SAFE',
+      };
+    }
+
+    // Check for UUPS (Universal Upgradeable Proxy Standard)
+    if (bytecode.includes('0x5c60da1')) { // UUPS upgrade function selector
+      return {
+        isProxy: true,
+        proxyType: 'UUPS',
+      };
+    }
+
+    // Check for Beacon Proxy
+    if (bytecode.includes('506257cdf')) {
+      return {
+        isProxy: true,
+        proxyType: 'BEACON',
+      };
+    }
+
+    return { isProxy: false };
+  } catch (error) {
+    console.error('Proxy detection failed:', error);
+    return { isProxy: false };
+  }
+}
+
+/**
+ * Detect contract type based on bytecode and function signatures
+ */
+async function detectContractType(bytecode: `0x${string}`): Promise<ContractType> {
+  // Common function signatures (first 4 bytes)
+  const signatures: Record<string, ContractType> = {
+    // Token signatures
+    '0xfb3bdb41': 'TOKEN_20', // transfer
+    '0xa9059cbb': 'TOKEN_20', // transfer
+    '0x23b872dd': 'TOKEN_20', // transferFrom
+    '0x095ea7b3': 'TOKEN_20', // approve
+    '0x70a08231': 'TOKEN_20', // balanceOf
+    '0x18160ddd': 'TOKEN_20', // totalSupply
+    '0x7ff36ab5': 'TOKEN_20', // mint (ERC20)
+
+    // DEX Router
+    '0xded9372f': 'DEX', // exactInputSingle
+    '0x414bf389': 'DEX', // exactInput
+    '0xdb3e2198': 'DEX', // exactOutputSingle
+    '0x09b81346': 'DEX', // exactOutput
+    '0x38ed1739': 'DEX', // uniswap V2 swapExactTokensForTokens
+    '0x8803dbee': 'DEX', // uniswap V2 swapTokensForExactTokens
+
+    // NFT signatures
+    '0x42842e0e': 'TOKEN_721', // ERC721 getApproved
+    '0xb88d4fde': 'TOKEN_721', // ERC721 setApprovalForAll
+    '0xa22cb465': 'TOKEN_721', // ERC721 safeTransferFrom
+    '0x6352211e': 'TOKEN_721', // ERC721 ownerOf
+
+    // Multi-token (1155)
+    '0x8f28a919': 'TOKEN_1155', // ERC1155 balanceOfBatch
+    '0xe5eb36c8': 'TOKEN_1155', // ERC1155 setApprovalForAll
+    '0xf242432a': 'TOKEN_1155', // ERC1155 safeTransferFrom
+
+    // Bridge
+    '0x26135f06': 'BRIDGE', // bridge (common selector)
+    '0x114f3236': 'BRIDGE', // bridge (layerZero)
+
+    // Lending
+    '0x4531c1f4': 'LENDING', // deposit (compound/aave)
+    '0x7d2768d3': 'LENDING', // withdraw (compound)
+
+    // Staking/Yield
+    '0x1a6b7620': 'STAKING', // stake (common)
+    '0x84d7a10a': 'STAKING', // withdraw (staking)
+    '0x3d18b513': 'YIELD', // harvest (yield farming)
+  };
+
+  // Check bytecode length - very short contracts might be proxies or factories
+  if (bytecode.length < 200) {
+    return 'FACTORY';
+  }
+
+  // Scan bytecode for function signatures
+  let detectedType: ContractType | null = null;
+
+  for (const [signature, type] of Object.entries(signatures)) {
+    if (bytecode.includes(signature.slice(2))) {
+      detectedType = type;
+      break;
+    }
+  }
+
+  return detectedType || 'OTHER';
+}
+
+/**
+ * Check if contract is a factory
+ */
+async function isFactoryContract(bytecode: `0x${string}`): Promise<boolean> {
+  // Factory contracts typically have specific patterns
+  const factoryPatterns = [
+    '0x5c60da1', // create (common in factories)
+    '0xf23a6e61', // createPair (uniswap factory)
+    '0xc9e65276', // create2 (CREATE2 opcode is common in factories)
+  ];
+
+  for (const pattern of factoryPatterns) {
+    if (bytecode.includes(pattern)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**

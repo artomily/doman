@@ -10,7 +10,7 @@
  */
 
 import { createPublicClient, createWalletClient, http, type Chain, type PublicClient, type WalletClient } from 'viem';
-import { baseSepolia, mainnet } from 'viem/chains';
+import { baseSepolia, mainnet, sepolia } from 'viem/chains';
 
 /**
  * Validate required environment variables
@@ -82,27 +82,40 @@ export const publicClient = createPublicClient({
  */
 export const walletClient = privateKey
   ? createWalletClient({
-      chain: baseSepoliaConfig,
-      transport: http(rpcUrl, {
-        timeout: 30_000,
-        retryCount: 3,
-      }),
-      account: privateKey,
-    })
+    chain: baseSepoliaConfig,
+    transport: http(rpcUrl, {
+      timeout: 30_000,
+      retryCount: 3,
+    }),
+    account: privateKey,
+  })
   : null;
 
 /**
- * Mainnet Public Client (for ENS resolution)
+ * Ethereum Client for ENS Resolution
  *
- * ENS only works on Ethereum mainnet, not on testnet or Base.
- * This client connects to mainnet specifically for ENS queries.
+ * ENS (Ethereum Name Service) is deployed on Ethereum mainnet.
+ * For testing, we support both mainnet and sepolia.
+ *
+ * IMPORTANT: For production ENS resolution, use Ethereum mainnet RPC.
  */
-export const mainnetClient = createPublicClient({
-  chain: mainnet,
-  transport: http('https://eth.rpc.blxrbdn.com', {
-    timeout: 30_000,
-    retryCount: 3,
-  }),
+import { fallback } from 'viem';
+
+// Detect if using sepolia or mainnet based on env var
+const isEnsSepolia = process.env.ETHEREUM_RPC_URL?.includes('sepolia');
+
+export const ensClient = createPublicClient({
+  chain: isEnsSepolia ? sepolia : mainnet,
+  transport: fallback([
+    http(process.env.ETHEREUM_RPC_URL || 'https://eth.drpc.org', {
+      timeout: 30_000,
+      retryCount: 2,
+    }),
+    http('https://eth.public-rpc.com', {
+      timeout: 30_000,
+      retryCount: 1,
+    }),
+  ]),
 });
 
 /**

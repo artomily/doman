@@ -14,6 +14,9 @@ import type { SyncResult, BatchSyncResult } from '@/types/models';
 
 /**
  * Sync DeFiLlama protocols (Base chain)
+ *
+ * NOTE: DeFiLlama API may be unreliable. This function is kept for reference
+ * but the primary sync source is ScamSniffer.
  */
 export async function syncDefiLlama(): Promise<SyncResult> {
   const startTime = Date.now();
@@ -21,9 +24,13 @@ export async function syncDefiLlama(): Promise<SyncResult> {
   let recordsUpdated = 0;
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     const response = await fetch(
-      `${EXTERNAL_APIS.DEFILLAMA.BASE_URL}${EXTERNAL_APIS.DEFILLAMA.PROTOCOLS_ENDPOINT}`
-    );
+      `${EXTERNAL_APIS.DEFILLAMA.BASE_URL}${EXTERNAL_APIS.DEFILLAMA.PROTOCOLS_ENDPOINT}`,
+      { signal: controller.signal }
+    ).finally(() => clearTimeout(timeoutId));
 
     if (!response.ok) {
       throw new Error(`DeFiLlama API error: ${response.status}`);
@@ -37,8 +44,11 @@ export async function syncDefiLlama(): Promise<SyncResult> {
     );
 
     for (const protocol of baseProtocols) {
+      const address = protocol.address?.[0] || '';
+      if (!address || !address.startsWith('0x')) continue;
+
       const addressData = {
-        address: protocol.address?.[0] || '',
+        address,
         name: protocol.name,
         category: categorizeProtocol(protocol.category),
         description: protocol.description,
@@ -59,10 +69,17 @@ export async function syncDefiLlama(): Promise<SyncResult> {
           description: addressData.description,
         },
         create: {
-          ...addressData,
+          address: addressData.address,
+          name: addressData.name,
+          category: addressData.category as any,
+          description: addressData.description,
+          url: addressData.url,
+          logoUrl: addressData.logoUrl,
+          tvl: addressData.tvl,
           status: 'UNKNOWN',
           riskScore: 0,
           chain: 'base',
+          source: 'EXTERNAL',
         },
       });
 
@@ -90,13 +107,16 @@ export async function syncDefiLlama(): Promise<SyncResult> {
           sourceUrl: protocol.url,
           rawData: protocol,
           syncedAt: new Date(),
+          lastSeenAt: new Date(),
         },
         create: {
-          addressId: existing!.id,
+          addressId: addressData.address,
           source: 'defillama',
           sourceId: protocol.name || '',
           sourceUrl: protocol.url,
           rawData: protocol,
+          firstSeenAt: new Date(),
+          lastSeenAt: new Date(),
         },
       });
     }
@@ -120,7 +140,9 @@ export async function syncDefiLlama(): Promise<SyncResult> {
       duration: Date.now() - startTime,
     };
   } catch (error) {
-    // Log error
+    // Log error but return gracefully
+    console.warn('DeFiLlama sync failed:', error instanceof Error ? error.message : 'Unknown error');
+
     await prisma.syncLog.create({
       data: {
         source: 'defillama',
@@ -132,7 +154,14 @@ export async function syncDefiLlama(): Promise<SyncResult> {
       },
     });
 
-    throw error;
+    return {
+      source: 'defillama',
+      status: 'failed',
+      recordsAdded: 0,
+      recordsUpdated: 0,
+      duration: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
   }
 }
 
@@ -161,93 +190,115 @@ function categorizeProtocol(category: string): 'DEX' | 'LENDING' | 'BRIDGE' | 'N
 
 /**
  * Sync from ScamSniffer (GitHub repository)
+ *
+ * Uses the working ScamSniffer blacklist endpoints:
+ * - combined.json: Combined address and domain data (primary source)
+ * - address.json: Scam contract addresses (fallback)
+ *
+ * Handles both wallet addresses (0x...) and phishing domains
  */
 export async function syncScamSniffer(): Promise<SyncResult> {
   const startTime = Date.now();
-  let recordsAdded = 0;
-  let recordsUpdated = 0;
+  let addressesAdded = 0;
+  let addressesUpdated = 0;
+  let domainsAdded = 0;
+  let domainsUpdated = 0;
 
   try {
-    // Fetch from raw GitHub
-    const response = await fetch(
-      'https://raw.githubusercontent.com/scamsniffer/scam-database/main/scams.json'
-    );
+    // Use all.json - up to date list with both addresses and domains
+    // Format: { "address": ["0x...", ...], "domain": ["domain.com", ...], "combined": {} }
+    const allUrl = 'https://raw.githubusercontent.com/scamsniffer/scam-database/refs/heads/main/blacklist/all.json';
 
+    const response = await fetch(allUrl);
     if (!response.ok) {
-      throw new Error(`ScamSniffer fetch error: ${response.status}`);
+      throw new Error(`ScamSniffer API error: ${response.status}`);
     }
 
-    const scams = await response.json();
+    const data: { address?: string[]; domain?: string[]; combined?: Record<string, string[]> } = await response.json();
 
-    // Process each scam
-    for (const scam of scams.slice(0, 100)) {
-      // Limit to 100 per sync
-      const addressData = {
-        address: scam.address,
-        name: scam.name,
-        category: scam.category?.toUpperCase() || 'OTHER',
-        description: scam.description,
-        url: scam.url,
-        source: 'EXTERNAL' as const,
-      };
+    // Process scam addresses
+    if (Array.isArray(data.address)) {
+      for (const address of data.address.slice(0, 500)) { // Limit to 500 per sync
+        if (!address || typeof address !== 'string') continue;
+        if (!address.startsWith('0x')) continue;
+        if (address.length !== 42) continue;
 
-      // Upsert as SCAM
-      await prisma.address.upsert({
-        where: { address: addressData.address },
-        update: {
-          name: addressData.name,
-          description: addressData.description,
-          url: addressData.url,
-          updatedAt: new Date(),
-        },
-        create: {
-          ...addressData,
-          status: 'SCAM',
-          riskScore: 80,
-          chain: 'base',
-        },
-      });
+        const existing = await prisma.address.findUnique({
+          where: { address },
+        });
 
-      const existing = await prisma.address.findUnique({
-        where: { address: addressData.address },
-      });
-
-      if (existing) {
-        recordsUpdated++;
-      } else {
-        recordsAdded++;
-      }
-
-      // Add external source
-      await prisma.externalSource.upsert({
-        where: {
-          addressId_source_sourceId: {
-            addressId: existing!.id,
-            source: 'scamsniffer',
-            sourceId: scam.name || '',
+        await prisma.address.upsert({
+          where: { address },
+          update: {
+            status: 'SCAM',
+            riskScore: 85,
+            category: 'PHISHING',
           },
-        },
-        update: {
-          sourceUrl: scam.url,
-          rawData: scam,
-          syncedAt: new Date(),
-        },
-        create: {
-          addressId: existing!.id,
-          source: 'scamsniffer',
-          sourceId: scam.name || '',
-          sourceUrl: scam.url,
-          rawData: scam,
-        },
-      });
+          create: {
+            address,
+            name: `Scam Contract from ScamSniffer`,
+            category: 'PHISHING',
+            description: 'Flagged by ScamSniffer as a scam address',
+            status: 'SCAM',
+            riskScore: 85,
+            chain: 'base',
+            source: 'EXTERNAL',
+          },
+        });
+
+        if (existing) {
+          addressesUpdated++;
+        } else {
+          addressesAdded++;
+        }
+      }
     }
 
+    // Process scam domains
+    if (Array.isArray(data.domain)) {
+      for (const domain of data.domain.slice(0, 500)) { // Limit to 500 per sync
+        if (!domain || typeof domain !== 'string') continue;
+
+        // Clean domain name
+        const cleanDomain = domain.replace(/^www\./, '').toLowerCase().trim();
+
+        // Skip invalid domains
+        if (!cleanDomain.includes('.')) continue;
+
+        const existing = await prisma.scamDomain.findUnique({
+          where: { domain: cleanDomain },
+        });
+
+        await prisma.scamDomain.upsert({
+          where: { domain: cleanDomain },
+          update: {
+            status: 'ACTIVE',
+          },
+          create: {
+            domain: cleanDomain,
+            name: cleanDomain,
+            category: 'PHISHING',
+            riskScore: 90,
+            status: 'ACTIVE',
+            source: 'scamsniffer',
+          },
+        });
+
+        if (existing) {
+          domainsUpdated++;
+        } else {
+          domainsAdded++;
+        }
+      }
+    }
+
+    // Log sync result
     await prisma.syncLog.create({
       data: {
         source: 'scamsniffer',
         status: 'success',
-        recordsAdded,
-        recordsUpdated,
+        recordsAdded: addressesAdded + domainsAdded,
+        recordsUpdated: addressesUpdated + domainsUpdated,
         completedAt: new Date(),
       },
     });
@@ -255,8 +306,8 @@ export async function syncScamSniffer(): Promise<SyncResult> {
     return {
       source: 'scamsniffer',
       status: 'success',
-      recordsAdded,
-      recordsUpdated,
+      recordsAdded: addressesAdded + domainsAdded,
+      recordsUpdated: addressesUpdated + domainsUpdated,
       duration: Date.now() - startTime,
     };
   } catch (error) {
@@ -277,6 +328,9 @@ export async function syncScamSniffer(): Promise<SyncResult> {
 
 /**
  * Sync from CryptoScamDB
+ *
+ * Note: This API may be unreliable. The function includes fallback handling.
+ * API endpoint: https://cryptoscamdb.org/api/scams
  */
 export async function syncCryptoScamDB(): Promise<SyncResult> {
   const startTime = Date.now();
@@ -284,24 +338,46 @@ export async function syncCryptoScamDB(): Promise<SyncResult> {
   let recordsUpdated = 0;
 
   try {
-    // Fetch from CryptoScamDB
-    const response = await fetch('https://cryptoscamdb.org/api/scams');
+    // Fetch from CryptoScamDB with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+    const response = await fetch('https://cryptoscamdb.org/api/scams', {
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeoutId));
 
     if (!response.ok) {
-      throw new Error(`CryptoScamDB error: ${response.status}`);
+      throw new Error(`CryptoScamDB API error: ${response.status} ${response.statusText}`);
     }
 
-    const scams = await response.json();
+    const data = await response.json();
 
-    // Process each scam
+    // Handle different response formats
+    const scams = Array.isArray(data) ? data : (data?.scams || data?.results || []);
+
+    if (scams.length === 0) {
+      console.warn('CryptoScamDB returned no data');
+      return {
+        source: 'cryptoscamdb',
+        status: 'success',
+        recordsAdded: 0,
+        recordsUpdated: 0,
+        duration: Date.now() - startTime,
+      };
+    }
+
+    // Process each scam - limit to 50 per sync
     for (const scam of scams.slice(0, 50)) {
+      // Handle various data formats
+      const address = scam.address || scam.contract_address || scam.hash;
+      if (!address || !address.startsWith('0x')) continue;
+
       const addressData = {
-        address: scam.address,
-        name: scam.name,
-        category: scam.category?.toUpperCase() || 'PHISHING',
-        description: scam.description,
-        url: scam.url,
-        source: 'EXTERNAL' as const,
+        address,
+        name: scam.name || scam.project || 'Unknown Scam',
+        category: (scam.category || scam.type || 'PHISHING')?.toUpperCase() || 'PHISHING',
+        description: scam.description || scam.details || 'Flagged by CryptoScamDB',
+        url: scam.url || scam.website || undefined,
       };
 
       await prisma.address.upsert({
@@ -310,13 +386,23 @@ export async function syncCryptoScamDB(): Promise<SyncResult> {
           name: addressData.name,
           description: addressData.description,
           url: addressData.url,
+        },
+        update: {
+          name: addressData.name,
+          description: addressData.description,
+          url: addressData.url,
           updatedAt: new Date(),
         },
         create: {
-          ...addressData,
+          address: addressData.address,
+          name: addressData.name,
+          category: addressData.category as any,
+          description: addressData.description,
+          url: addressData.url,
           status: 'SCAM',
           riskScore: 85,
           chain: 'base',
+          source: 'EXTERNAL',
         },
       });
 
@@ -349,29 +435,51 @@ export async function syncCryptoScamDB(): Promise<SyncResult> {
       duration: Date.now() - startTime,
     };
   } catch (error) {
+    // Log error but don't throw - allow sync to continue
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.warn('CryptoScamDB sync failed:', errorMessage);
+
     await prisma.syncLog.create({
       data: {
         source: 'cryptoscamdb',
         status: 'failed',
         recordsAdded: 0,
         recordsUpdated: 0,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
         completedAt: new Date(),
       },
     });
 
-    throw error;
+    // Return partial success instead of throwing
+    return {
+      source: 'cryptoscamdb',
+      status: 'failed',
+      recordsAdded: 0,
+      recordsUpdated: 0,
+      duration: Date.now() - startTime,
+      error: errorMessage,
+    };
   }
 }
 
 /**
  * Run all syncs
+ * Continues even if individual syncs fail
  */
 export async function runAllSyncs(): Promise<BatchSyncResult> {
   const results = await Promise.allSettled([
-    syncDefiLlama(),
-    syncScamSniffer(),
-    syncCryptoScamDB(),
+    syncDefiLlama().catch((e): SyncResult => {
+      console.error('DeFiLlama sync failed:', e.message);
+      return { source: 'defillama', status: 'failed', recordsAdded: 0, recordsUpdated: 0, duration: 0, error: e.message };
+    }),
+    syncScamSniffer().catch((e): SyncResult => {
+      console.error('ScamSniffer sync failed:', e.message);
+      return { source: 'scamsniffer', status: 'failed', recordsAdded: 0, recordsUpdated: 0, duration: 0, error: e.message };
+    }),
+    syncCryptoScamDB().catch((e): SyncResult => {
+      console.error('CryptoScamDB sync failed:', e.message);
+      return { source: 'cryptoscamdb', status: 'failed', recordsAdded: 0, recordsUpdated: 0, duration: 0, error: e.message };
+    }),
   ]);
 
   const successful = results.filter((r) => r.status === 'fulfilled');
@@ -391,7 +499,7 @@ export async function runAllSyncs(): Promise<BatchSyncResult> {
     totalAdded,
     totalUpdated,
     totalDuration: Date.now(),
-    hasErrors: failed.length > 0,
+    hasErrors: failed.length > 0 || successful.some((r) => r.value.status === 'failed'),
   };
 }
 
