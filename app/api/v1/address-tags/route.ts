@@ -28,36 +28,25 @@ type PostTagResponse = {
   };
 };
 
-type AddressTagListItem = {
-  id: string;
-  tag: string;
-  taggedBy: string | null;
-  createdAt: Date;
-  address: {
-    address: string;
-    name: string | null;
-    status: string;
-    riskScore: number;
-  };
-};
-
 type GetTagsListResponse = {
-  data: AddressTagListItem[];
+  data: Array<{
+    id: string;
+    tag: string;
+    taggedBy: string | null;
+    createdAt: Date;
+    address: {
+      address: string;
+      name: string | null;
+      status: string;
+      riskScore: number;
+    };
+  }>;
   pagination: {
     page: number;
     limit: number;
     total: number;
     totalPages: number;
   };
-};
-
-type AddressTagWhere = {
-  addressId?: string;
-  tag?: {
-    contains: string;
-    mode: 'insensitive';
-  };
-  taggedBy?: string;
 };
 
 /**
@@ -151,12 +140,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return apiSuccess(
-      { tag: tagRecord },
-      {
-        message: 'Tag created successfully',
-      }
-    );
+    return apiSuccess(tagRecord, {
+      message: 'Tag created successfully',
+    });
   });
 }
 
@@ -175,7 +161,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: AddressTagWhere = {};
+    const where: any = {};
 
     if (address) {
       const addressRecord = await prisma.address.findUnique({
@@ -209,7 +195,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get tags with address info
-    const [tags, total]: [AddressTagListItem[], number] = await Promise.all([
+    const [tags, total] = await Promise.all([
       prisma.addressTag.findMany({
         where,
         include: {
