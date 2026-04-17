@@ -95,27 +95,16 @@ export const walletClient = privateKey
  * Ethereum Client for ENS Resolution
  *
  * ENS (Ethereum Name Service) is deployed on Ethereum mainnet.
- * For testing, we support both mainnet and sepolia.
+ * Cloudflare's gateway is used as it properly supports ENS resolution.
  *
- * IMPORTANT: For production ENS resolution, use Ethereum mainnet RPC.
+ * For production, consider using Infura or Alchemy with their web3 API gateways.
  */
-import { fallback } from 'viem';
-
-// Detect if using sepolia or mainnet based on env var
-const isEnsSepolia = process.env.ETHEREUM_RPC_URL?.includes('sepolia');
-
 export const ensClient = createPublicClient({
-  chain: isEnsSepolia ? sepolia : mainnet,
-  transport: fallback([
-    http(process.env.ETHEREUM_RPC_URL || 'https://eth.drpc.org', {
-      timeout: 30_000,
-      retryCount: 2,
-    }),
-    http('https://eth.public-rpc.com', {
-      timeout: 30_000,
-      retryCount: 1,
-    }),
-  ]),
+  chain: mainnet,
+  transport: http('https://cloudflare-eth.com', {
+    timeout: 30_000,
+    retryCount: 3,
+  }),
 });
 
 /**
