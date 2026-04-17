@@ -92,6 +92,22 @@ export const walletClient = privateKey
   : null;
 
 /**
+ * Ethereum Client for ENS Resolution
+ *
+ * ENS (Ethereum Name Service) is deployed on Ethereum mainnet.
+ * Cloudflare's gateway is used as it properly supports ENS resolution.
+ *
+ * For production, consider using Infura or Alchemy with their web3 API gateways.
+ */
+export const ensClient = createPublicClient({
+  chain: mainnet,
+  transport: http('https://cloudflare-eth.com', {
+    timeout: 30_000,
+    retryCount: 3,
+  }),
+});
+
+/**
  * Check if address is a valid Ethereum address
  * Accepts variable length addresses (EOA addresses can be shorter)
  */
