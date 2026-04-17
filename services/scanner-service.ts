@@ -6,6 +6,7 @@
  */
 
 import { getBytecode, isContract, publicClient } from '@/lib/viem';
+import { getBytecode, isContract, publicClient } from '@/lib/viem';
 import { SCAM_PATTERNS, getRiskLevelFromScore, SCAN_LIMITS } from '@/lib/constants';
 import { allScamPatterns, calculateRiskScore, getRiskLevel } from '@/config/scam-patterns';
 import type { DetectedPattern, ScanResult, QuickScanResult, SimilarScam } from '@/types/api';
