@@ -1,0 +1,234 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum AddressStatus {
+  LEGIT
+  SCAM
+  SUSPICIOUS
+  UNKNOWN
+}
+
+enum AddressCategory {
+  DEFI
+  NFT
+  BRIDGE
+  DEX
+  LENDING
+  PHISHING
+  DRAINER
+  AIRDROP_SCAM
+  RUGPULL
+  IMPOSTER
+  OTHER
+}
+
+enum DataSource {
+  COMMUNITY
+  SCANNER
+  EXTERNAL
+  SEED
+  ADMIN
+}
+
+enum ReportStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  DISPUTED
+}
+
+enum VoteType {
+  FOR
+  AGAINST
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ============================================
+// CORE TABLES
+// ============================================
+
+model Address {
+  id          String   @id @default(cuid())
+  address     String   @unique @db.VarChar(42)
+  name        String?  @db.VarChar(255)
+  chain       String   @default("base") @db.VarChar(50)
+  status      AddressStatus @default(UNKNOWN)
+  riskScore   Int      @default(0) @db.SmallInt
+  category    AddressCategory @default(OTHER)
+  source      DataSource @default(SEED)
+  description String?  @db.Text
+  url         String?  @db.VarChar(2048)
+  logoUrl     String?  @db.VarChar(2048)
+  tvl         Decimal? @db.Decimal(20, 2)
+  verifiedBy  String?  @db.VarChar(42)
+  verifiedAt  DateTime?
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  reports        Report[]
+  scans          ContractScan[]
+  tags           AddressTag[]
+  sourceLinks    ExternalSource[]
+
+  @@index([status])
+  @@index([category])
+  @@index([riskScore])
+  @@index([source])
+  @@index([chain])
+  @@index([source, chain, status])
+  @@index([status, riskScore])
+  @@map("addresses")
+}
+
+model Report {
+  id              String   @id @default(cuid())
+  addressId       String
+  reporterAddress String   @db.VarChar(42)
+  reason          String   @db.Text
+  evidenceUrl     String?  @db.VarChar(2048)
+  category        AddressCategory @default(OTHER)
+  status          ReportStatus @default(PENDING)
+  votesFor        Int      @default(0)
+  votesAgainst    Int      @default(0)
+  txHash          String?  @unique @db.VarChar(66)
+  resolvedAt      DateTime? @db.Timestamptz(6)
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  address   Address  @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  votes     Vote[]
+
+  @@index([status])
+  @@index([reporterAddress])
+  @@index([createdAt])
+  @@index([addressId])
+  @@index([reporterAddress, status, createdAt])
+  @@index([status, votesFor, votesAgainst])
+  @@map("reports")
+}
+
+model Vote {
+  id          String   @id @default(cuid())
+  reportId    String
+  voterAddress String  @db.VarChar(42)
+  vote        VoteType
+  txHash      String?  @unique @db.VarChar(66)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  report     Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, voterAddress])
+  @@index([voterAddress])
+  @@map("votes")
+}
+
+model ContractScan {
+  id              String   @id @default(cuid())
+  addressId       String
+  bytecodeHash    String?  @db.VarChar(66)
+  riskScore       Int      @db.SmallInt
+  riskLevel       RiskLevel
+  patterns        Json
+  isVerified      Boolean  @default(false)
+  scannerVersion  String   @default("1.0.0") @db.VarChar(20)
+  scanDuration    Int?     @db.Integer
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  address   Address  @relation(fields: [addressId], references: [id], onDelete: Cascade)
+
+  @@index([riskLevel])
+  @@index([createdAt])
+  @@index([addressId])
+  @@map("contract_scans")
+}
+
+model AddressTag {
+  id        String   @id @default(cuid())
+  addressId String
+  tag       String   @db.VarChar(100)
+  taggedBy  String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  address   Address  @relation(fields: [addressId], references: [id], onDelete: Cascade)
+
+  @@unique([addressId, tag])
+  @@index([tag])
+  @@map("address_tags")
+}
+
+model ExternalSource {
+  id          String   @id @default(cuid())
+  addressId   String
+  source      String   @db.VarChar(50)
+  sourceId    String?  @db.VarChar(255)
+  sourceUrl   String?  @db.VarChar(2048)
+  rawData     Json?
+  syncedAt    DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  address   Address  @relation(fields: [addressId], references: [id], onDelete: Cascade)
+
+  @@unique([addressId, source, sourceId])
+  @@index([source])
+  @@map("external_sources")
+}
+
+// ============================================
+// SYSTEM TABLES
+// ============================================
+
+model SyncLog {
+  id            String   @id @default(cuid())
+  source        String   @db.VarChar(50)
+  status        String   @db.VarChar(20)
+  recordsAdded  Int      @default(0)
+  recordsUpdated Int     @default(0)
+  error         String?  @db.Text
+  startedAt     DateTime @default(now()) @db.Timestamptz(6)
+  completedAt   DateTime? @db.Timestamptz(6)
+
+  @@index([source])
+  @@index([startedAt])
+  @@map("sync_logs")
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  address         String   @unique @db.VarChar(42)
+  ensName         String?  @db.VarChar(255)
+  reportsSubmitted Int     @default(0)
+  reportsVerified Int      @default(0)
+  reputation      Int      @default(0)
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([reputation])
+  @@index([reportsSubmitted])
+  @@index([reportsVerified])
+  @@map("user_profiles")
+}
