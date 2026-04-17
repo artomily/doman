@@ -36,6 +36,36 @@ enum AddressCategory {
   OTHER
 }
 
+enum AddressType {
+  EOA              // Externally Owned Account (wallet)
+  SMART_CONTRACT   // Regular smart contract
+  PROXY            // Proxy contract
+  FACTORY          // Factory contract
+}
+
+enum ContractType {
+  DEX
+  NFT
+  TOKEN_20         // ERC-20
+  TOKEN_721        // ERC-721 NFT
+  TOKEN_1155       // ERC-1155 Multi-token
+  BRIDGE
+  LENDING
+  STAKING
+  YIELD
+  GOVERNANCE
+  MULTISIG
+  AIRDROP
+  MINTER
+  DRAINER
+  PHISHING
+  IMPOSTER
+  ROUTER
+  VAULT
+  FACTORY
+  OTHER
+}
+
 enum DataSource {
   COMMUNITY
   SCANNER
@@ -71,17 +101,26 @@ model Address {
   id          String   @id @default(cuid())
   address     String   @unique @db.VarChar(42)
   name        String?  @db.VarChar(255)
+  displayName String?  @db.VarChar(255) // Alternative name from different sources
   chain       String   @default("base") @db.VarChar(50)
   status      AddressStatus @default(UNKNOWN)
   riskScore   Int      @default(0) @db.SmallInt
   category    AddressCategory @default(OTHER)
+  addressType AddressType @default(EOA) // EOA, SMART_CONTRACT, PROXY, FACTORY
+  contractType ContractType? // For smart contracts: DEX, NFT, TOKEN, etc
   source      DataSource @default(SEED)
   description String?  @db.Text
   url         String?  @db.VarChar(2048)
+  website     String?  @db.VarChar(2048) // Official website
   logoUrl     String?  @db.VarChar(2048)
+  twitter     String?  @db.VarChar(255) // Social media for verification
+  telegram    String?  @db.VarChar(255)
+  discord     String?  @db.VarChar(255)
   tvl         Decimal? @db.Decimal(20, 2)
   verifiedBy  String?  @db.VarChar(42)
   verifiedAt  DateTime?
+  firstSeenAt DateTime @default(now()) @db.Timestamptz(6) // When first detected/scanned
+  lastSeenAt  DateTime @default(now()) @db.Timestamptz(6) // Last activity detected
   createdAt   DateTime @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @db.Timestamptz(6)
 
@@ -90,6 +129,8 @@ model Address {
   scans          ContractScan[]
   tags           AddressTag[]
   sourceLinks    ExternalSource[]
+  ensRecords     EnsRecord[]
+  signatures     ContractSignature[] @relation("ContractSignatures") // Function signatures
 
   @@index([status])
   @@index([category])
@@ -98,6 +139,11 @@ model Address {
   @@index([chain])
   @@index([source, chain, status])
   @@index([status, riskScore])
+  @@index([addressType])
+  @@index([contractType])
+  @@index([firstSeenAt])
+  @@index([lastSeenAt])
+  @@index([status, firstSeenAt]) // Recent scams by status
   @@map("addresses")
 }
 
@@ -149,10 +195,15 @@ model ContractScan {
   id              String   @id @default(cuid())
   addressId       String
   bytecodeHash    String?  @db.VarChar(66)
+  bytecodeLength  Int?     // Bytecode size for quick analysis
   riskScore       Int      @db.SmallInt
   riskLevel       RiskLevel
-  patterns        Json
+  patterns        Json     // Detected scam patterns
+  detectedSignatures Json? // Function signatures found
   isVerified      Boolean  @default(false)
+  isProxy         Boolean  @default(false)
+  proxyType       String?  @db.VarChar(50) // ERC1967, Gnosis, UUPS, etc
+  implementationAddress String? @db.VarChar(42) // For proxy contracts
   scannerVersion  String   @default("1.0.0") @db.VarChar(20)
   scanDuration    Int?     @db.Integer
   createdAt       DateTime @default(now()) @db.Timestamptz(6)
@@ -163,6 +214,8 @@ model ContractScan {
   @@index([riskLevel])
   @@index([createdAt])
   @@index([addressId])
+  @@index([bytecodeHash]) // For finding similar contracts
+  @@index([isProxy])
   @@map("contract_scans")
 }
 
@@ -188,6 +241,11 @@ model ExternalSource {
   sourceId    String?  @db.VarChar(255)
   sourceUrl   String?  @db.VarChar(2048)
   rawData     Json?
+  confidence  Int?     @db.SmallInt // Confidence score from source (0-100)
+  category    String?  @db.VarChar(100) // Category from external source
+  tags        String[] @default([]) // Tags from external source
+  firstSeenAt DateTime @default(now()) @db.Timestamptz(6)
+  lastSeenAt  DateTime @default(now()) @db.Timestamptz(6)
   syncedAt    DateTime @default(now()) @db.Timestamptz(6)
 
   // Relations
@@ -195,6 +253,8 @@ model ExternalSource {
 
   @@unique([addressId, source, sourceId])
   @@index([source])
+  @@index([source, category])
+  @@index([confidence])
   @@map("external_sources")
 }
 
@@ -231,4 +291,68 @@ model UserProfile {
   @@index([reportsSubmitted])
   @@index([reportsVerified])
   @@map("user_profiles")
+}
+
+// Phishing/scam domains from external sources
+model ScamDomain {
+  id          String   @id @default(cuid())
+  domain      String   @unique @db.VarChar(500)
+  name        String?  @db.VarChar(255)
+  category    String   @default("PHISHING") @db.VarChar(50)
+  status      String   @default("ACTIVE") @db.VarChar(20)
+  source      String   @default("scamsniffer") @db.VarChar(50)
+  description String?  @db.Text
+  riskScore   Int      @default(80) @db.SmallInt
+  rawData     Json?
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([domain])
+  @@index([status])
+  @@index([source])
+  @@index([riskScore])
+  @@index([category])
+  @@map("scam_domains")
+}
+
+// ENS Records for name resolution
+model EnsRecord {
+  id          String   @id @default(cuid())
+  addressId   String   @db.VarChar(42)
+  ensName     String   @unique @db.VarChar(255) // .eth name without .eth suffix
+  fullName    String   @db.VarChar(500) // Full name with .eth
+  avatar      String?  @db.VarChar(2048)
+  resolvedAt  DateTime @default(now()) @db.Timestamptz(6)
+  lastChecked DateTime @default(now()) @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  address Address @relation(fields: [addressId], references: [id], onDelete: Cascade)
+
+  @@index([ensName])
+  @@index([addressId])
+  @@index([fullName])
+  @@map("ens_records")
+}
+
+// Contract function signatures for type detection and similarity matching
+model ContractSignature {
+  id          String   @id @default(cuid())
+  addressId   String
+  selector    String   @db.VarChar(10) // Function selector (0xXXXXXXXX)
+  functionName String? @db.VarChar(255) // Detected function name
+  signature   String   @db.VarChar(255) // Full signature
+  riskLevel   String?  @db.VarChar(20) // LOW/MEDIUM/HIGH/CRITICAL if this is a dangerous function
+  isMalicious Boolean  @default(false) // Known scam function
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  address Address @relation("ContractSignatures", fields: [addressId], references: [id], onDelete: Cascade)
+
+  @@unique([addressId, selector])
+  @@index([selector]) // Find all contracts with same function
+  @@index([addressId])
+  @@index([isMalicious])
+  @@map("contract_signatures")
 }
