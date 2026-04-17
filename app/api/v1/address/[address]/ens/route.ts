@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEnsRecordsForAddress, reverseResolveEns } from '@/services/ens-service';
 import { apiSuccess, apiError } from '@/lib/api-response';
-import { addressSchema } from '@/lib/validation';
+import { addressSchema } from '@/lib/validations/address';
 
 /**
  * GET /api/v1/address/[address]/ens

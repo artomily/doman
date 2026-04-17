@@ -6,7 +6,6 @@
  */
 
 import { getBytecode, isContract, publicClient } from '@/lib/viem';
-import { getBytecode, isContract, publicClient } from '@/lib/viem';
 import { SCAM_PATTERNS, getRiskLevelFromScore, SCAN_LIMITS } from '@/lib/constants';
 import { allScamPatterns, calculateRiskScore, getRiskLevel } from '@/config/scam-patterns';
 import type { DetectedPattern, ScanResult, QuickScanResult, SimilarScam } from '@/types/api';
@@ -37,30 +36,26 @@ export async function scanContract(address: string, checkerAddress?: string): Pr
   // Detect address type first
   const addressTypeInfo = await detectAddressType(address);
 
+  // Detect address type first
+  const addressTypeInfo = await detectAddressType(address);
+
   // Check if it's a contract
   const hasCode = await isContract(address);
   if (!hasCode) {
     // EOA (Externally Owned Account) - low risk but not a contract
-    // Upsert address and save scan so it appears in history
-    if (checkerAddress) await trackChecker(checkerAddress);
-    const eoaRecord = await prisma.address.upsert({
+    // Update address record with EOA type
+    await prisma.address.upsert({
       where: { address },
-      create: { address, status: 'UNKNOWN', riskScore: 0, category: 'OTHER', source: 'SCANNER' },
-      update: {},
-      include: { _count: { select: { reports: true } } },
-    });
-    await prisma.contractScan.create({
-      data: {
-        addressId: eoaRecord.id,
-        checkerAddress: checkerAddress ?? null,
+      update: { addressType: 'EOA' },
+      create: {
+        address,
+        addressType: 'EOA',
+        status: 'UNKNOWN',
         riskScore: 0,
-        riskLevel: 'LOW',
-        patterns: [],
-        isVerified: false,
-        scannerVersion: '1.0.0',
-        scanDuration: Date.now() - startTime,
+        source: 'SCANNER',
       },
     });
+
     return {
       address,
       riskScore: 0,

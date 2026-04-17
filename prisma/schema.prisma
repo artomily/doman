@@ -64,6 +64,36 @@ enum ContractType {
   OTHER
 }
 
+enum AddressType {
+  EOA              // Externally Owned Account (wallet)
+  SMART_CONTRACT   // Regular smart contract
+  PROXY            // Proxy contract
+  FACTORY          // Factory contract
+}
+
+enum ContractType {
+  DEX
+  NFT
+  TOKEN_20         // ERC-20
+  TOKEN_721        // ERC-721 NFT
+  TOKEN_1155       // ERC-1155 Multi-token
+  BRIDGE
+  LENDING
+  STAKING
+  YIELD
+  GOVERNANCE
+  MULTISIG
+  AIRDROP
+  MINTER
+  DRAINER
+  PHISHING
+  IMPOSTER
+  ROUTER
+  VAULT
+  FACTORY
+  OTHER
+}
+
 enum DataSource {
   COMMUNITY
   SCANNER
@@ -125,6 +155,8 @@ model Address {
   verifiedAt  DateTime?
   firstSeenAt DateTime @default(now()) @db.Timestamptz(6) // When first detected/scanned
   lastSeenAt  DateTime @default(now()) @db.Timestamptz(6) // Last activity detected
+  firstSeenAt DateTime @default(now()) @db.Timestamptz(6) // When first detected/scanned
+  lastSeenAt  DateTime @default(now()) @db.Timestamptz(6) // Last activity detected
   createdAt   DateTime @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @db.Timestamptz(6)
 
@@ -133,9 +165,8 @@ model Address {
   scans          ContractScan[]
   tags           AddressTag[]
   sourceLinks    ExternalSource[]
-  watchlist      Watchlist[]
   ensRecords     EnsRecord[]
-  contractSignatures ContractSignature[] @relation("ContractSignatures")
+  signatures     ContractSignature[] @relation("ContractSignatures") // Function signatures
 
   @@index([status])
   @@index([category])
