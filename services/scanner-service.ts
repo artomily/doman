@@ -36,9 +36,6 @@ export async function scanContract(address: string, checkerAddress?: string): Pr
   // Detect address type first
   const addressTypeInfo = await detectAddressType(address);
 
-  // Detect address type first
-  const addressTypeInfo = await detectAddressType(address);
-
   // Check if it's a contract
   const hasCode = await isContract(address);
   if (!hasCode) {
