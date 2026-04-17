@@ -260,11 +260,11 @@ enum RiskLevel { LOW, MEDIUM, HIGH, CRITICAL }
 
 ```env
 # Base Sepolia (Alchemy)
-NEXT_PUBLIC_BASE_RPC_URL="https://base-sepolia.g.alchemy.com/v2/Cc4KBLOc0mq_T6shftqv0"
+NEXT_PUBLIC_BASE_RPC_URL="https://base-sepolia.g.alchemy.com/v2/YOUR_KEY"
 NEXT_PUBLIC_BASE_CHAIN_ID=84532
 
 # Ethereum Mainnet (for ENS - cache only currently)
-ETHEREUM_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/Cc4KBLOc0mq_T6shftqv0"
+ETHEREUM_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
 ```
 
 ### Data Sources
