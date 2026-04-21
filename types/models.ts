@@ -5,7 +5,7 @@
  * These types provide better TypeScript support when working with database models.
  */
 
-import type { Address, Report, Vote, ContractScan, AddressTag, ExternalSource, SyncLog, UserProfile } from '@prisma/client';
+import type { Address, Report, Vote, ContractScan, AddressTag, ExternalSource, SyncLog, UserProfile, AddressStatus, AddressCategory, DataSource, ReportStatus, VoteType, RiskLevel } from '@prisma/client';
 
 // ============================================
 // ADDRESS TYPES
@@ -358,7 +358,7 @@ export interface ReputationEvent {
 /**
  * User profile extended with stats
  */
-export interface UserProfile {
+export interface UserProfileData {
   address: string;
   ens?: string;
   avatar?: string;

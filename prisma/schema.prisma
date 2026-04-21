@@ -6,9 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 // ============================================
@@ -90,6 +88,7 @@ model Address {
   scans          ContractScan[]
   tags           AddressTag[]
   sourceLinks    ExternalSource[]
+  watchlist      Watchlist[]
 
   @@index([status])
   @@index([category])
@@ -198,9 +197,25 @@ model ExternalSource {
   @@map("external_sources")
 }
 
+model Watchlist {
+  id          String   @id @default(cuid())
+  userAddress String   @db.VarChar(42)
+  addressId   String
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  address   Address  @relation(fields: [addressId], references: [id], onDelete: Cascade)
+
+  @@unique([userAddress, addressId])
+  @@index([userAddress])
+  @@map("watchlists")
+}
+
 // ============================================
 // SYSTEM TABLES
 // ============================================
+
+
 
 model SyncLog {
   id            String   @id @default(cuid())

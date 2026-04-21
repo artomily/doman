@@ -9,7 +9,7 @@
  */
 
 import prisma from '@/lib/prisma';
-import type { LeaderboardEntry, UserProfile, ReputationEvent } from '@/types/models';
+import type { LeaderboardEntry, UserProfileData, ReputationEvent } from '@/types/models';
 
 /**
  * Reputation points configuration
@@ -231,7 +231,7 @@ export async function getLeaderboard(options: {
 /**
  * Get user profile with stats
  */
-export async function getUserProfile(userAddress: string): Promise<UserProfile | null> {
+export async function getUserProfile(userAddress: string): Promise<UserProfileData | null> {
   const user = await prisma.userProfile.findUnique({
     where: { address: userAddress },
   });
@@ -330,7 +330,7 @@ export async function getUserProfile(userAddress: string): Promise<UserProfile |
 export async function upsertUserProfile(data: {
   address: string;
   ensName?: string;
-}): Promise<UserProfile> {
+}): Promise<UserProfileData> {
   const profile = await prisma.userProfile.upsert({
     where: { address: data.address },
     update: {

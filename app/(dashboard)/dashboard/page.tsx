@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { TrustScoreBadge } from "@/components/ui/badge";
+import prisma from "@/lib/prisma";
 import {
   Search,
   Shield,
@@ -9,71 +10,68 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 
-const stats = [
-  {
-    label: "Total Checks",
-    value: "1,247",
-    change: "+12%",
-    up: true,
-    icon: Search,
-  },
-  {
-    label: "Flagged Addresses",
-    value: "23",
-    change: "+3",
-    up: true,
-    icon: AlertTriangle,
-  },
-  {
-    label: "Watchlist",
-    value: "8",
-    change: "0",
-    up: false,
-    icon: Eye,
-  },
-  {
-    label: "Trust Score Avg",
-    value: "72",
-    change: "+5",
-    up: true,
-    icon: Shield,
-  },
-];
+export const dynamic = "force-dynamic";
 
-const recentActivity = [
-  {
-    address: "0x1a2b3c4d5e6f7890abcdef1234567890abcdef12",
-    type: "Address Check",
-    score: 85,
-    time: "2 min ago",
-  },
-  {
-    address: "uniswap.org",
-    type: "Domain Check",
-    score: 95,
-    time: "15 min ago",
-  },
-  {
-    address: "0xdead000000000000000000000000000000000000",
-    type: "Address Check",
-    score: 12,
-    time: "1 hour ago",
-  },
-  {
-    address: "0xabcdef1234567890abcdef1234567890abcdef12",
-    type: "Contract Check",
-    score: 45,
-    time: "3 hours ago",
-  },
-  {
-    address: "fake-airdrop.xyz",
-    type: "Domain Check",
-    score: 8,
-    time: "5 hours ago",
-  },
-];
+export default async function DashboardPage() {
+  const [
+    totalScans,
+    flaggedCount,
+    watchlistCount,
+    riskScoreAvg,
+    recentScans,
+  ] = await Promise.all([
+    prisma.contractScan.count(),
+    prisma.address.count({
+      where: { status: { in: ["SCAM", "SUSPICIOUS"] } },
+    }),
+    prisma.watchlist.count(),
+    prisma.address.aggregate({ _avg: { riskScore: true } }),
+    prisma.contractScan.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: {
+        address: {
+          select: { address: true, chain: true, category: true },
+        },
+      },
+    }),
+  ]);
 
-export default function DashboardPage() {
+  const trustScoreAvg = riskScoreAvg._avg.riskScore
+    ? Math.round(100 - riskScoreAvg._avg.riskScore)
+    : 0;
+
+  const stats = [
+    {
+      label: "Total Checks",
+      value: totalScans.toLocaleString(),
+      change: null,
+      up: true,
+      icon: Search,
+    },
+    {
+      label: "Flagged Addresses",
+      value: flaggedCount.toLocaleString(),
+      change: null,
+      up: true,
+      icon: AlertTriangle,
+    },
+    {
+      label: "Watchlist",
+      value: watchlistCount.toLocaleString(),
+      change: null,
+      up: false,
+      icon: Eye,
+    },
+    {
+      label: "Trust Score Avg",
+      value: trustScoreAvg.toString(),
+      change: null,
+      up: true,
+      icon: Shield,
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <div>
@@ -89,18 +87,20 @@ export default function DashboardPage() {
           <Card key={stat.label} className="flex flex-col justify-between min-h-32">
             <div className="flex items-center justify-between">
               <stat.icon size={18} className="text-muted" />
-              <span
-                className={`flex items-center gap-1 text-xs ${
-                  stat.up ? "text-green-400" : "text-muted"
-                }`}
-              >
-                {stat.up ? (
-                  <ArrowUpRight size={12} />
-                ) : (
-                  <ArrowDownRight size={12} />
-                )}
-                {stat.change}
-              </span>
+              {stat.change && (
+                <span
+                  className={`flex items-center gap-1 text-xs ${
+                    stat.up ? "text-green-400" : "text-muted"
+                  }`}
+                >
+                  {stat.up ? (
+                    <ArrowUpRight size={12} />
+                  ) : (
+                    <ArrowDownRight size={12} />
+                  )}
+                  {stat.change}
+                </span>
+              )}
             </div>
             <div>
               <p className="mt-3 text-2xl font-bold">{stat.value}</p>
@@ -122,25 +122,37 @@ export default function DashboardPage() {
           </a>
         </div>
         <div className="space-y-0">
-          {recentActivity.map((item, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between border-t border-card-border py-4 first:border-0 first:pt-0"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-mono text-sm">{item.address}</p>
-                <p className="mt-0.5 text-xs text-muted">{item.type}</p>
+          {recentScans.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted">
+              No scan activity yet. Try checking an address.
+            </p>
+          ) : (
+            recentScans.map((scan: typeof recentScans[number]) => (
+              <div
+                key={scan.id}
+                className="flex items-center justify-between border-t border-card-border py-4 first:border-0 first:pt-0"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-mono text-sm">
+                    {scan.address.address}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted capitalize">
+                    {scan.address.category.toLowerCase().replace("_", " ")} ·{" "}
+                    {scan.address.chain}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <TrustScoreBadge score={100 - scan.riskScore} />
+                  <span className="hidden text-xs text-muted sm:block">
+                    {new Date(scan.createdAt).toLocaleString()}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <TrustScoreBadge score={item.score} />
-                <span className="hidden text-xs text-muted sm:block">
-                  {item.time}
-                </span>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </Card>
     </div>
   );
 }
+
