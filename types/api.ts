@@ -258,10 +258,17 @@ export interface SimilarScam {
 }
 
 /**
+ * Input type for scan (address, ENS name, or domain)
+ */
+export type ScanInputType = 'address' | 'ens' | 'domain';
+
+/**
  * Scan result
  */
 export interface ScanResult {
   address: string;
+  inputType?: ScanInputType;
+  resolvedAddress?: string; // ENS → resolved 0x address
   riskScore: number;
   riskLevel: RiskLevel;
   isVerified: boolean;

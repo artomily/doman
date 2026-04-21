@@ -10,7 +10,7 @@
  */
 
 import { createPublicClient, createWalletClient, http, type Chain, type PublicClient, type WalletClient } from 'viem';
-import { baseSepolia } from 'viem/chains';
+import { baseSepolia, mainnet } from 'viem/chains';
 
 /**
  * Validate required environment variables
@@ -92,6 +92,20 @@ export const walletClient = privateKey
   : null;
 
 /**
+ * Mainnet Public Client (for ENS resolution)
+ *
+ * ENS only works on Ethereum mainnet, not on testnet or Base.
+ * This client connects to mainnet specifically for ENS queries.
+ */
+export const mainnetClient = createPublicClient({
+  chain: mainnet,
+  transport: http('https://eth.rpc.blxrbdn.com', {
+    timeout: 30_000,
+    retryCount: 3,
+  }),
+});
+
+/**
  * Check if address is a valid Ethereum address
  * Accepts variable length addresses (EOA addresses can be shorter)
  */
@@ -161,3 +175,59 @@ export async function getTransactionReceipt(txHash: string) {
  * Re-export types for convenience
  */
 export type { Chain, PublicClient, WalletClient };
+
+// ============================================
+// ENS / INPUT TYPE DETECTION
+// ============================================
+
+export type ScanInputType = 'address' | 'ens' | 'domain';
+
+/**
+ * Detect whether the user input is a 0x address, ENS name, or plain domain.
+ */
+export function detectInputType(input: string): ScanInputType {
+  const trimmed = input.trim().toLowerCase();
+  if (/^0x[a-f0-9]{1,40}$/.test(trimmed)) return 'address';
+  if (trimmed.endsWith('.eth')) return 'ens';
+  return 'domain';
+}
+
+/**
+ * Resolve an ENS name to its underlying Ethereum address.
+ * Uses mainnet ENS registry (ENS only works on mainnet, not testnet).
+ * Returns null if the name has no resolver or no address record.
+ */
+export async function resolveEns(ensName: string): Promise<`0x${string}` | null> {
+  try {
+    const address = await mainnetClient.getEnsAddress({
+      name: ensName,
+    });
+    return address ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Given any user input (address / ENS / domain) return its normalised
+ * address (0x…) and detected input type.  Returns null address for domains
+ * so callers can perform a database-only lookup instead of a chain lookup.
+ */
+export async function resolveInput(input: string): Promise<{
+  inputType: ScanInputType;
+  resolvedAddress: string | null;
+}> {
+  const type = detectInputType(input);
+
+  if (type === 'address') {
+    return { inputType: 'address', resolvedAddress: input.trim() };
+  }
+
+  if (type === 'ens') {
+    const resolved = await resolveEns(input.trim());
+    return { inputType: 'ens', resolvedAddress: resolved };
+  }
+
+  // domain – no on-chain resolution; caller searches the database by url field
+  return { inputType: 'domain', resolvedAddress: null };
+}

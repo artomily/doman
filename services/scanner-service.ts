@@ -280,3 +280,56 @@ export async function batchScan(addresses: string[]): Promise<{ address: string;
 
   return results;
 }
+
+/**
+ * Scan a domain/URL for potential scam patterns.
+ * Performs a database lookup by the `url` field and returns a risk assessment.
+ */
+export async function scanDomain(domain: string): Promise<ScanResult> {
+  const startTime = Date.now();
+  const normalised = domain.trim().toLowerCase().replace(/^https?:\/\//, '');
+
+  // Search DB by url field (contains match) or by name
+  const dbMatch = await prisma.address.findFirst({
+    where: {
+      OR: [
+        { url: { contains: normalised, mode: 'insensitive' } },
+        { name: { contains: normalised, mode: 'insensitive' } },
+      ],
+    },
+    include: {
+      _count: { select: { reports: true } },
+    },
+  });
+
+  if (dbMatch) {
+    const riskScore = dbMatch.riskScore;
+    const riskLevel = getRiskLevel(riskScore) as RiskLevel;
+    return {
+      address: normalised,
+      inputType: 'domain',
+      riskScore,
+      riskLevel,
+      isVerified: !!dbMatch.verifiedBy,
+      patterns: [],
+      similarScams: [],
+      reportCount: dbMatch._count.reports,
+      scanDuration: Date.now() - startTime,
+      scannedAt: new Date().toISOString(),
+    };
+  }
+
+  // Not in database – treat as unknown, low risk
+  return {
+    address: normalised,
+    inputType: 'domain',
+    riskScore: 0,
+    riskLevel: 'LOW',
+    isVerified: false,
+    patterns: [],
+    similarScams: [],
+    reportCount: 0,
+    scanDuration: Date.now() - startTime,
+    scannedAt: new Date().toISOString(),
+  };
+}
