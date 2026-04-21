@@ -81,26 +81,22 @@ export async function syncDefiLlama(): Promise<SyncResult> {
       await prisma.externalSource.upsert({
         where: {
           addressId_source_sourceId: {
-            addressId: addressData.address,
+            addressId: existing!.id,
             source: 'defillama',
             sourceId: protocol.name || '',
           },
         },
         update: {
-          data: {
-            sourceUrl: protocol.url,
-            rawData: protocol,
-            syncedAt: new Date(),
-          },
+          sourceUrl: protocol.url,
+          rawData: protocol,
+          syncedAt: new Date(),
         },
         create: {
-          data: {
-            addressId: addressData.address,
-            source: 'defillama',
-            sourceId: protocol.name || '',
-            sourceUrl: protocol.url,
-            rawData: protocol,
-          },
+          addressId: existing!.id,
+          source: 'defillama',
+          sourceId: protocol.name || '',
+          sourceUrl: protocol.url,
+          rawData: protocol,
         },
       });
     }
@@ -121,7 +117,6 @@ export async function syncDefiLlama(): Promise<SyncResult> {
       status: 'success',
       recordsAdded,
       recordsUpdated,
-      syncLogId: 'defillama-' + Date.now(),
       duration: Date.now() - startTime,
     };
   } catch (error) {
@@ -144,9 +139,9 @@ export async function syncDefiLlama(): Promise<SyncResult> {
 /**
  * Helper: Categorize DeFiLlama protocol
  */
-function categorizeProtocol(category: string): string {
+function categorizeProtocol(category: string): 'DEX' | 'LENDING' | 'BRIDGE' | 'NFT' | 'DEFI' | 'OTHER' {
   const cat = category?.toLowerCase() || '';
-  const categoryMap: Record<string, string> = {
+  const categoryMap: Record<string, 'DEX' | 'LENDING' | 'BRIDGE' | 'NFT' | 'DEFI' | 'OTHER'> = {
     dex: 'DEX',
     lending: 'LENDING',
     'yield': 'LENDING',
@@ -200,20 +195,16 @@ export async function syncScamSniffer(): Promise<SyncResult> {
       await prisma.address.upsert({
         where: { address: addressData.address },
         update: {
-          data: {
-            name: addressData.name,
-            description: addressData.description,
-            url: addressData.url,
-            updatedAt: new Date(),
-          },
+          name: addressData.name,
+          description: addressData.description,
+          url: addressData.url,
+          updatedAt: new Date(),
         },
         create: {
-          data: {
-            ...addressData,
-            status: 'SCAM',
-            riskScore: 80,
-            chain: 'base',
-          },
+          ...addressData,
+          status: 'SCAM',
+          riskScore: 80,
+          chain: 'base',
         },
       });
 
@@ -231,19 +222,22 @@ export async function syncScamSniffer(): Promise<SyncResult> {
       await prisma.externalSource.upsert({
         where: {
           addressId_source_sourceId: {
-            addressId: addressData.address,
+            addressId: existing!.id,
             source: 'scamsniffer',
             sourceId: scam.name || '',
           },
         },
+        update: {
+          sourceUrl: scam.url,
+          rawData: scam,
+          syncedAt: new Date(),
+        },
         create: {
-          data: {
-            addressId: addressData.address,
-            source: 'scamsniffer',
-            sourceId: scam.name || '',
-            sourceUrl: scam.url,
-            rawData: scam,
-          },
+          addressId: existing!.id,
+          source: 'scamsniffer',
+          sourceId: scam.name || '',
+          sourceUrl: scam.url,
+          rawData: scam,
         },
       });
     }
@@ -263,7 +257,6 @@ export async function syncScamSniffer(): Promise<SyncResult> {
       status: 'success',
       recordsAdded,
       recordsUpdated,
-      syncLogId: 'scamsniffer-' + Date.now(),
       duration: Date.now() - startTime,
     };
   } catch (error) {
@@ -313,13 +306,17 @@ export async function syncCryptoScamDB(): Promise<SyncResult> {
 
       await prisma.address.upsert({
         where: { address: addressData.address },
+        update: {
+          name: addressData.name,
+          description: addressData.description,
+          url: addressData.url,
+          updatedAt: new Date(),
+        },
         create: {
-          data: {
-            ...addressData,
-            status: 'SCAM',
-            riskScore: 85,
-            chain: 'base',
-          },
+          ...addressData,
+          status: 'SCAM',
+          riskScore: 85,
+          chain: 'base',
         },
       });
 
@@ -349,7 +346,6 @@ export async function syncCryptoScamDB(): Promise<SyncResult> {
       status: 'success',
       recordsAdded,
       recordsUpdated,
-      syncLogId: 'cryptoscamdb-' + Date.now(),
       duration: Date.now() - startTime,
     };
   } catch (error) {
