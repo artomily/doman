@@ -1,34 +1,58 @@
 /**
- * Contract Scan Endpoint
+ * Contract / ENS / Domain Scan Endpoint
  * GET /api/v1/scan/[address]
  *
- * Scan a smart contract for potential security risks and scam patterns.
- * Returns risk score, detected patterns, and similar known scams.
+ * Accepts:
+ *   - 0x… Ethereum address (wallet or contract)
+ *   - ENS name (e.g. vitalik.eth)  → resolved to address then scanned
+ *   - Domain / URL (e.g. uniswap.org) → database lookup
  */
 
 import { NextRequest } from 'next/server';
 import { apiSuccess, errors, withErrorHandler } from '@/lib/api-response';
-import { addressSchema } from '@/lib/validation';
-import { scanContract } from '@/services/scanner-service';
+import { scanContract, scanDomain } from '@/services/scanner-service';
+import { resolveInput } from '@/lib/viem';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ address: string }> }
 ) {
   return withErrorHandler(async () => {
-    const { address: addressParam } = await params;
+    const { address: rawInput } = await params;
+    const input = decodeURIComponent(rawInput).trim();
 
-    // Validate address format
-    const addressResult = addressSchema.safeParse(addressParam);
-    if (!addressResult.success) {
-      return errors.invalidAddress(addressResult.error.errors);
+    if (!input || input.length < 2) {
+      return errors.validation('Input must be at least 2 characters');
     }
 
-    const address = addressResult.data;
+    if (input.length > 253) {
+      return errors.validation('Input too long', { maxLength: 253 });
+    }
 
-    // Perform scan
+    const { inputType, resolvedAddress } = await resolveInput(input);
+
+    if (inputType === 'domain') {
+      const result = await scanDomain(input);
+      return apiSuccess(result);
+    }
+
+    // ENS or address – need a resolved 0x address
+    const address = resolvedAddress ?? input;
+
+    if (!/^0x[a-fA-F0-9]{1,40}$/.test(address)) {
+      if (inputType === 'ens') {
+        return errors.validation('ENS name could not be resolved to an address');
+      }
+      return errors.invalidAddress([{ message: 'Invalid Ethereum address format' }]);
+    }
+
     const result = await scanContract(address);
-
-    return apiSuccess(result);
+    return apiSuccess({
+      ...result,
+      inputType,
+      resolvedAddress: inputType === 'ens' ? address : undefined,
+      // Show original ENS / input as the display label
+      displayInput: inputType === 'ens' ? input : undefined,
+    });
   });
 }

@@ -72,10 +72,11 @@ function CheckerContent() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          Address & Contract Checker
+          Address, ENS & Domain Checker
         </h1>
         <p className="mt-1 text-sm text-muted">
-          Enter a wallet or contract address to get a risk score
+          Enter a wallet address, contract, ENS name (vitalik.eth), or domain
+          to get a trust score
         </p>
       </div>
 
@@ -90,7 +91,7 @@ function CheckerContent() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="0x... contract address"
+              placeholder="0x... address, ENS name, or domain"
               className="pl-10"
             />
           </div>
@@ -120,8 +121,14 @@ function CheckerContent() {
           <Card>
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div>
+                {/* ENS or original input label */}
+                {(state.data as any).displayInput && (
+                  <p className="text-sm font-medium">
+                    {(state.data as any).displayInput}
+                  </p>
+                )}
                 <p className="font-mono text-sm text-muted">
-                  {state.data.address}
+                  {(state.data as any).resolvedAddress ?? state.data.address}
                 </p>
                 <div className="mt-3 flex items-center gap-4">
                   <div className="text-5xl font-bold text-accent">
@@ -149,6 +156,12 @@ function CheckerContent() {
                 </Badge>
                 {state.data.isVerified && (
                   <Badge variant="safe">Verified</Badge>
+                )}
+                {(state.data as any).inputType === "ens" && (
+                  <Badge variant="unknown">ENS</Badge>
+                )}
+                {(state.data as any).inputType === "domain" && (
+                  <Badge variant="unknown">Domain</Badge>
                 )}
               </div>
             </div>
