@@ -173,6 +173,8 @@ export interface ReportDTO {
   votesFor: number;
   votesAgainst: number;
   txHash: string | null;
+  reasonHash: string | null;
+  reasonData: { selectedReasons: string[]; customText: string } | null;
   resolvedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -187,6 +189,8 @@ export interface CreateReportRequest {
   evidenceUrl?: string | null;
   category: AddressCategory;
   reporterAddress: string;
+  reasonHash?: string | null;
+  reasonData?: { selectedReasons: string[]; customText: string } | null;
 }
 
 /**

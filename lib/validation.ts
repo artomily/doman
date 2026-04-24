@@ -131,6 +131,11 @@ export const createReportSchema = z.object({
   evidenceUrl: httpsUrlSchema.optional().nullable(),
   category: AddressCategoryEnum.default('OTHER'),
   reporterAddress: addressSchema,
+  reasonHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'Invalid bytes32 hex').optional().nullable(),
+  reasonData: z.object({
+    selectedReasons: z.array(z.string()).min(1).max(20),
+    customText: z.string().max(2000),
+  }).optional().nullable(),
 });
 
 /**

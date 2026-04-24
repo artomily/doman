@@ -15,8 +15,10 @@ import {
   ThumbsUp,
   ThumbsDown,
   Loader2,
+  Flag,
 } from "lucide-react";
 import type { ScanResult } from "@/types/api";
+import { ReportScamModal } from "@/components/dashboard/report-scam-modal";
 
 type ScanState =
   | { status: "idle" }
@@ -231,11 +233,33 @@ function CheckerContent() {
             <p className="mb-4 text-sm text-muted">
               Do you trust this address? Help the community by voting.
             </p>
-            <VoteButtons address={state.data.address} />
+            <div className="flex flex-wrap items-center gap-3">
+              <VoteButtons address={state.data.address} />
+              <ReportScamButton address={state.data.address} />
+            </div>
           </Card>
         </div>
       )}
     </div>
+  );
+}
+
+function ReportScamButton({ address }: { address: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-2 rounded-xl border border-red-900 bg-red-950/30 px-4 py-2 text-sm text-red-400 transition-colors hover:border-red-500 hover:bg-red-950/60"
+      >
+        <Flag size={14} /> Report Scam
+      </button>
+      <ReportScamModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        targetAddress={address}
+      />
+    </>
   );
 }
 

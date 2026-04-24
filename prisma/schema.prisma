@@ -111,6 +111,8 @@ model Report {
   votesFor        Int      @default(0)
   votesAgainst    Int      @default(0)
   txHash          String?  @unique @db.VarChar(66)
+  reasonHash      String?  @db.VarChar(66)
+  reasonData      Json?
   resolvedAt      DateTime? @db.Timestamptz(6)
   createdAt       DateTime @default(now()) @db.Timestamptz(6)
   updatedAt       DateTime @updatedAt @db.Timestamptz(6)
