@@ -8,7 +8,7 @@ import {
 } from 'wagmi';
 import { hashReasonData, type ReasonData } from '@/lib/hash';
 import {
-  WALLO_CONTRACT_ABI,
+  DOMAN_CONTRACT_ABI,
   CONTRACT_ADDRESSES,
   SUPPORTED_CHAIN_IDS,
 } from '@/config/contracts';
@@ -113,7 +113,7 @@ export function useReportScam(): UseReportScamReturn {
         setStep('wallet');
         const hash = await writeContractAsync({
           address: contractAddress as `0x${string}`,
-          abi: WALLO_CONTRACT_ABI,
+          abi: DOMAN_CONTRACT_ABI,
           functionName: 'submitReport',
           args: [reasonHash, true],
           chainId,

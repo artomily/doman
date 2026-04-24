@@ -13,7 +13,7 @@ export const wagmiConfig = createConfig({
   chains: [base, baseSepolia],
   connectors: [
     injected(),
-    coinbaseWallet({ appName: 'Wallo' }),
+    coinbaseWallet({ appName: 'Doman' }),
   ],
   transports: {
     [base.id]: http('https://mainnet.base.org'),

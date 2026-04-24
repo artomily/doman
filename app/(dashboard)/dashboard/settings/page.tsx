@@ -85,7 +85,7 @@ export default function SettingsPage() {
           <h2 className="text-lg font-semibold">API Keys</h2>
         </div>
         <p className="text-sm text-muted">
-          Generate API keys to integrate Wallo trust scores into your own
+          Generate API keys to integrate Doman trust scores into your own
           applications. Available on Pro plan.
         </p>
         <Button size="sm" variant="secondary" className="mt-4">

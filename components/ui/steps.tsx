@@ -18,7 +18,7 @@ export function Steps({ steps, current }: StepsProps) {
               <div
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${
                   isCompleted
-                    ? 'bg-accent text-black'
+                    ? 'bg-accent text-white'
                     : isCurrent
                     ? 'border-2 border-accent text-accent'
                     : 'border-2 border-card-border text-muted'

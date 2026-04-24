@@ -52,7 +52,7 @@ function WalletButton() {
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 rounded-xl border border-card-border bg-surface px-3 py-1.5 text-sm transition-colors hover:border-accent"
       >
-        <div className="h-5 w-5 rounded-full bg-linear-to-br from-accent to-green-600 shrink-0" />
+        <div className="h-5 w-5 rounded-full bg-linear-to-br from-accent to-zinc-400 shrink-0" />
         <span className="hidden font-mono md:inline">{truncated}</span>
         <ChevronDown size={14} className={`text-muted transition-transform ${open ? "rotate-180" : ""}`} />
       </button>

@@ -9,7 +9,7 @@
 // APP INFO
 // ============================================
 
-export const APP_NAME = 'Wallo';
+export const APP_NAME = 'Doman';
 export const APP_VERSION = '1.0.0';
 export const APP_DESCRIPTION = 'Web3 Scam Detection Platform for Base Chain';
 

@@ -13,7 +13,7 @@ import { base, baseSepolia } from 'wagmi/chains';
  * - ScamReportSubmitted event — reporter + reasonHash indexed
  * - EmptyReasonHash error — reverts when hash is bytes32(0)
  */
-export const WALLO_CONTRACT_ABI = [
+export const DOMAN_CONTRACT_ABI = [
   {
     type: 'function',
     name: 'submitReport',
@@ -50,7 +50,7 @@ export const CONTRACT_ADDRESSES: Record<number, `0x${string}` | ''> = {
   [baseSepolia.id]: '', // TODO: replace with Base Sepolia address after deployment
 };
 
-/** Chain IDs that Wallo supports */
+/** Chain IDs that Doman supports */
 export const SUPPORTED_CHAIN_IDS = [base.id, baseSepolia.id] as const;
 
 export type SupportedChainId = (typeof SUPPORTED_CHAIN_IDS)[number];

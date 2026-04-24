@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wallo — Web3 Security & Decision Engine",
+  title: "Doman — Web3 Security & Decision Engine",
   description:
-    "Scan addresses, contracts, and domains before you interact. Wallo protects you from Web3 scams with real-time trust scores.",
+    "Scan addresses, contracts, and domains before you interact. Doman protects you from Web3 scams with real-time trust scores.",
 };
 
 export default function RootLayout({
