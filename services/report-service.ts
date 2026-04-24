@@ -61,6 +61,8 @@ export async function createReport(data: CreateReportRequest): Promise<Report> {
       evidenceUrl: data.evidenceUrl,
       category: data.category,
       status: 'PENDING',
+      reasonHash: data.reasonHash ?? null,
+      reasonData: data.reasonData ?? undefined,
     },
   });
 
