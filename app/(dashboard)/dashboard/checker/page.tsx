@@ -240,6 +240,7 @@ function CheckerContent() {
               votesFor={state.data.votesFor}
               votesAgainst={state.data.votesAgainst}
             />
+              {/* <VoteButtons address={state.data.address} /> */}
               <ReportScamButton address={state.data.address} />
             </div>
           </Card>
