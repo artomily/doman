@@ -1,24 +1,46 @@
-import { Card } from "@/components/ui/card";
-import { TrustScoreBadge } from "@/components/ui/badge";
-import prisma from "@/lib/prisma";
+"use client";
 
-export default async function HistoryPage() {
-  const scans = await prisma.contractScan.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 50,
-    include: {
-      address: {
-        select: { address: true, chain: true, category: true },
-      },
-    },
-  });
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { Card } from "@/components/ui/card";
+import { TrustScoreBadge, Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
+
+interface ScanRow {
+  id: string;
+  riskScore: number;
+  riskLevel: string;
+  createdAt: string;
+  address: { address: string; chain: string; category: string };
+}
+
+export default function HistoryPage() {
+  const { address: walletAddress, isConnected } = useAccount();
+  const [scans, setScans] = useState<ScanRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const params = new URLSearchParams({ limit: "50" });
+    if (isConnected && walletAddress) {
+      params.set("checker", walletAddress);
+    }
+    setLoading(true);
+    fetch(`/api/v1/history?${params}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setScans(json.data);
+      })
+      .finally(() => setLoading(false));
+  }, [walletAddress, isConnected]);
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Check History</h1>
         <p className="mt-1 text-sm text-muted">
-          All previous trust score checks on the platform
+          {isConnected
+            ? "Your personal check history"
+            : "Connect your wallet to see your history, or view all recent checks below"}
         </p>
       </div>
 
@@ -36,13 +58,21 @@ export default async function HistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {scans.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <Loader2 size={18} className="mx-auto animate-spin text-muted" />
+                  </td>
+                </tr>
+              ) : scans.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
                     className="px-6 py-12 text-center text-sm text-muted"
                   >
-                    No scan history yet. Try checking an address.
+                    {isConnected
+                      ? "No checks yet. Try checking an address."
+                      : "No scan history yet."}
                   </td>
                 </tr>
               ) : (
@@ -56,9 +86,7 @@ export default async function HistoryPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="rounded-full bg-surface px-2.5 py-1 text-xs text-muted capitalize">
-                        {scan.address.category
-                          .toLowerCase()
-                          .replace("_", " ")}
+                        {scan.address.category.toLowerCase().replace("_", " ")}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-muted">
@@ -67,8 +95,18 @@ export default async function HistoryPage() {
                     <td className="px-6 py-4">
                       <TrustScoreBadge score={100 - scan.riskScore} />
                     </td>
-                    <td className="px-6 py-4 text-sm text-muted">
-                      {scan.riskLevel}
+                    <td className="px-6 py-4">
+                      <Badge
+                        variant={
+                          scan.riskLevel === "LOW"
+                            ? "safe"
+                            : scan.riskLevel === "MEDIUM"
+                            ? "warning"
+                            : "danger"
+                        }
+                      >
+                        {scan.riskLevel}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-muted">
                       {new Date(scan.createdAt).toLocaleString()}

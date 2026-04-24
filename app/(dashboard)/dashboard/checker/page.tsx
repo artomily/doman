@@ -35,6 +35,7 @@ function riskLevelToIcon(level: string) {
 
 function CheckerContent() {
   const searchParams = useSearchParams();
+  const { address: walletAddress } = useAccount();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [state, setState] = useState<ScanState>({ status: "idle" });
 
@@ -42,9 +43,12 @@ function CheckerContent() {
     if (!address.trim()) return;
     setState({ status: "loading" });
     try {
-      const res = await fetch(
-        `/api/v1/scan/${encodeURIComponent(address.trim())}`
+      const url = new URL(
+        `/api/v1/scan/${encodeURIComponent(address.trim())}`,
+        window.location.origin
       );
+      if (walletAddress) url.searchParams.set("checker", walletAddress);
+      const res = await fetch(url.toString());
       const json = await res.json();
       if (json.success) {
         setState({ status: "done", data: json.data });
@@ -226,22 +230,26 @@ function CheckerContent() {
             </Card>
           )}
 
-          {/* Community Voting */}
+          {/* Community Voting / Report */}
           <Card>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">
-              Community Voting
+              Community
             </h3>
             <p className="mb-4 text-sm text-muted">
-              Do you trust this address? Help the community by voting.
+              Help the community by reporting suspicious activity.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <VoteButtons
-              address={state.data.address}
-              votesFor={state.data.votesFor}
-              votesAgainst={state.data.votesAgainst}
-            />
-              {/* <VoteButtons address={state.data.address} /> */}
-              <ReportScamButton address={state.data.address} />
+              {(state.data as any).inputType !== "domain" && (
+                <VoteButtons
+                  address={(state.data as any).resolvedAddress ?? state.data.address}
+                  votesFor={state.data.votesFor}
+                  votesAgainst={state.data.votesAgainst}
+                />
+              )}
+              <ReportScamButton
+                address={(state.data as any).resolvedAddress ?? state.data.address}
+                isDomain={(state.data as any).inputType === 'domain'}
+              />
             </div>
           </Card>
         </div>
@@ -250,7 +258,7 @@ function CheckerContent() {
   );
 }
 
-function ReportScamButton({ address }: { address: string }) {
+function ReportScamButton({ address, isDomain }: { address: string; isDomain?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -258,12 +266,13 @@ function ReportScamButton({ address }: { address: string }) {
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 rounded-xl border border-red-900 bg-red-950/30 px-4 py-2 text-sm text-red-400 transition-colors hover:border-red-500 hover:bg-red-950/60"
       >
-        <Flag size={14} /> Report Scam
+        <Flag size={14} /> {isDomain ? 'Report Website' : 'Report Scam'}
       </button>
       <ReportScamModal
         isOpen={open}
         onClose={() => setOpen(false)}
         targetAddress={address}
+        isDomain={isDomain}
       />
     </>
   );

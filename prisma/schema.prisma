@@ -149,6 +149,7 @@ model Vote {
 model ContractScan {
   id              String   @id @default(cuid())
   addressId       String
+  checkerAddress  String?  @db.VarChar(42)
   bytecodeHash    String?  @db.VarChar(66)
   riskScore       Int      @db.SmallInt
   riskLevel       RiskLevel
@@ -164,6 +165,7 @@ model ContractScan {
   @@index([riskLevel])
   @@index([createdAt])
   @@index([addressId])
+  @@index([checkerAddress])
   @@map("contract_scans")
 }
 

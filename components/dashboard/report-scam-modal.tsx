@@ -27,6 +27,7 @@ interface ReportScamModalProps {
   isOpen: boolean;
   onClose: () => void;
   targetAddress: string;
+  isDomain?: boolean;
 }
 
 const STEPS = ['Details', 'Preview', 'Confirm'];
@@ -151,27 +152,32 @@ interface Step2Props {
   selectedReasons: ReasonId[];
   customText: string;
   chainId: number;
+  isDomain: boolean;
   onBack: () => void;
   onNext: () => void;
 }
 
-function Step2Preview({ targetAddress, selectedReasons, customText, chainId, onBack, onNext }: Step2Props) {
+function Step2Preview({ targetAddress, selectedReasons, customText, chainId, isDomain, onBack, onNext }: Step2Props) {
   const { switchChain, isPending: isSwitching } = useSwitchChain();
   const reasonData: ReasonData = {
     selectedReasons: selectedReasons.map((id) => REASONS.find((r) => r.id === id)!.label),
     customText,
   };
   const hash = hashReasonData(reasonData);
-  const isSupported = (SUPPORTED_CHAIN_IDS as readonly number[]).includes(chainId);
+  const isSupported = isDomain || (SUPPORTED_CHAIN_IDS as readonly number[]).includes(chainId);
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-muted">Review your report before submitting to the blockchain.</p>
+      <p className="text-sm text-muted">
+        {isDomain
+          ? 'Review your report before submitting to our community database.'
+          : 'Review your report before submitting to the blockchain.'}
+      </p>
 
       {/* Report summary */}
       <div className="space-y-3 rounded-xl border border-card-border bg-surface p-4 text-sm">
         <div>
-          <p className="text-xs text-muted">Target address</p>
+          <p className="text-xs text-muted">{isDomain ? 'Target website' : 'Target address'}</p>
           <p className="mt-0.5 font-mono text-xs">{targetAddress}</p>
         </div>
         <div>
@@ -194,29 +200,33 @@ function Step2Preview({ targetAddress, selectedReasons, customText, chainId, onB
             <p className="mt-0.5 text-xs text-foreground">{customText}</p>
           </div>
         )}
-        <div>
-          <p className="text-xs text-muted">Reason hash (bytes32)</p>
-          <p className="mt-0.5 font-mono text-[10px] break-all text-muted">{hash}</p>
-        </div>
-      </div>
-
-      {/* Network check */}
-      <div className="flex items-center justify-between rounded-xl border border-card-border bg-surface px-4 py-3">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted">Network</span>
-          <NetworkBadge chainId={chainId} />
-        </div>
-        {!isSupported && (
-          <Button
-            onClick={() => switchChain({ chainId: baseSepolia.id })}
-            disabled={isSwitching}
-            variant="secondary"
-            size="sm"
-          >
-            {isSwitching ? <Loader2 size={12} className="animate-spin" /> : 'Switch to Base Sepolia'}
-          </Button>
+        {!isDomain && (
+          <div>
+            <p className="text-xs text-muted">Reason hash (bytes32)</p>
+            <p className="mt-0.5 font-mono text-[10px] break-all text-muted">{hash}</p>
+          </div>
         )}
       </div>
+
+      {/* Network check — address only */}
+      {!isDomain && (
+        <div className="flex items-center justify-between rounded-xl border border-card-border bg-surface px-4 py-3">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted">Network</span>
+            <NetworkBadge chainId={chainId} />
+          </div>
+          {!isSupported && (
+            <Button
+              onClick={() => switchChain({ chainId: baseSepolia.id })}
+              disabled={isSwitching}
+              variant="secondary"
+              size="sm"
+            >
+              {isSwitching ? <Loader2 size={12} className="animate-spin" /> : 'Switch to Base Sepolia'}
+            </Button>
+          )}
+        </div>
+      )}
 
       <div className="flex justify-between">
         <Button onClick={onBack} variant="ghost" size="sm">← Back</Button>
@@ -235,11 +245,12 @@ interface Step3Props {
   selectedReasons: ReasonId[];
   customText: string;
   chainId: number;
+  isDomain: boolean;
   onBack: () => void;
   onClose: () => void;
 }
 
-function Step3Confirm({ targetAddress, selectedReasons, customText, chainId, onBack, onClose }: Step3Props) {
+function Step3Confirm({ targetAddress, selectedReasons, customText, chainId, isDomain, onBack, onClose }: Step3Props) {
   const { address: walletAddress, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const { step, txHash, error, isLoading, submit, reset } = useReportScam();
@@ -263,10 +274,16 @@ function Step3Confirm({ targetAddress, selectedReasons, customText, chainId, onB
           <CheckCircle2 size={28} className="text-accent" />
         </div>
         <div>
-          <p className="font-semibold">Report submitted!</p>
-          <p className="mt-1 text-sm text-muted">Thank you for helping keep the community safe.</p>
+          <p className="font-semibold">
+            {isDomain ? 'Website reported!' : 'Report submitted!'}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            {isDomain
+              ? 'Thank you! This website has been flagged in our database.'
+              : 'Thank you for helping keep the community safe.'}
+          </p>
         </div>
-        {txExplorerUrl && (
+        {!isDomain && txExplorerUrl && (
           <a
             href={txExplorerUrl}
             target="_blank"
@@ -337,16 +354,33 @@ function Step3Confirm({ targetAddress, selectedReasons, customText, chainId, onB
       {step === 'saving' && (
         <div className="flex items-center gap-2 text-sm text-muted">
           <Loader2 size={14} className="animate-spin" />
-          Saving report off-chain…
+          Saving report…
         </div>
       )}
-      {step === 'wallet' && (
+      {!isDomain && step === 'deploying' && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm text-muted">
+            <Loader2 size={14} className="animate-spin" />
+            Deploying ScamReporter contract — approve in your wallet…
+          </div>
+          <p className="pl-6 text-xs text-muted">
+            One-time setup. Only needed once per network.
+          </p>
+        </div>
+      )}
+      {!isDomain && step === 'deploy-confirming' && (
         <div className="flex items-center gap-2 text-sm text-muted">
           <Loader2 size={14} className="animate-spin" />
-          Waiting for wallet confirmation…
+          Waiting for contract deployment to confirm…
         </div>
       )}
-      {step === 'confirming' && (
+      {!isDomain && step === 'wallet' && (
+        <div className="flex items-center gap-2 text-sm text-muted">
+          <Loader2 size={14} className="animate-spin" />
+          Submitting report on-chain — approve in your wallet…
+        </div>
+      )}
+      {!isDomain && step === 'confirming' && (
         <div className="flex items-center gap-2 text-sm text-muted">
           <Loader2 size={14} className="animate-spin" />
           Transaction submitted — waiting for block confirmation…
@@ -363,12 +397,13 @@ function Step3Confirm({ targetAddress, selectedReasons, customText, chainId, onB
         </div>
       )}
 
-      {/* Gas note */}
+      {/* Info note */}
       <div className="flex items-start gap-2 rounded-xl bg-surface px-4 py-3 text-xs text-muted">
         <AlertTriangle size={13} className="mt-0.5 shrink-0" />
         <span>
-          Submitting this report requires a small gas fee on Base. Only the hash of your
-          report is stored on-chain — no personal data.
+          {isDomain
+            ? 'Your report will be saved to our community database to help warn other users. No gas fee required.'
+            : 'Submitting requires a small gas fee on Base. If the contract is not yet deployed, you will be asked to approve a deploy transaction first (one-time). Only the hash of your report is stored on-chain — no personal data.'}
         </span>
       </div>
 
@@ -389,7 +424,7 @@ function Step3Confirm({ targetAddress, selectedReasons, customText, chainId, onB
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
 
-export function ReportScamModal({ isOpen, onClose, targetAddress }: ReportScamModalProps) {
+export function ReportScamModal({ isOpen, onClose, targetAddress, isDomain = false }: ReportScamModalProps) {
   const chainId = useChainId();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedReasons, setSelectedReasons] = useState<ReasonId[]>([]);
@@ -415,7 +450,7 @@ export function ReportScamModal({ isOpen, onClose, targetAddress }: ReportScamMo
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Report Scam Address"
+      title={isDomain ? 'Report Scam Website' : 'Report Scam Address'}
       maxWidth="max-w-lg"
     >
       <div className="space-y-6">
@@ -442,6 +477,7 @@ export function ReportScamModal({ isOpen, onClose, targetAddress }: ReportScamMo
             selectedReasons={selectedReasons}
             customText={customText}
             chainId={chainId}
+            isDomain={isDomain}
             onBack={() => setCurrentStep(1)}
             onNext={() => setCurrentStep(3)}
           />
@@ -453,6 +489,7 @@ export function ReportScamModal({ isOpen, onClose, targetAddress }: ReportScamMo
             selectedReasons={selectedReasons}
             customText={customText}
             chainId={chainId}
+            isDomain={isDomain}
             onBack={() => setCurrentStep(2)}
             onClose={handleClose}
           />

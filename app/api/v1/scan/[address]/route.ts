@@ -21,6 +21,9 @@ export async function GET(
     const { address: rawInput } = await params;
     const input = decodeURIComponent(rawInput).trim();
 
+    // Optional: wallet address of the user performing the check
+    const checkerAddress = request.nextUrl.searchParams.get('checker') ?? undefined;
+
     if (!input || input.length < 2) {
       return errors.validation('Input must be at least 2 characters');
     }
@@ -32,7 +35,7 @@ export async function GET(
     const { inputType, resolvedAddress } = await resolveInput(input);
 
     if (inputType === 'domain') {
-      const result = await scanDomain(input);
+      const result = await scanDomain(input, checkerAddress);
       return apiSuccess(result);
     }
 
@@ -46,12 +49,11 @@ export async function GET(
       return errors.invalidAddress([{ message: 'Invalid Ethereum address format' }]);
     }
 
-    const result = await scanContract(address);
+    const result = await scanContract(address, checkerAddress);
     return apiSuccess({
       ...result,
       inputType,
       resolvedAddress: inputType === 'ens' ? address : undefined,
-      // Show original ENS / input as the display label
       displayInput: inputType === 'ens' ? input : undefined,
     });
   });

@@ -27,12 +27,12 @@ function Hero() {
 
       <div className="relative mx-auto max-w-7xl px-6 pb-24 pt-20 md:pb-32 md:pt-28">
         {/* Top nav row */}
-        <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-card-border pb-4 text-xs uppercase tracking-wider text-muted">
+        {/* <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-card-border pb-4 text-xs uppercase tracking-wider text-muted">
           <span>How It Works</span>
           <span>SEO</span>
           <span>Marketing</span>
           <span>Connect Us</span>
-        </div>
+        </div> */}
 
         {/* Brand wordmark */}
         <div className="py-20 flex items-center justify-between">
