@@ -35,6 +35,8 @@ export async function scanContract(address: string): Promise<ScanResult> {
       patterns: [],
       similarScams: [],
       reportCount: 0,
+      votesFor: 0,
+      votesAgainst: 0,
       scanDuration: Date.now() - startTime,
       scannedAt: new Date().toISOString(),
     };
@@ -59,13 +61,23 @@ export async function scanContract(address: string): Promise<ScanResult> {
   const riskScore = Math.min(calculatedRiskScore, 100);
   const riskLevel = getRiskLevel(riskScore) as RiskLevel;
 
-  // Get report count for this address
+  // Get report count and vote aggregates for this address
   const addressRecord = await prisma.address.findUnique({
     where: { address },
     include: { _count: { select: { reports: true } } },
   });
 
   const reportCount = addressRecord?._count.reports || 0;
+
+  const voteAggregates = addressRecord
+    ? await prisma.report.aggregate({
+        where: { addressId: addressRecord.id },
+        _sum: { votesFor: true, votesAgainst: true },
+      })
+    : null;
+
+  const votesFor = voteAggregates?._sum.votesFor ?? 0;
+  const votesAgainst = voteAggregates?._sum.votesAgainst ?? 0;
 
   // Find similar scams (by bytecode hash)
   const bytecodeHash = bytecode.slice(2, 42); // First 20 bytes for comparison
@@ -80,6 +92,8 @@ export async function scanContract(address: string): Promise<ScanResult> {
     patterns: detectedPatterns,
     similarScams,
     reportCount,
+    votesFor,
+    votesAgainst,
     scanDuration: Date.now() - startTime,
     scannedAt: new Date().toISOString(),
   };
@@ -314,6 +328,8 @@ export async function scanDomain(domain: string): Promise<ScanResult> {
       patterns: [],
       similarScams: [],
       reportCount: dbMatch._count.reports,
+      votesFor: 0,
+      votesAgainst: 0,
       scanDuration: Date.now() - startTime,
       scannedAt: new Date().toISOString(),
     };
@@ -329,6 +345,8 @@ export async function scanDomain(domain: string): Promise<ScanResult> {
     patterns: [],
     similarScams: [],
     reportCount: 0,
+    votesFor: 0,
+    votesAgainst: 0,
     scanDuration: Date.now() - startTime,
     scannedAt: new Date().toISOString(),
   };

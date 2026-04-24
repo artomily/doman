@@ -1,6 +1,89 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Bell, Search, Wallet, LogOut, ChevronDown, Copy, Check } from "lucide-react";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
+
+function WalletButton() {
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const handleCopy = async () => {
+    if (!address) return;
+    await navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const truncated = address
+    ? `${address.slice(0, 6)}...${address.slice(-4)}`
+    : null;
+
+  if (!isConnected) {
+    return (
+      <button
+        onClick={() => connect({ connector: connectors[0] })}
+        className="flex items-center gap-2 rounded-xl border border-card-border bg-surface px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+      >
+        <Wallet size={15} />
+        <span className="hidden md:inline">Connect Wallet</span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 rounded-xl border border-card-border bg-surface px-3 py-1.5 text-sm transition-colors hover:border-accent"
+      >
+        <div className="h-5 w-5 rounded-full bg-linear-to-br from-accent to-green-600 shrink-0" />
+        <span className="hidden font-mono md:inline">{truncated}</span>
+        <ChevronDown size={14} className={`text-muted transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-card-border bg-card shadow-xl z-50">
+          <div className="border-b border-card-border px-4 py-3">
+            <p className="text-xs text-muted">Connected wallet</p>
+            <p className="mt-0.5 font-mono text-sm break-all">{address}</p>
+          </div>
+          <div className="p-1.5">
+            <button
+              onClick={handleCopy}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
+            >
+              {copied ? <Check size={15} className="text-accent" /> : <Copy size={15} />}
+              {copied ? "Copied!" : "Copy address"}
+            </button>
+            <button
+              onClick={() => { disconnect(); setOpen(false); }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-400 transition-colors hover:bg-red-950/40"
+            >
+              <LogOut size={15} />
+              Disconnect
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function DashboardHeader() {
   return (
@@ -22,17 +105,12 @@ export function DashboardHeader() {
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <button className="relative rounded-lg p-2 text-muted transition-colors hover:bg-surface hover:text-foreground">
           <Bell size={18} />
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" />
         </button>
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-linear-to-br from-accent to-green-600" />
-          <div className="hidden text-sm md:block">
-            <p className="font-medium">0x1a2b...3c4d</p>
-          </div>
-        </div>
+        <WalletButton />
       </div>
     </header>
   );

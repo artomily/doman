@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useAccount, useConnect } from "wagmi";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -234,7 +235,11 @@ function CheckerContent() {
               Do you trust this address? Help the community by voting.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <VoteButtons address={state.data.address} />
+              <VoteButtons
+              address={state.data.address}
+              votesFor={state.data.votesFor}
+              votesAgainst={state.data.votesAgainst}
+            />
               <ReportScamButton address={state.data.address} />
             </div>
           </Card>
@@ -263,46 +268,88 @@ function ReportScamButton({ address }: { address: string }) {
   );
 }
 
-function VoteButtons({ address }: { address: string }) {
-  const [votes, setVotes] = useState<{ up: number; down: number } | null>(null);
+function VoteButtons({
+  address,
+  votesFor,
+  votesAgainst,
+}: {
+  address: string;
+  votesFor: number;
+  votesAgainst: number;
+}) {
+  const { address: walletAddress, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
   const [voted, setVoted] = useState(false);
-
-  // Fetch report for this address to get votes
-  useEffect(() => {
-    async function load() {
-      const res = await fetch(`/api/v1/address/${encodeURIComponent(address)}`);
-      const json = await res.json();
-      if (json.success) {
-        setVotes({ up: 0, down: 0 }); // base votes; report votes come from reports
-      }
-    }
-    load();
-  }, [address]);
+  const [voteError, setVoteError] = useState<string | null>(null);
+  const [counts, setCounts] = useState({ for: votesFor, against: votesAgainst });
 
   const handleVote = async (type: "up" | "down") => {
     if (voted) return;
-    setVoted(true);
-    setVotes((v) =>
-      v ? { ...v, [type]: v[type] + 1 } : { up: type === "up" ? 1 : 0, down: type === "down" ? 1 : 0 }
-    );
+    setVoteError(null);
+
+    if (!isConnected || !walletAddress) {
+      const connector = connectors[0];
+      if (connector) connect({ connector });
+      return;
+    }
+
+    try {
+      const reportsRes = await fetch(
+        `/api/v1/reports?address=${encodeURIComponent(address)}&limit=1`
+      );
+      const reportsJson = await reportsRes.json();
+
+      if (!reportsJson.success || !reportsJson.data?.length) {
+        setVoteError("No reports exist for this address yet.");
+        return;
+      }
+
+      const reportId = reportsJson.data[0].id;
+      // ThumbsUp = safe (against the scam report), ThumbsDown = confirms scam (for the report)
+      const vote = type === "up" ? "AGAINST" : "FOR";
+
+      const voteRes = await fetch(`/api/v1/reports/${reportId}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vote, voterAddress: walletAddress }),
+      });
+      const voteJson = await voteRes.json();
+
+      if (voteRes.status === 409) {
+        setVoteError("You have already voted on this report.");
+        return;
+      }
+      if (!voteRes.ok || !voteJson.success) {
+        setVoteError(voteJson.error?.message ?? "Vote failed. Please try again.");
+        return;
+      }
+
+      setVoted(true);
+      setCounts({ for: voteJson.data.votesFor, against: voteJson.data.votesAgainst });
+    } catch {
+      setVoteError("Network error. Please try again.");
+    }
   };
 
   return (
-    <div className="flex items-center gap-4">
-      <button
-        onClick={() => handleVote("up")}
-        disabled={voted}
-        className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm transition-colors hover:border-green-500 hover:text-green-400 disabled:opacity-50"
-      >
-        <ThumbsUp size={16} /> {votes?.up ?? 0}
-      </button>
-      <button
-        onClick={() => handleVote("down")}
-        disabled={voted}
-        className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm transition-colors hover:border-red-500 hover:text-red-400 disabled:opacity-50"
-      >
-        <ThumbsDown size={16} /> {votes?.down ?? 0}
-      </button>
+    <div className="space-y-2">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => handleVote("up")}
+          disabled={voted}
+          className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm transition-colors hover:border-green-500 hover:text-green-400 disabled:opacity-50"
+        >
+          <ThumbsUp size={16} /> {counts.against}
+        </button>
+        <button
+          onClick={() => handleVote("down")}
+          disabled={voted}
+          className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm transition-colors hover:border-red-500 hover:text-red-400 disabled:opacity-50"
+        >
+          <ThumbsDown size={16} /> {counts.for}
+        </button>
+      </div>
+      {voteError && <p className="text-xs text-red-400">{voteError}</p>}
     </div>
   );
 }

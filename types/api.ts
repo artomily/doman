@@ -279,6 +279,8 @@ export interface ScanResult {
   patterns: DetectedPattern[];
   similarScams: SimilarScam[];
   reportCount: number;
+  votesFor: number;
+  votesAgainst: number;
   scanDuration: number;
   scannedAt: string;
 }

@@ -1,25 +1,43 @@
 /**
- * Smart Contract Configuration
+ * Smart Contract Configuration — ScamReporter
  *
- * Placeholder ABI and addresses for the Wallo on-chain report contract.
- * Replace CONTRACT_ADDRESSES with real deployed addresses before going live.
+ * ABI sourced from ScamReporter.json (Solidity 0.8.24, deployed on Base).
+ * Replace CONTRACT_ADDRESSES with real deployed addresses.
  */
 
 import { base, baseSepolia } from 'wagmi/chains';
 
 /**
- * submitReport(bytes32 reasonHash, bool isScam) → bool
+ * ABI from ScamReporter.sol
+ * - submitReport(bytes32, bool) — void, emits ScamReportSubmitted
+ * - ScamReportSubmitted event — reporter + reasonHash indexed
+ * - EmptyReasonHash error — reverts when hash is bytes32(0)
  */
 export const WALLO_CONTRACT_ABI = [
   {
-    name: 'submitReport',
     type: 'function',
-    stateMutability: 'nonpayable',
+    name: 'submitReport',
     inputs: [
-      { name: 'reasonHash', type: 'bytes32' },
-      { name: 'isScam', type: 'bool' },
+      { name: 'reasonHash', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'isScam', type: 'bool', internalType: 'bool' },
     ],
-    outputs: [{ name: 'success', type: 'bool' }],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'event',
+    name: 'ScamReportSubmitted',
+    inputs: [
+      { name: 'reporter', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'reasonHash', type: 'bytes32', indexed: true, internalType: 'bytes32' },
+      { name: 'isScam', type: 'bool', indexed: false, internalType: 'bool' },
+    ],
+    anonymous: false,
+  },
+  {
+    type: 'error',
+    name: 'EmptyReasonHash',
+    inputs: [],
   },
 ] as const;
 

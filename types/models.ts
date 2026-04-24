@@ -181,6 +181,7 @@ export interface ReportFilters {
   category?: ('DEFI' | 'NFT' | 'BRIDGE' | 'DEX' | 'LENDING' | 'PHISHING' | 'DRAINER' | 'AIRDROP_SCAM' | 'RUGPULL' | 'IMPOSTER' | 'OTHER')[];
   reporterAddress?: string;
   addressId?: string;
+  targetAddress?: string; // filter by the reported address value (joins to Address table)
   minVotesFor?: number;
   minVotesAgainst?: number;
 }

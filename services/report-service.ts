@@ -112,6 +112,10 @@ export async function getReports(
     where.addressId = filters.addressId;
   }
 
+  if (filters.targetAddress) {
+    where.address = { address: filters.targetAddress };
+  }
+
   const [data, total] = await Promise.all([
     prisma.report.findMany({
       where,
