@@ -1,7 +1,7 @@
 /**
  * Blockchain Chain Configuration
  *
- * Configuration for various blockchain networks supported by Wallo.
+ * Configuration for various blockchain networks supported by Doman.
  * Currently supports Base Sepolia (testnet) with plans for Base Mainnet.
  */
 

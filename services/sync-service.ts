@@ -98,7 +98,7 @@ export async function syncDefiLlama(): Promise<SyncResult> {
       await prisma.externalSource.upsert({
         where: {
           addressId_source_sourceId: {
-            addressId: addressData.address,
+            addressId: existing!.id,
             source: 'defillama',
             sourceId: protocol.name || '',
           },
@@ -107,16 +107,13 @@ export async function syncDefiLlama(): Promise<SyncResult> {
           sourceUrl: protocol.url,
           rawData: protocol,
           syncedAt: new Date(),
-          lastSeenAt: new Date(),
         },
         create: {
-          addressId: addressData.address,
+          addressId: existing!.id,
           source: 'defillama',
           sourceId: protocol.name || '',
           sourceUrl: protocol.url,
           rawData: protocol,
-          firstSeenAt: new Date(),
-          lastSeenAt: new Date(),
         },
       });
     }
@@ -168,9 +165,9 @@ export async function syncDefiLlama(): Promise<SyncResult> {
 /**
  * Helper: Categorize DeFiLlama protocol
  */
-function categorizeProtocol(category: string): string {
+function categorizeProtocol(category: string): 'DEX' | 'LENDING' | 'BRIDGE' | 'NFT' | 'DEFI' | 'OTHER' {
   const cat = category?.toLowerCase() || '';
-  const categoryMap: Record<string, string> = {
+  const categoryMap: Record<string, 'DEX' | 'LENDING' | 'BRIDGE' | 'NFT' | 'DEFI' | 'OTHER'> = {
     dex: 'DEX',
     lending: 'LENDING',
     'yield': 'LENDING',
@@ -216,80 +213,67 @@ export async function syncScamSniffer(): Promise<SyncResult> {
 
     const data: { address?: string[]; domain?: string[]; combined?: Record<string, string[]> } = await response.json();
 
-    // Process scam addresses
-    if (Array.isArray(data.address)) {
-      for (const address of data.address.slice(0, 500)) { // Limit to 500 per sync
-        if (!address || typeof address !== 'string') continue;
-        if (!address.startsWith('0x')) continue;
-        if (address.length !== 42) continue;
+    // Process each scam
+    for (const scam of scams.slice(0, 100)) {
+      // Limit to 100 per sync
+      const addressData = {
+        address: scam.address,
+        name: scam.name,
+        category: scam.category?.toUpperCase() || 'OTHER',
+        description: scam.description,
+        url: scam.url,
+        source: 'EXTERNAL' as const,
+      };
 
-        const existing = await prisma.address.findUnique({
-          where: { address },
-        });
+      // Upsert as SCAM
+      await prisma.address.upsert({
+        where: { address: addressData.address },
+        update: {
+          name: addressData.name,
+          description: addressData.description,
+          url: addressData.url,
+          updatedAt: new Date(),
+        },
+        create: {
+          ...addressData,
+          status: 'SCAM',
+          riskScore: 80,
+          chain: 'base',
+        },
+      });
 
-        await prisma.address.upsert({
-          where: { address },
-          update: {
-            status: 'SCAM',
-            riskScore: 85,
-            category: 'PHISHING',
-          },
-          create: {
-            address,
-            name: `Scam Contract from ScamSniffer`,
-            category: 'PHISHING',
-            description: 'Flagged by ScamSniffer as a scam address',
-            status: 'SCAM',
-            riskScore: 85,
-            chain: 'base',
-            source: 'EXTERNAL',
-          },
-        });
+      const existing = await prisma.address.findUnique({
+        where: { address: addressData.address },
+      });
 
-        if (existing) {
-          addressesUpdated++;
-        } else {
-          addressesAdded++;
-        }
+      if (existing) {
+        recordsUpdated++;
+      } else {
+        recordsAdded++;
       }
-    }
 
-    // Process scam domains
-    if (Array.isArray(data.domain)) {
-      for (const domain of data.domain.slice(0, 500)) { // Limit to 500 per sync
-        if (!domain || typeof domain !== 'string') continue;
-
-        // Clean domain name
-        const cleanDomain = domain.replace(/^www\./, '').toLowerCase().trim();
-
-        // Skip invalid domains
-        if (!cleanDomain.includes('.')) continue;
-
-        const existing = await prisma.scamDomain.findUnique({
-          where: { domain: cleanDomain },
-        });
-
-        await prisma.scamDomain.upsert({
-          where: { domain: cleanDomain },
-          update: {
-            status: 'ACTIVE',
-          },
-          create: {
-            domain: cleanDomain,
-            name: cleanDomain,
-            category: 'PHISHING',
-            riskScore: 90,
-            status: 'ACTIVE',
+      // Add external source
+      await prisma.externalSource.upsert({
+        where: {
+          addressId_source_sourceId: {
+            addressId: existing!.id,
             source: 'scamsniffer',
+            sourceId: scam.name || '',
           },
-        });
-
-        if (existing) {
-          domainsUpdated++;
-        } else {
-          domainsAdded++;
-        }
-      }
+        },
+        update: {
+          sourceUrl: scam.url,
+          rawData: scam,
+          syncedAt: new Date(),
+        },
+        create: {
+          addressId: existing!.id,
+          source: 'scamsniffer',
+          sourceId: scam.name || '',
+          sourceUrl: scam.url,
+          rawData: scam,
+        },
+      });
     }
 
     // Log sync result
@@ -306,8 +290,8 @@ export async function syncScamSniffer(): Promise<SyncResult> {
     return {
       source: 'scamsniffer',
       status: 'success',
-      recordsAdded: addressesAdded + domainsAdded,
-      recordsUpdated: addressesUpdated + domainsUpdated,
+      recordsAdded,
+      recordsUpdated,
       duration: Date.now() - startTime,
     };
   } catch (error) {
@@ -386,17 +370,13 @@ export async function syncCryptoScamDB(): Promise<SyncResult> {
           name: addressData.name,
           description: addressData.description,
           url: addressData.url,
+          updatedAt: new Date(),
         },
         create: {
-          address: addressData.address,
-          name: addressData.name,
-          category: addressData.category as any,
-          description: addressData.description,
-          url: addressData.url,
+          ...addressData,
           status: 'SCAM',
           riskScore: 85,
           chain: 'base',
-          source: 'EXTERNAL',
         },
       });
 

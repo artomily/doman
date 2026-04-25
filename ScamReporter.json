@@ -1,0 +1,177 @@
+{
+    "abi": [
+        {
+            "type": "function",
+            "name": "submitReport",
+            "inputs": [
+                {
+                    "name": "reasonHash",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                },
+                {
+                    "name": "isScam",
+                    "type": "bool",
+                    "internalType": "bool"
+                }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+        },
+        {
+            "type": "event",
+            "name": "ScamReportSubmitted",
+            "inputs": [
+                {
+                    "name": "reporter",
+                    "type": "address",
+                    "indexed": true,
+                    "internalType": "address"
+                },
+                {
+                    "name": "reasonHash",
+                    "type": "bytes32",
+                    "indexed": true,
+                    "internalType": "bytes32"
+                },
+                {
+                    "name": "isScam",
+                    "type": "bool",
+                    "indexed": false,
+                    "internalType": "bool"
+                }
+            ],
+            "anonymous": false
+        },
+        {
+            "type": "error",
+            "name": "EmptyReasonHash",
+            "inputs": []
+        }
+    ],
+    "bytecode": {
+        "object": "0x608060405234801561000f575f80fd5b506101df8061001d5f395ff3fe608060405234801561000f575f80fd5b5060043610610029575f3560e01c8063bbd89cfb1461002d575b5f80fd5b61004760048036038101906100429190610143565b610049565b005b5f801b8203610084576040517f817f48ed00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b813373ffffffffffffffffffffffffffffffffffffffff167f79894f1cff1f4559d5bdf71389e2213f93539a2f03ba03edceec7927accb9ae5836040516100cb9190610190565b60405180910390a35050565b5f80fd5b5f819050919050565b6100ed816100db565b81146100f7575f80fd5b50565b5f81359050610108816100e4565b92915050565b5f8115159050919050565b6101228161010e565b811461012c575f80fd5b50565b5f8135905061013d81610119565b92915050565b5f8060408385031215610159576101586100d7565b5b5f610166858286016100fa565b92505060206101778582860161012f565b9150509250929050565b61018a8161010e565b82525050565b5f6020820190506101a35f830184610181565b9291505056fea2646970667358221220b8b07e3e6c97b5f22f65b596576f23d740e89deea8123507e9c3c8616fab8baa64736f6c63430008180033",
+        "sourceMap": "632:1913:21:-:0;;;;;;;;;;;;;;;;;;;",
+        "linkReferences": {}
+    },
+    "deployedBytecode": {
+        "object": "0x608060405234801561000f575f80fd5b5060043610610029575f3560e01c8063bbd89cfb1461002d575b5f80fd5b61004760048036038101906100429190610143565b610049565b005b5f801b8203610084576040517f817f48ed00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b813373ffffffffffffffffffffffffffffffffffffffff167f79894f1cff1f4559d5bdf71389e2213f93539a2f03ba03edceec7927accb9ae5836040516100cb9190610190565b60405180910390a35050565b5f80fd5b5f819050919050565b6100ed816100db565b81146100f7575f80fd5b50565b5f81359050610108816100e4565b92915050565b5f8115159050919050565b6101228161010e565b811461012c575f80fd5b50565b5f8135905061013d81610119565b92915050565b5f8060408385031215610159576101586100d7565b5b5f610166858286016100fa565b92505060206101778582860161012f565b9150509250929050565b61018a8161010e565b82525050565b5f6020820190506101a35f830184610181565b9291505056fea2646970667358221220b8b07e3e6c97b5f22f65b596576f23d740e89deea8123507e9c3c8616fab8baa64736f6c63430008180033",
+        "sourceMap": "632:1913:21:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2342:201;;;;;;;;;;;;;:::i;:::-;;:::i;:::-;;;2442:1;2434:10;;2420;:24;2416:54;;2453:17;;;;;;;;;;;;;;2416:54;2517:10;2505;2485:51;;;2529:6;2485:51;;;;;;:::i;:::-;;;;;;;;2342:201;;:::o;88:117:23:-;197:1;194;187:12;334:77;371:7;400:5;389:16;;334:77;;;:::o;417:122::-;490:24;508:5;490:24;:::i;:::-;483:5;480:35;470:63;;529:1;526;519:12;470:63;417:122;:::o;545:139::-;591:5;629:6;616:20;607:29;;645:33;672:5;645:33;:::i;:::-;545:139;;;;:::o;690:90::-;724:7;767:5;760:13;753:21;742:32;;690:90;;;:::o;786:116::-;856:21;871:5;856:21;:::i;:::-;849:5;846:32;836:60;;892:1;889;882:12;836:60;786:116;:::o;908:133::-;951:5;989:6;976:20;967:29;;1005:30;1029:5;1005:30;:::i;:::-;908:133;;;;:::o;1047:468::-;1112:6;1120;1169:2;1157:9;1148:7;1144:23;1140:32;1137:119;;;1175:79;;:::i;:::-;1137:119;1295:1;1320:53;1365:7;1356:6;1345:9;1341:22;1320:53;:::i;:::-;1310:63;;1266:117;1422:2;1448:50;1490:7;1481:6;1470:9;1466:22;1448:50;:::i;:::-;1438:60;;1393:115;1047:468;;;;;:::o;1521:109::-;1602:21;1617:5;1602:21;:::i;:::-;1597:3;1590:34;1521:109;;:::o;1636:210::-;1723:4;1761:2;1750:9;1746:18;1738:26;;1774:65;1836:1;1825:9;1821:17;1812:6;1774:65;:::i;:::-;1636:210;;;;:::o",
+        "linkReferences": {}
+    },
+    "methodIdentifiers": {
+        "submitReport(bytes32,bool)": "bbd89cfb"
+    },
+    "rawMetadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"EmptyReasonHash\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"reporter\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"reasonHash\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"isScam\",\"type\":\"bool\"}],\"name\":\"ScamReportSubmitted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"reasonHash\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isScam\",\"type\":\"bool\"}],\"name\":\"submitReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Zero state variables \\u2192 zero SSTORE \\u2192 ~22-24k gas per call on Base.         The reasonHash must be the keccak256 of the off-chain payload so the         Supabase listener can verify on-chain \\u2194 off-chain consistency.\",\"errors\":{\"EmptyReasonHash()\":[{\"details\":\"Reverts when `reasonHash` is the zero value, which would make the      event unverifiable against any real off-chain record.\"}]},\"events\":{\"ScamReportSubmitted(address,bytes32,bool)\":{\"params\":{\"isScam\":\"True = reporter believes target is a scam.                   Non-indexed (boolean, low cardinality \\u2014 not useful as a                   filter topic, saves one topic slot per log entry).\",\"reasonHash\":\"keccak256 of the off-chain reason payload (indexed for                   integrity checks \\u2014 fetch the hash, verify the payload).\",\"reporter\":\"Address that submitted the report (indexed for                   per-address lookups in the off-chain indexer).\"}}},\"kind\":\"dev\",\"methods\":{\"submitReport(bytes32,bool)\":{\"params\":{\"isScam\":\"True if the reporter considers the target a scam.\",\"reasonHash\":\"keccak256 of the off-chain reason payload.                    Must not be bytes32(0).\"}}},\"title\":\"ScamReporter\",\"version\":1},\"userdoc\":{\"events\":{\"ScamReportSubmitted(address,bytes32,bool)\":{\"notice\":\"Emitted for every scam-report vote.\"}},\"kind\":\"user\",\"methods\":{\"submitReport(bytes32,bool)\":{\"notice\":\"Submit a scam-report vote.\"}},\"notice\":\"Decentralized scam-report vote submission for the Wallo platform.         All data lives off-chain (Supabase); this contract is the integrity         anchor \\u2014 it proves a given (reporter, reasonHash, isScam) triple was         witnessed by the chain at a specific block.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/ScamReporter.sol\":\"ScamReporter\"},\"evmVersion\":\"cancun\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/ScamReporter.sol\":{\"keccak256\":\"0xaf383aaf46d5c03d38d6b6672802324107f4a7ae2cbdb6aff0d279de67880ee4\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://ae303fa916babf4d0092bd7ac511c12e680e2e901974750dd292fe58c34b821a\",\"dweb:/ipfs/QmPoL7cR2bc9BtoQ6ucqeXfgdvUjKVfaA1GzGUiWQ9GJm9\"]}},\"version\":1}",
+    "metadata": {
+        "compiler": {
+            "version": "0.8.24+commit.e11b9ed9"
+        },
+        "language": "Solidity",
+        "output": {
+            "abi": [
+                {
+                    "inputs": [],
+                    "type": "error",
+                    "name": "EmptyReasonHash"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "address",
+                            "name": "reporter",
+                            "type": "address",
+                            "indexed": true
+                        },
+                        {
+                            "internalType": "bytes32",
+                            "name": "reasonHash",
+                            "type": "bytes32",
+                            "indexed": true
+                        },
+                        {
+                            "internalType": "bool",
+                            "name": "isScam",
+                            "type": "bool",
+                            "indexed": false
+                        }
+                    ],
+                    "type": "event",
+                    "name": "ScamReportSubmitted",
+                    "anonymous": false
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "bytes32",
+                            "name": "reasonHash",
+                            "type": "bytes32"
+                        },
+                        {
+                            "internalType": "bool",
+                            "name": "isScam",
+                            "type": "bool"
+                        }
+                    ],
+                    "stateMutability": "nonpayable",
+                    "type": "function",
+                    "name": "submitReport"
+                }
+            ],
+            "devdoc": {
+                "kind": "dev",
+                "methods": {
+                    "submitReport(bytes32,bool)": {
+                        "params": {
+                            "isScam": "True if the reporter considers the target a scam.",
+                            "reasonHash": "keccak256 of the off-chain reason payload.                    Must not be bytes32(0)."
+                        }
+                    }
+                },
+                "version": 1
+            },
+            "userdoc": {
+                "kind": "user",
+                "methods": {
+                    "submitReport(bytes32,bool)": {
+                        "notice": "Submit a scam-report vote."
+                    }
+                },
+                "version": 1
+            }
+        },
+        "settings": {
+            "remappings": [
+                "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+                "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+                "forge-std/=lib/forge-std/src/",
+                "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+                "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+            ],
+            "optimizer": {
+                "enabled": false,
+                "runs": 200
+            },
+            "metadata": {
+                "bytecodeHash": "ipfs"
+            },
+            "compilationTarget": {
+                "src/ScamReporter.sol": "ScamReporter"
+            },
+            "evmVersion": "cancun",
+            "libraries": {}
+        },
+        "sources": {
+            "src/ScamReporter.sol": {
+                "keccak256": "0xaf383aaf46d5c03d38d6b6672802324107f4a7ae2cbdb6aff0d279de67880ee4",
+                "urls": [
+                    "bzz-raw://ae303fa916babf4d0092bd7ac511c12e680e2e901974750dd292fe58c34b821a",
+                    "dweb:/ipfs/QmPoL7cR2bc9BtoQ6ucqeXfgdvUjKVfaA1GzGUiWQ9GJm9"
+                ],
+                "license": "UNLICENSED"
+            }
+        },
+        "version": 1
+    },
+    "id": 21
+}

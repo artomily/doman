@@ -61,6 +61,8 @@ export async function createReport(data: CreateReportRequest): Promise<Report> {
       evidenceUrl: data.evidenceUrl,
       category: data.category,
       status: 'PENDING',
+      reasonHash: data.reasonHash ?? null,
+      reasonData: data.reasonData ?? undefined,
     },
   });
 
@@ -108,6 +110,10 @@ export async function getReports(
 
   if (filters.addressId) {
     where.addressId = filters.addressId;
+  }
+
+  if (filters.targetAddress) {
+    where.address = { address: filters.targetAddress };
   }
 
   const [data, total] = await Promise.all([

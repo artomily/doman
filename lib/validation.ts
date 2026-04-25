@@ -125,12 +125,23 @@ export const searchQuerySchema = z.object({
 /**
  * POST /api/v1/report - Request body
  */
+/** ETH address OR domain string (e.g. "uniswap.org") */
+const reportTargetSchema = z.union([
+  addressSchema,
+  z.string().min(2).max(253).regex(/^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/, 'Invalid domain'),
+]);
+
 export const createReportSchema = z.object({
-  address: addressSchema,
-  reason: z.string().trim().min(10).max(5000),
+  address: reportTargetSchema,
+  reason: z.string().trim().min(1).max(5000),
   evidenceUrl: httpsUrlSchema.optional().nullable(),
   category: AddressCategoryEnum.default('OTHER'),
   reporterAddress: addressSchema,
+  reasonHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'Invalid bytes32 hex').optional().nullable(),
+  reasonData: z.object({
+    selectedReasons: z.array(z.string()).min(0).max(20),
+    customText: z.string().max(2000),
+  }).optional().nullable(),
 });
 
 /**

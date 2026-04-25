@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
       status: searchParams.get('status') as any,
       category: searchParams.get('category') as any,
       reporterAddress: searchParams.get('reporterAddress') || undefined,
+      targetAddress: searchParams.get('address') || undefined,
       page: parseInt(searchParams.get('page') || '1', 10),
       limit: parseInt(searchParams.get('limit') || '20', 10),
     };

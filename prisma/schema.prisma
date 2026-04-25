@@ -6,9 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 // ============================================
@@ -129,8 +127,7 @@ model Address {
   scans          ContractScan[]
   tags           AddressTag[]
   sourceLinks    ExternalSource[]
-  ensRecords     EnsRecord[]
-  signatures     ContractSignature[] @relation("ContractSignatures") // Function signatures
+  watchlist      Watchlist[]
 
   @@index([status])
   @@index([category])
@@ -158,6 +155,8 @@ model Report {
   votesFor        Int      @default(0)
   votesAgainst    Int      @default(0)
   txHash          String?  @unique @db.VarChar(66)
+  reasonHash      String?  @db.VarChar(66)
+  reasonData      Json?
   resolvedAt      DateTime? @db.Timestamptz(6)
   createdAt       DateTime @default(now()) @db.Timestamptz(6)
   updatedAt       DateTime @updatedAt @db.Timestamptz(6)
@@ -194,6 +193,7 @@ model Vote {
 model ContractScan {
   id              String   @id @default(cuid())
   addressId       String
+  checkerAddress  String?  @db.VarChar(42)
   bytecodeHash    String?  @db.VarChar(66)
   bytecodeLength  Int?     // Bytecode size for quick analysis
   riskScore       Int      @db.SmallInt
@@ -214,8 +214,7 @@ model ContractScan {
   @@index([riskLevel])
   @@index([createdAt])
   @@index([addressId])
-  @@index([bytecodeHash]) // For finding similar contracts
-  @@index([isProxy])
+  @@index([checkerAddress])
   @@map("contract_scans")
 }
 
@@ -258,9 +257,25 @@ model ExternalSource {
   @@map("external_sources")
 }
 
+model Watchlist {
+  id          String   @id @default(cuid())
+  userAddress String   @db.VarChar(42)
+  addressId   String
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  address   Address  @relation(fields: [addressId], references: [id], onDelete: Cascade)
+
+  @@unique([userAddress, addressId])
+  @@index([userAddress])
+  @@map("watchlists")
+}
+
 // ============================================
 // SYSTEM TABLES
 // ============================================
+
+
 
 model SyncLog {
   id            String   @id @default(cuid())

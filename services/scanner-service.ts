@@ -13,10 +13,19 @@ import type { RiskLevel } from '@/lib/validation';
 import type { AddressType, ContractType } from '@prisma/client';
 import prisma from '@/lib/prisma';
 
+/** Upsert a UserProfile row so the wallet is tracked. */
+async function trackChecker(checkerAddress: string) {
+  await prisma.userProfile.upsert({
+    where: { address: checkerAddress },
+    create: { address: checkerAddress },
+    update: {},
+  });
+}
+
 /**
  * Scan contract for potential risks
  */
-export async function scanContract(address: string): Promise<ScanResult> {
+export async function scanContract(address: string, checkerAddress?: string): Promise<ScanResult> {
   const startTime = Date.now();
 
   // Validate address format
@@ -31,19 +40,26 @@ export async function scanContract(address: string): Promise<ScanResult> {
   const hasCode = await isContract(address);
   if (!hasCode) {
     // EOA (Externally Owned Account) - low risk but not a contract
-    // Update address record with EOA type
-    await prisma.address.upsert({
+    // Upsert address and save scan so it appears in history
+    if (checkerAddress) await trackChecker(checkerAddress);
+    const eoaRecord = await prisma.address.upsert({
       where: { address },
-      update: { addressType: 'EOA' },
-      create: {
-        address,
-        addressType: 'EOA',
-        status: 'UNKNOWN',
+      create: { address, status: 'UNKNOWN', riskScore: 0, category: 'OTHER', source: 'SCANNER' },
+      update: {},
+      include: { _count: { select: { reports: true } } },
+    });
+    await prisma.contractScan.create({
+      data: {
+        addressId: eoaRecord.id,
+        checkerAddress: checkerAddress ?? null,
         riskScore: 0,
-        source: 'SCANNER',
+        riskLevel: 'LOW',
+        patterns: [],
+        isVerified: false,
+        scannerVersion: '1.0.0',
+        scanDuration: Date.now() - startTime,
       },
     });
-
     return {
       address,
       riskScore: 0,
@@ -51,7 +67,9 @@ export async function scanContract(address: string): Promise<ScanResult> {
       isVerified: false,
       patterns: [],
       similarScams: [],
-      reportCount: 0,
+      reportCount: eoaRecord._count.reports,
+      votesFor: 0,
+      votesAgainst: 0,
       scanDuration: Date.now() - startTime,
       scannedAt: new Date().toISOString(),
     };
@@ -76,13 +94,25 @@ export async function scanContract(address: string): Promise<ScanResult> {
   const riskScore = Math.min(calculatedRiskScore, 100);
   const riskLevel = getRiskLevel(riskScore) as RiskLevel;
 
-  // Get report count for this address
-  const addressRecord = await prisma.address.findUnique({
+  if (checkerAddress) await trackChecker(checkerAddress);
+
+  // Upsert address record so ContractScan can always be saved (needed for history)
+  const addressRecord = await prisma.address.upsert({
     where: { address },
+    create: { address, status: 'UNKNOWN', riskScore, category: 'OTHER', source: 'SCANNER' },
+    update: {},
     include: { _count: { select: { reports: true } } },
   });
 
-  const reportCount = addressRecord?._count.reports || 0;
+  const reportCount = addressRecord._count.reports;
+
+  const voteAggregates = await prisma.report.aggregate({
+    where: { addressId: addressRecord.id },
+    _sum: { votesFor: true, votesAgainst: true },
+  });
+
+  const votesFor = voteAggregates._sum.votesFor ?? 0;
+  const votesAgainst = voteAggregates._sum.votesAgainst ?? 0;
 
   // Find similar scams (by bytecode hash)
   const bytecodeHash = bytecode.slice(2, 42); // First 20 bytes for comparison
@@ -97,51 +127,26 @@ export async function scanContract(address: string): Promise<ScanResult> {
     patterns: detectedPatterns,
     similarScams,
     reportCount,
+    votesFor,
+    votesAgainst,
     scanDuration: Date.now() - startTime,
     scannedAt: new Date().toISOString(),
   };
 
-  // Save to database if address exists
-  if (addressRecord) {
-    await prisma.contractScan.create({
-      data: {
-        addressId: addressRecord.id,
-        bytecodeHash,
-        bytecodeLength: bytecode.length / 2 - 1, // Convert hex length to bytes
-        riskScore,
-        riskLevel,
-        patterns: detectedPatterns as any, // Store as JSON
-        isVerified: false,
-        isProxy: addressTypeInfo.isProxy,
-        proxyType: addressTypeInfo.proxyType,
-        implementationAddress: addressTypeInfo.implementationAddress,
-        scannerVersion: '1.0.0',
-        scanDuration: scanResult.scanDuration,
-      },
-    });
-
-    // Update address with detected type
-    await prisma.address.update({
-      where: { id: addressRecord.id },
-      data: {
-        addressType: addressTypeInfo.addressType,
-        contractType: addressTypeInfo.contractType,
-        lastSeenAt: new Date(),
-      },
-    });
-  } else {
-    // Create address record if it doesn't exist
-    await prisma.address.create({
-      data: {
-        address,
-        addressType: addressTypeInfo.addressType,
-        contractType: addressTypeInfo.contractType,
-        status: riskScore > 70 ? 'SUSPICIOUS' : 'UNKNOWN',
-        riskScore,
-        source: 'SCANNER',
-      },
-    });
-  }
+  // Always save scan to DB for history tracking
+  await prisma.contractScan.create({
+    data: {
+      addressId: addressRecord.id,
+      checkerAddress: checkerAddress ?? null,
+      bytecodeHash,
+      riskScore,
+      riskLevel,
+      patterns: detectedPatterns as any,
+      isVerified: false,
+      scannerVersion: '1.0.0',
+      scanDuration: scanResult.scanDuration,
+    },
+  });
 
   return scanResult;
 }
@@ -515,4 +520,61 @@ export async function batchScan(addresses: string[]): Promise<{ address: string;
   );
 
   return results;
+}
+
+/**
+ * Scan a domain/URL for potential scam patterns.
+ * Performs a database lookup by the `url` field and returns a risk assessment.
+ */
+export async function scanDomain(domain: string, checkerAddress?: string): Promise<ScanResult> {
+  const startTime = Date.now();
+  const normalised = domain.trim().toLowerCase().replace(/^https?:\/\//, '');
+
+  // Search DB by url field (contains match) or by name
+  const dbMatch = await prisma.address.findFirst({
+    where: {
+      OR: [
+        { url: { contains: normalised, mode: 'insensitive' } },
+        { name: { contains: normalised, mode: 'insensitive' } },
+      ],
+    },
+    include: {
+      _count: { select: { reports: true } },
+    },
+  });
+
+  if (dbMatch) {
+    const riskScore = dbMatch.riskScore;
+    const riskLevel = getRiskLevel(riskScore) as RiskLevel;
+    return {
+      address: normalised,
+      inputType: 'domain',
+      riskScore,
+      riskLevel,
+      isVerified: !!dbMatch.verifiedBy,
+      patterns: [],
+      similarScams: [],
+      reportCount: dbMatch._count.reports,
+      votesFor: 0,
+      votesAgainst: 0,
+      scanDuration: Date.now() - startTime,
+      scannedAt: new Date().toISOString(),
+    };
+  }
+
+  // Not in database – treat as unknown, low risk
+  return {
+    address: normalised,
+    inputType: 'domain',
+    riskScore: 0,
+    riskLevel: 'LOW',
+    isVerified: false,
+    patterns: [],
+    similarScams: [],
+    reportCount: 0,
+    votesFor: 0,
+    votesAgainst: 0,
+    scanDuration: Date.now() - startTime,
+    scannedAt: new Date().toISOString(),
+  };
 }

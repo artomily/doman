@@ -46,17 +46,17 @@ export function Footer() {
             ))}
           </nav>
           <a
-            href="mailto:hello@wallo.xyz"
+            href="mailto:hello@doman.xyz"
             className="text-xs text-muted transition-colors hover:text-foreground"
           >
-            hello@wallo.xyz
+            hello@doman.xyz
           </a>
         </div>
 
         {/* Big brand name — centered */}
         <div className="overflow-hidden py-6 text-center md:py-8">
           <h2 className="text-[20vw] sm:text-[15vw] md:text-[20vw] font-bold leading-none tracking-tighter">
-            WAL<span className="text-accent">L</span>O
+            DOMA<span className="text-accent">N</span>
           </h2>
         </div>
 
@@ -114,10 +114,10 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:hello@wallo.xyz"
+                  href="mailto:hello@doman.xyz"
                   className="text-sm text-zinc-400 transition-colors hover:text-foreground"
                 >
-                  hello@wallo.xyz
+                  hello@doman.xyz
                 </a>
               </li>
             </ul>
@@ -127,7 +127,7 @@ export function Footer() {
         {/* Copyright bar */}
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-card-border py-8 md:flex-row">
           <p className="text-xs text-muted">
-            © 2026 Wallo. All rights reserved.
+            © 2026 Doman. All rights reserved.
           </p>
           <div className="flex gap-6">
             <Link href="#" className="text-xs text-muted hover:text-foreground">

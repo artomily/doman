@@ -5,23 +5,7 @@
  * These types provide better TypeScript support when working with database models.
  */
 
-import type {
-  Address,
-  Report,
-  Vote,
-  ContractScan,
-  AddressTag,
-  ExternalSource,
-  SyncLog,
-  UserProfile,
-  ScamDomain,
-  AddressStatus,
-  AddressCategory,
-  DataSource,
-  ReportStatus,
-  VoteType,
-  RiskLevel,
-} from '@prisma/client';
+import type { Address, Report, Vote, ContractScan, AddressTag, ExternalSource, SyncLog, UserProfile, AddressStatus, AddressCategory, DataSource, ReportStatus, VoteType, RiskLevel } from '@prisma/client';
 
 // ============================================
 // ADDRESS TYPES
@@ -221,6 +205,7 @@ export interface ReportFilters {
   category?: ('DEFI' | 'NFT' | 'BRIDGE' | 'DEX' | 'LENDING' | 'PHISHING' | 'DRAINER' | 'AIRDROP_SCAM' | 'RUGPULL' | 'IMPOSTER' | 'OTHER')[];
   reporterAddress?: string;
   addressId?: string;
+  targetAddress?: string; // filter by the reported address value (joins to Address table)
   minVotesFor?: number;
   minVotesAgainst?: number;
 }
@@ -398,7 +383,7 @@ export interface ReputationEvent {
 /**
  * User profile extended with stats (API response format)
  */
-export interface UserProfileDetail {
+export interface UserProfileData {
   address: string;
   ens?: string;
   avatar?: string;

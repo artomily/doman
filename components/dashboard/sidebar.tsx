@@ -55,11 +55,11 @@ export function Sidebar() {
       >
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 border-b border-card-border px-6">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-            <Shield size={16} className="text-black" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent glow-accent">
+            <Shield size={16} className="text-white" />
           </div>
           <Link href="/dashboard" className="text-lg font-bold tracking-tight">
-            WALLO
+            DOMAN
           </Link>
         </div>
 

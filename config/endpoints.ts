@@ -18,7 +18,7 @@ export const defiLlamaConfig = {
   timeout: EXTERNAL_APIS.DEFILLAMA.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
-    'User-Agent': 'Wallo-Scam-Detector/1.0',
+    'User-Agent': 'Doman-Scam-Detector/1.0',
   },
   /**
    * Get all protocols from DeFiLlama
@@ -46,7 +46,7 @@ export const scamSnifferConfig = {
   timeout: EXTERNAL_APIS.SCAMSNIFFER.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
-    'User-Agent': 'Wallo-Scam-Detector/1.0',
+    'User-Agent': 'Doman-Scam-Detector/1.0',
   },
   files: {
     // Main scam database file
@@ -80,7 +80,7 @@ export const cryptoScamDbConfig = {
   timeout: EXTERNAL_APIS.CRYPTOSCAMDB.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
-    'User-Agent': 'Wallo-Scam-Detector/1.0',
+    'User-Agent': 'Doman-Scam-Detector/1.0',
   },
   endpoints: {
     // List all scams
@@ -109,7 +109,7 @@ export const baseRegistryConfig = {
   timeout: EXTERNAL_APIS.BASE_REGISTRY.TIMEOUT,
   headers: {
     'Content-Type': 'text/html',
-    'User-Agent': 'Wallo-Scam-Detector/1.0',
+    'User-Agent': 'Doman-Scam-Detector/1.0',
   },
   endpoints: {
     // Official dApp directory

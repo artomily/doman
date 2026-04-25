@@ -173,6 +173,8 @@ export interface ReportDTO {
   votesFor: number;
   votesAgainst: number;
   txHash: string | null;
+  reasonHash: string | null;
+  reasonData: { selectedReasons: string[]; customText: string } | null;
   resolvedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -187,6 +189,8 @@ export interface CreateReportRequest {
   evidenceUrl?: string | null;
   category: AddressCategory;
   reporterAddress: string;
+  reasonHash?: string | null;
+  reasonData?: { selectedReasons: string[]; customText: string } | null;
 }
 
 /**
@@ -258,16 +262,25 @@ export interface SimilarScam {
 }
 
 /**
+ * Input type for scan (address, ENS name, or domain)
+ */
+export type ScanInputType = 'address' | 'ens' | 'domain';
+
+/**
  * Scan result
  */
 export interface ScanResult {
   address: string;
+  inputType?: ScanInputType;
+  resolvedAddress?: string; // ENS → resolved 0x address
   riskScore: number;
   riskLevel: RiskLevel;
   isVerified: boolean;
   patterns: DetectedPattern[];
   similarScams: SimilarScam[];
   reportCount: number;
+  votesFor: number;
+  votesAgainst: number;
   scanDuration: number;
   scannedAt: string;
 }

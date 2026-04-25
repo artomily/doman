@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Shield,
@@ -23,39 +22,34 @@ function Hero() {
       {/* Abstract gradient background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-1/2 -left-1/4 h-200 w-200 rounded-full bg-accent/10 blur-[120px]" />
-        <div className="absolute -bottom-1/2 -right-1/4 h-150 w-150 rounded-full bg-green-600/10 blur-[100px]" />
+        <div className="absolute -bottom-1/2 -right-1/4 h-150 w-150 rounded-full bg-zinc-400/10 blur-[100px]" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-6 pb-24 pt-20 md:pb-32 md:pt-28">
         {/* Top nav row */}
-        <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-card-border pb-4 text-xs uppercase tracking-wider text-muted">
+        {/* <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-card-border pb-4 text-xs uppercase tracking-wider text-muted">
           <span>How It Works</span>
           <span>SEO</span>
           <span>Marketing</span>
           <span>Connect Us</span>
-        </div>
+        </div> */}
 
         {/* Brand wordmark */}
         <div className="py-20 flex items-center justify-between">
           <Plus size={20} strokeWidth={1.5} className="text-muted/50" />
           <p className="text-center text-[20vw] font-bold tracking-tighter sm:text-[15vw] md:text-[20vw]">
-            WAL<span className="text-accent">L</span>O
+            DOMA<span className="text-accent">N</span>
           </p>
           <Plus size={20} strokeWidth={1.5} className="text-muted/50" />
         </div>
 
         {/* Hero visual placeholder */}
-        <div className="relative mb-16 h-75 overflow-hidden rounded-3xl border border-card-border md:h-100">
-          <Image
-            src="/hero-bg.png"
-            alt="Wallo Hero Background"
-            fill
-            className="object-cover"
-            priority
-          />
+        <div className="relative mb-16 h-75 overflow-hidden rounded-3xl border border-card-border bg-linear-to-br from-accent/5 to-zinc-800/50 md:h-100">
+          <div className="absolute -top-1/2 -left-1/4 h-200 w-200 rounded-full bg-accent/5 blur-[100px]" />
+          <div className="absolute -bottom-1/2 -right-1/4 h-150 w-150 rounded-full bg-zinc-400/5 blur-[80px]" />
           <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
             <div>
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1 text-xs text-accent">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">
                 <Shield size={12} /> Web3 Security Engine
               </div>
             </div>
@@ -79,7 +73,7 @@ function Hero() {
           </h1>
 
           <p className="mt-8 max-w-xl text-sm leading-relaxed text-muted md:text-base">
-            Wallo combines on-chain analysis, smart contract inspection, and
+            Doman combines on-chain analysis, smart contract inspection, and
             community reputation signals into a single trust score — so you know
             what&apos;s safe before you click or send.
           </p>
@@ -108,13 +102,13 @@ function About() {
             {/* <span className="text-[10px] font-bold text-black">W</span> */}
           </div>
           <span className="text-xs uppercase tracking-wider text-muted">
-            About · Wallo
+            About · Doman
           </span>
         </div>
 
         <h2 className="max-w-4xl text-3xl font-bold leading-[1.15] tracking-tight md:text-5xl lg:text-6xl">
           YOU THINK THE BLOCKCHAIN IS TRANSPARENT. ACTUALLY IT&apos;S A MAZE,
-          AND SOMEHOW WALLO HELPS YOU NAVIGATE YOUR{" "}
+          AND SOMEHOW DOMAN HELPS YOU NAVIGATE YOUR{" "}
           <span className="inline-flex items-center">
             SAFETY
             <span className="ml-2 inline-block h-10 w-10 rounded-full bg-accent md:h-14 md:w-14" />
@@ -124,7 +118,7 @@ function About() {
         <p className="mt-8 max-w-2xl text-sm leading-relaxed text-muted md:text-base">
           Web3 scam losses reached $3.8B in 2023 — mostly from phishing, bad
           approvals, and fake addresses. Existing tools are too technical and
-          developer-focused. Wallo makes security accessible to everyone.
+          developer-focused. Doman makes security accessible to everyone.
         </p>
       </div>
     </section>
@@ -246,7 +240,7 @@ function Features() {
             {/* <span className="text-[10px] font-bold text-black">W</span> */}
           </div>
           <span className="text-xs uppercase tracking-wider text-muted">
-            Services · Wallo
+            Services · Doman
           </span>
         </div>
 
@@ -292,11 +286,11 @@ function Manifesto() {
       <div className="mx-auto max-w-7xl px-6">
         <h2 className="text-2xl font-bold leading-[1.2] tracking-tight md:text-4xl lg:text-5xl">
           SIMPLIFYING{" "}
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-accent text-black md:h-9 md:w-9 lg:h-12 lg:w-12">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-accent text-white md:h-9 md:w-9 lg:h-12 lg:w-12">
             <Shield className="h-full w-full p-1" />
           </span>{" "}
           WEB3 MEANS{" "}
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-green-600 text-white md:h-9 md:w-9 lg:h-12 lg:w-12">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-glow/20 text-glow md:h-9 md:w-9 lg:h-12 lg:w-12">
             <Lock className="h-full w-full p-1" />
           </span>{" "}
           PROTECTING USERS. BY ELIMINATING{" "}
@@ -308,7 +302,7 @@ function Manifesto() {
             <Eye className="h-full w-full p-1" />
           </span>{" "}
           RISKS, ONLY SAFE{" "}
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-accent text-black md:h-9 md:w-9 lg:h-12 lg:w-12">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-accent text-white md:h-9 md:w-9 lg:h-12 lg:w-12">
             <CheckCircle className="h-full w-full p-1" />
           </span>{" "}
           TRANSACTIONS REMAIN.
@@ -348,7 +342,7 @@ function Advantage() {
               STAY SAFER
             </h2>
             <p className="mt-6 max-w-md text-sm leading-relaxed text-muted md:text-base">
-              Wallo combines on-chain data from Alchemy, Moralis, and Etherscan
+              Doman combines on-chain data from Alchemy, Moralis, and Etherscan
               with community-driven reputation signals. Our scoring engine
               processes transaction history, funding sources, and contract risk
               to deliver trust scores with &gt;90% detection accuracy and
@@ -356,7 +350,7 @@ function Advantage() {
             </p>
             <div className="mt-8 grid grid-cols-2 gap-4">
               <div className="rounded-xl border border-card-border bg-card p-4">
-                <p className="text-2xl font-bold text-accent">{"<"}1.5s</p>
+                <p className="text-2xl font-bold text-glow">{"<"}1.5s</p>
                 <p className="mt-1 text-xs text-muted">API Response</p>
               </div>
               <div className="rounded-xl border border-card-border bg-card p-4">
@@ -364,7 +358,7 @@ function Advantage() {
                 <p className="mt-1 text-xs text-muted">Uptime SLA</p>
               </div>
               <div className="rounded-xl border border-card-border bg-card p-4">
-                <p className="text-2xl font-bold text-accent">{">"}90%</p>
+                <p className="text-2xl font-bold text-glow">{">"}90%</p>
                 <p className="mt-1 text-xs text-muted">Detection Rate</p>
               </div>
               <div className="rounded-xl border border-card-border bg-card p-4">
@@ -387,8 +381,8 @@ function ProductHighlights() {
         <div className="grid gap-8 md:grid-cols-2">
           {/* Trust Engine */}
           <div className="overflow-hidden rounded-2xl border border-card-border">
-            <div className="bg-linear-to-br from-accent/10 to-green-900/20 p-8 md:p-10">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1 text-xs text-accent">
+            <div className="bg-linear-to-br from-accent/5 to-zinc-900/40 p-8 md:p-10">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">
                 <Zap size={12} /> Engine
               </div>
               <h3 className="text-xs uppercase tracking-wider text-muted">

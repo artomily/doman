@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --accent: #beff00;
-  --accent-dark: #a3d900;
-  --muted: #888888;
-  --card: #141414;
-  --card-border: #222222;
-  --surface: #1a1a1a;
+  --background: #000000;
+  --foreground: #E5E7EB;
+  --accent: #3B82F6;
+  --accent-dark: #2563EB;
+  --glow: #22D3EE;
+  --muted: #9CA3AF;
+  --card: #0D0D0D;
+  --card-border: #1F1F1F;
+  --surface: #0A0A0A;
 }
 
 @theme inline {
@@ -16,6 +17,7 @@
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
   --color-accent-dark: var(--accent-dark);
+  --color-glow: var(--glow);
   --color-muted: var(--muted);
   --color-card: var(--card);
   --color-card-border: var(--card-border);
@@ -51,4 +53,22 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
+}
+
+/* Blue Neon gradient utility */
+.gradient-blue {
+  background: linear-gradient(to right, #3B82F6, #22D3EE);
+}
+
+/* Gradient text (blue → cyan) */
+.gradient-text {
+  background: linear-gradient(to right, #3B82F6, #22D3EE);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Soft blue glow — use on buttons, active states */
+.glow-accent {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.25), 0 0 40px rgba(59, 130, 246, 0.1);
 }
