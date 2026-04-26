@@ -15,6 +15,7 @@ import type {
 import type { CreateReportRequest } from '@/types/api';
 import { REPORT_THRESHOLDS, REPUTATION } from '@/lib/constants';
 import type { AddressCategory, VoteType } from '@/lib/validation';
+import { AppError } from '@/lib/error-handler';
 
 /**
  * Create a new report
@@ -183,7 +184,7 @@ export async function voteOnReport(
   });
 
   if (existingVote) {
-    throw new Error('You have already voted on this report');
+    throw new AppError('REPORT_ALREADY_VOTED', 'You have already voted on this report', 409);
   }
 
   // Check voter reputation

@@ -15,6 +15,7 @@ import {
 } from '@/config/contracts';
 import { wagmiConfig } from '@/lib/wagmi';
 import artifact from '@/ScamReporter.json';
+import { isAddress, keccak256, pad, toBytes } from 'viem';
 
 export type ReportStep =
   | 'idle'
@@ -45,6 +46,24 @@ function getCachedAddress(chainId: number): `0x${string}` | null {
   if (typeof window === 'undefined') return null;
   const v = localStorage.getItem(`wallo:contract:${chainId}`);
   return v ? (v as `0x${string}`) : null;
+}
+
+function getTargetTypeAndId(target: string): { targetType: number; targetId: `0x${string}` } {
+  const normalized = target.trim();
+
+  if (isAddress(normalized)) {
+    return {
+      targetType: 0,
+      targetId: pad(normalized.toLowerCase() as `0x${string}`, { size: 32 }),
+    };
+  }
+
+  const normalizedText = normalized.toLowerCase();
+  const targetType = normalizedText.endsWith('.eth') ? 1 : 2;
+  return {
+    targetType,
+    targetId: keccak256(toBytes(normalizedText)),
+  };
 }
 
 export function useReportScam(): UseReportScamReturn {
@@ -81,14 +100,14 @@ export function useReportScam(): UseReportScamReturn {
       setError(null);
 
       // Determine whether on-chain submission is possible
-      const isDomain = !targetAddress.startsWith('0x');
-      const isChainSupported = !isDomain && (SUPPORTED_CHAIN_IDS as readonly number[]).includes(chainId);
+      const isChainSupported = (SUPPORTED_CHAIN_IDS as readonly number[]).includes(chainId);
       const existingAddress: `0x${string}` | '' =
         CONTRACT_ADDRESSES[chainId] || getCachedAddress(chainId) || '';
 
       try {
         // 1. Hash reason data deterministically
         const reasonHash = hashReasonData(reasonData);
+        const { targetType, targetId } = getTargetTypeAndId(targetAddress);
 
         // Build a human-readable reason string for the `reason` field
         const reasonText = [
@@ -161,8 +180,8 @@ export function useReportScam(): UseReportScamReturn {
         const hash = await writeContractAsync({
           address: contractAddress as `0x${string}`,
           abi: DOMAN_CONTRACT_ABI,
-          functionName: 'submitReport',
-          args: [reasonHash, true],
+          functionName: 'submitVote',
+          args: [targetType, targetId, reasonHash, true],
           chainId,
         });
 
@@ -173,6 +192,8 @@ export function useReportScam(): UseReportScamReturn {
           err instanceof Error
             ? err.message.includes('User rejected') || err.message.includes('user rejected')
               ? 'Transaction cancelled.'
+              : err.message.includes('AlreadyVoted')
+                ? 'You have already voted for this target on-chain.'
               : err.message
             : 'An unexpected error occurred.';
         setError(message);

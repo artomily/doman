@@ -133,20 +133,47 @@ export async function scanContract(address: string, checkerAddress?: string): Pr
     scannedAt: new Date().toISOString(),
   };
 
-  // Always save scan to DB for history tracking
-  await prisma.contractScan.create({
-    data: {
-      addressId: addressRecord.id,
-      checkerAddress: checkerAddress ?? null,
-      bytecodeHash,
-      riskScore,
-      riskLevel,
-      patterns: detectedPatterns as any,
-      isVerified: false,
-      scannerVersion: '1.0.0',
-      scanDuration: scanResult.scanDuration,
-    },
-  });
+  // Save to database if address exists
+  if (addressRecord) {
+    await prisma.contractScan.create({
+      data: {
+        addressId: addressRecord.id,
+        bytecodeHash,
+        bytecodeLength: bytecode.length / 2 - 1, // Convert hex length to bytes
+        riskScore,
+        riskLevel,
+        patterns: detectedPatterns as any, // Store as JSON
+        isVerified: false,
+        isProxy: addressTypeInfo.isProxy,
+        proxyType: addressTypeInfo.proxyType,
+        implementationAddress: addressTypeInfo.implementationAddress,
+        scannerVersion: '1.0.0',
+        scanDuration: scanResult.scanDuration,
+      },
+    });
+
+    // Update address with detected type
+    await prisma.address.update({
+      where: { id: addressRecord.id },
+      data: {
+        addressType: addressTypeInfo.addressType,
+        contractType: addressTypeInfo.contractType,
+        lastSeenAt: new Date(),
+      },
+    });
+  } else {
+    // Create address record if it doesn't exist
+    await prisma.address.create({
+      data: {
+        address,
+        addressType: addressTypeInfo.addressType,
+        contractType: addressTypeInfo.contractType,
+        status: riskScore > 70 ? 'SUSPICIOUS' : 'UNKNOWN',
+        riskScore,
+        source: 'SCANNER',
+      },
+    });
+  }
 
   return scanResult;
 }

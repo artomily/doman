@@ -383,7 +383,7 @@ export interface ReputationEvent {
 /**
  * User profile extended with stats (API response format)
  */
-export interface UserProfileData {
+export interface UserProfileDetail {
   address: string;
   ens?: string;
   avatar?: string;

@@ -10,7 +10,7 @@
  */
 
 import { createPublicClient, createWalletClient, http, type Chain, type PublicClient, type WalletClient } from 'viem';
-import { baseSepolia, mainnet } from 'viem/chains';
+import { baseSepolia, mainnet, sepolia } from 'viem/chains';
 
 /**
  * Validate required environment variables
@@ -92,14 +92,16 @@ export const walletClient = privateKey
   : null;
 
 /**
- * Mainnet Public Client (for ENS resolution)
+ * Ethereum Client for ENS Resolution
  *
- * ENS only works on Ethereum mainnet, not on testnet or Base.
- * This client connects to mainnet specifically for ENS queries.
+ * ENS (Ethereum Name Service) is deployed on Ethereum mainnet.
+ * Cloudflare's gateway is used as it properly supports ENS resolution.
+ *
+ * For production, consider using Infura or Alchemy with their web3 API gateways.
  */
-export const mainnetClient = createPublicClient({
+export const ensClient = createPublicClient({
   chain: mainnet,
-  transport: http('https://eth.rpc.blxrbdn.com', {
+  transport: http('https://cloudflare-eth.com', {
     timeout: 30_000,
     retryCount: 3,
   }),

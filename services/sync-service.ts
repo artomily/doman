@@ -107,13 +107,16 @@ export async function syncDefiLlama(): Promise<SyncResult> {
           sourceUrl: protocol.url,
           rawData: protocol,
           syncedAt: new Date(),
+          lastSeenAt: new Date(),
         },
         create: {
-          addressId: existing!.id,
+          addressId: addressData.address,
           source: 'defillama',
           sourceId: protocol.name || '',
           sourceUrl: protocol.url,
           rawData: protocol,
+          firstSeenAt: new Date(),
+          lastSeenAt: new Date(),
         },
       });
     }
@@ -404,13 +407,23 @@ export async function syncCryptoScamDB(): Promise<SyncResult> {
           name: addressData.name,
           description: addressData.description,
           url: addressData.url,
+        },
+        update: {
+          name: addressData.name,
+          description: addressData.description,
+          url: addressData.url,
           updatedAt: new Date(),
         },
         create: {
-          ...addressData,
+          address: addressData.address,
+          name: addressData.name,
+          category: addressData.category as any,
+          description: addressData.description,
+          url: addressData.url,
           status: 'SCAM',
           riskScore: 85,
           chain: 'base',
+          source: 'EXTERNAL',
         },
       });
 

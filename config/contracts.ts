@@ -9,15 +9,44 @@ import { base, baseSepolia } from 'wagmi/chains';
 
 /**
  * ABI from ScamReporter.sol
- * - submitReport(bytes32, bool) — void, emits ScamReportSubmitted
- * - ScamReportSubmitted event — reporter + reasonHash indexed
- * - EmptyReasonHash error — reverts when hash is bytes32(0)
+ * - submitVote(uint8, bytes32, bytes32, bool) — target-scoped vote
+ * - hasVoted(bytes32, address) — anti-double-vote query
+ * - addressToTargetId(address) — canonical address target hash helper
  */
 export const DOMAN_CONTRACT_ABI = [
   {
     type: 'function',
+    name: 'addressToTargetId',
+    inputs: [{ name: 'target', type: 'address', internalType: 'address' }],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    name: 'hasVoted',
+    inputs: [
+      { name: 'targetId', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'reporterAddr', type: 'address', internalType: 'address' },
+    ],
+    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
     name: 'submitReport',
     inputs: [
+      { name: 'reasonHash', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'isScam', type: 'bool', internalType: 'bool' },
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'submitVote',
+    inputs: [
+      { name: 'targetType', type: 'uint8', internalType: 'uint8' },
+      { name: 'targetId', type: 'bytes32', internalType: 'bytes32' },
       { name: 'reasonHash', type: 'bytes32', internalType: 'bytes32' },
       { name: 'isScam', type: 'bool', internalType: 'bool' },
     ],
@@ -35,8 +64,38 @@ export const DOMAN_CONTRACT_ABI = [
     anonymous: false,
   },
   {
+    type: 'event',
+    name: 'ScamVoteSubmitted',
+    inputs: [
+      { name: 'reporter', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'targetId', type: 'bytes32', indexed: true, internalType: 'bytes32' },
+      { name: 'targetType', type: 'uint8', indexed: false, internalType: 'uint8' },
+      { name: 'reasonHash', type: 'bytes32', indexed: false, internalType: 'bytes32' },
+      { name: 'isScam', type: 'bool', indexed: false, internalType: 'bool' },
+    ],
+    anonymous: false,
+  },
+  {
+    type: 'error',
+    name: 'AlreadyVoted',
+    inputs: [
+      { name: 'targetId', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'reporter', type: 'address', internalType: 'address' },
+    ],
+  },
+  {
     type: 'error',
     name: 'EmptyReasonHash',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'EmptyTargetId',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'InvalidTargetType',
     inputs: [],
   },
 ] as const;
