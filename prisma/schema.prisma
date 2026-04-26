@@ -91,6 +91,12 @@ enum RiskLevel {
   CRITICAL
 }
 
+enum TargetType {
+  ADDRESS
+  ENS
+  DOMAIN
+}
+
 // ============================================
 // CORE TABLES
 // ============================================
@@ -192,6 +198,29 @@ model Vote {
   @@unique([reportId, voterAddress])
   @@index([voterAddress])
   @@map("votes")
+}
+
+model OnchainVoteEvent {
+  id              String     @id @default(cuid())
+  chainId         Int
+  contractAddress String     @db.VarChar(42)
+  txHash          String     @db.VarChar(66)
+  logIndex        Int
+  blockNumber     BigInt     @db.BigInt
+  blockTimestamp  DateTime?  @db.Timestamptz(6)
+  reporterAddress String     @db.VarChar(42)
+  targetId        String     @db.VarChar(66)
+  targetType      TargetType
+  reasonHash      String     @db.VarChar(66)
+  isScam          Boolean
+  createdAt       DateTime   @default(now()) @db.Timestamptz(6)
+
+  @@unique([txHash, logIndex])
+  @@index([chainId, blockNumber])
+  @@index([targetId, targetType])
+  @@index([reporterAddress])
+  @@index([reasonHash])
+  @@map("onchain_vote_events")
 }
 
 model ContractScan {

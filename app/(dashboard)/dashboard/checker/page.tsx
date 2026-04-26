@@ -17,6 +17,8 @@ import {
   ThumbsDown,
   Loader2,
   Flag,
+  CheckCircle2,
+  X,
 } from "lucide-react";
 import type { ScanResult } from "@/types/api";
 import { ReportScamModal } from "@/components/dashboard/report-scam-modal";
@@ -232,13 +234,30 @@ function CheckerContent() {
 
           {/* Community Voting / Report */}
           <Card>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">
+            <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-muted">
               Community
             </h3>
+
+            {/* Scam flagged banner */}
+            {(state.data.votesFor > 0 || state.data.votesAgainst > 0) && (
+              <div
+                className={`mb-4 mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                  state.data.votesFor >= 3
+                    ? "border-red-900 bg-red-950/30 text-red-400"
+                    : "border-yellow-900 bg-yellow-950/20 text-yellow-400"
+                }`}
+              >
+                <AlertTriangle size={14} className="shrink-0" />
+                {state.data.votesFor >= 3
+                  ? `${state.data.votesFor} anggota komunitas sudah menandai ini sebagai scam`
+                  : `${state.data.votesFor + state.data.votesAgainst} vote komunitas tercatat untuk alamat ini`}
+              </div>
+            )}
+
             <p className="mb-4 text-sm text-muted">
               Help the community by reporting suspicious activity.
             </p>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col gap-4">
               {(state.data as any).inputType !== "domain" && (
                 <VoteButtons
                   address={(state.data as any).resolvedAddress ?? state.data.address}
@@ -246,10 +265,12 @@ function CheckerContent() {
                   votesAgainst={state.data.votesAgainst}
                 />
               )}
-              <ReportScamButton
-                address={(state.data as any).resolvedAddress ?? state.data.address}
-                isDomain={(state.data as any).inputType === 'domain'}
-              />
+              <div>
+                <ReportScamButton
+                  address={(state.data as any).resolvedAddress ?? state.data.address}
+                  isDomain={(state.data as any).inputType === 'domain'}
+                />
+              </div>
             </div>
           </Card>
         </div>
@@ -290,11 +311,44 @@ function VoteButtons({
   const { address: walletAddress, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const [voted, setVoted] = useState(false);
+  const [myVoteType, setMyVoteType] = useState<"FOR" | "AGAINST" | null>(null);
   const [voteError, setVoteError] = useState<string | null>(null);
+  const [showAlreadyVotedPopup, setShowAlreadyVotedPopup] = useState(false);
   const [counts, setCounts] = useState({ for: votesFor, against: votesAgainst });
 
+  // Check if the connected wallet has already voted (once per address+wallet)
+  useEffect(() => {
+    if (!isConnected || !walletAddress || !address) return;
+
+    const controller = new AbortController();
+    fetch(
+      `/api/v1/reports/vote-status?address=${encodeURIComponent(address)}&voterAddress=${encodeURIComponent(walletAddress)}`,
+      { signal: controller.signal }
+    )
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data.hasVoted) {
+          setVoted(true);
+          setMyVoteType(json.data.voteType);
+        }
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, [address, walletAddress, isConnected]);
+
+  // Auto-dismiss "already voted" popup after 3 seconds
+  useEffect(() => {
+    if (!showAlreadyVotedPopup) return;
+    const t = setTimeout(() => setShowAlreadyVotedPopup(false), 3000);
+    return () => clearTimeout(t);
+  }, [showAlreadyVotedPopup]);
+
   const handleVote = async (type: "up" | "down") => {
-    if (voted) return;
+    if (voted) {
+      setShowAlreadyVotedPopup(true);
+      return;
+    }
     setVoteError(null);
 
     if (!isConnected || !walletAddress) {
@@ -326,7 +380,9 @@ function VoteButtons({
       const voteJson = await voteRes.json();
 
       if (voteRes.status === 409) {
-        setVoteError("You have already voted on this report.");
+        setVoted(true);
+        setMyVoteType(vote);
+        setShowAlreadyVotedPopup(true);
         return;
       }
       if (!voteRes.ok || !voteJson.success) {
@@ -335,30 +391,109 @@ function VoteButtons({
       }
 
       setVoted(true);
+      setMyVoteType(vote);
       setCounts({ for: voteJson.data.votesFor, against: voteJson.data.votesAgainst });
     } catch {
       setVoteError("Network error. Please try again.");
     }
   };
 
+  const total = counts.for + counts.against;
+  const scamPct = total > 0 ? Math.round((counts.for / total) * 100) : 0;
+
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => handleVote("up")}
-          disabled={voted}
-          className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm transition-colors hover:border-green-500 hover:text-green-400 disabled:opacity-50"
-        >
-          <ThumbsUp size={16} /> {counts.against}
-        </button>
-        <button
-          onClick={() => handleVote("down")}
-          disabled={voted}
-          className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm transition-colors hover:border-red-500 hover:text-red-400 disabled:opacity-50"
-        >
-          <ThumbsDown size={16} /> {counts.for}
-        </button>
+    <div className="space-y-3 w-full">
+      {/* Community sentiment bar */}
+      {total > 0 && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs text-muted">
+            <span className="flex items-center gap-1">
+              <ThumbsUp size={11} className="text-green-400" />
+              Safe — {counts.against}
+            </span>
+            <span className="font-medium">{total} vote{total !== 1 ? "s" : ""}</span>
+            <span className="flex items-center gap-1">
+              {counts.for} — Scam
+              <ThumbsDown size={11} className="text-red-400" />
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-card-border">
+            <div
+              className="h-full rounded-full bg-red-500 transition-all duration-300"
+              style={{ width: `${scamPct}%` }}
+            />
+          </div>
+          {scamPct >= 50 && (
+            <p className="flex items-center gap-1 text-xs text-red-400">
+              <AlertTriangle size={11} />
+              Majority of voters flagged this as a scam
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Vote buttons */}
+      <div className="flex flex-wrap items-center gap-3">
+        {voted ? (
+          <div className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm text-muted">
+            <CheckCircle2 size={15} className="text-accent" />
+            You voted:{" "}
+            <span
+              className={
+                myVoteType === "FOR" ? "font-medium text-red-400" : "font-medium text-green-400"
+              }
+            >
+              {myVoteType === "FOR" ? "Scam" : "Safe"}
+            </span>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={() => handleVote("up")}
+              className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm transition-colors hover:border-green-500 hover:text-green-400"
+              title="Mark as safe"
+            >
+              <ThumbsUp size={16} />
+              <span>Safe</span>
+              {counts.against > 0 && (
+                <span className="ml-1 rounded-full bg-surface px-1.5 py-0.5 text-xs text-muted">
+                  {counts.against}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => handleVote("down")}
+              className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm transition-colors hover:border-red-500 hover:text-red-400"
+              title="Confirm scam"
+            >
+              <ThumbsDown size={16} />
+              <span>Scam</span>
+              {counts.for > 0 && (
+                <span className="ml-1 rounded-full bg-surface px-1.5 py-0.5 text-xs text-muted">
+                  {counts.for}
+                </span>
+              )}
+            </button>
+          </>
+        )}
       </div>
+
+      {/* Already voted popup */}
+      {showAlreadyVotedPopup && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent/5 px-4 py-2.5 text-sm">
+          <span className="flex items-center gap-2 text-accent">
+            <CheckCircle2 size={14} />
+            Anda sudah memberikan vote pada laporan ini.
+          </span>
+          <button
+            onClick={() => setShowAlreadyVotedPopup(false)}
+            className="shrink-0 text-muted hover:text-foreground"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {voteError && <p className="text-xs text-red-400">{voteError}</p>}
     </div>
   );

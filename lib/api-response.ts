@@ -8,7 +8,7 @@
 import { NextResponse } from 'next/server';
 import type { ApiResponse, ApiSuccessResponse, ApiErrorResponse } from '@/types/api';
 import { HTTP_STATUS, ERROR_CODES } from '@/lib/constants';
-export { withErrorHandling } from '@/lib/error-handler';
+export { withErrorHandling, AppError } from '@/lib/error-handler';
 
 /**
  * Create a success response
@@ -130,6 +130,11 @@ export function withErrorHandler<T>(
 ): Promise<NextResponse<ApiResponse<T>>> {
   return handler().catch((error) => {
     console.error('API Error:', error);
+
+    // Handle AppError (application-level errors with explicit status codes)
+    if (error?.name === 'AppError') {
+      return apiError(error.code, error.message, error.details, error.statusCode);
+    }
 
     // Handle Prisma errors
     if (error.code === 'P2002') {

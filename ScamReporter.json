@@ -2,8 +2,79 @@
     "abi": [
         {
             "type": "function",
+            "name": "addressToTargetId",
+            "inputs": [
+                {
+                    "name": "target",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                }
+            ],
+            "stateMutability": "pure"
+        },
+        {
+            "type": "function",
+            "name": "hasVoted",
+            "inputs": [
+                {
+                    "name": "targetId",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                },
+                {
+                    "name": "reporterAddr",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "bool",
+                    "internalType": "bool"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
             "name": "submitReport",
             "inputs": [
+                {
+                    "name": "reasonHash",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                },
+                {
+                    "name": "isScam",
+                    "type": "bool",
+                    "internalType": "bool"
+                }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+        },
+        {
+            "type": "function",
+            "name": "submitVote",
+            "inputs": [
+                {
+                    "name": "targetType",
+                    "type": "uint8",
+                    "internalType": "uint8"
+                },
+                {
+                    "name": "targetId",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                },
                 {
                     "name": "reasonHash",
                     "type": "bytes32",
@@ -44,25 +115,91 @@
             "anonymous": false
         },
         {
+            "type": "event",
+            "name": "ScamVoteSubmitted",
+            "inputs": [
+                {
+                    "name": "reporter",
+                    "type": "address",
+                    "indexed": true,
+                    "internalType": "address"
+                },
+                {
+                    "name": "targetId",
+                    "type": "bytes32",
+                    "indexed": true,
+                    "internalType": "bytes32"
+                },
+                {
+                    "name": "targetType",
+                    "type": "uint8",
+                    "indexed": false,
+                    "internalType": "uint8"
+                },
+                {
+                    "name": "reasonHash",
+                    "type": "bytes32",
+                    "indexed": false,
+                    "internalType": "bytes32"
+                },
+                {
+                    "name": "isScam",
+                    "type": "bool",
+                    "indexed": false,
+                    "internalType": "bool"
+                }
+            ],
+            "anonymous": false
+        },
+        {
+            "type": "error",
+            "name": "AlreadyVoted",
+            "inputs": [
+                {
+                    "name": "targetId",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                },
+                {
+                    "name": "reporter",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ]
+        },
+        {
             "type": "error",
             "name": "EmptyReasonHash",
+            "inputs": []
+        },
+        {
+            "type": "error",
+            "name": "EmptyTargetId",
+            "inputs": []
+        },
+        {
+            "type": "error",
+            "name": "InvalidTargetType",
             "inputs": []
         }
     ],
     "bytecode": {
-        "object": "0x608060405234801561000f575f80fd5b506101df8061001d5f395ff3fe608060405234801561000f575f80fd5b5060043610610029575f3560e01c8063bbd89cfb1461002d575b5f80fd5b61004760048036038101906100429190610143565b610049565b005b5f801b8203610084576040517f817f48ed00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b813373ffffffffffffffffffffffffffffffffffffffff167f79894f1cff1f4559d5bdf71389e2213f93539a2f03ba03edceec7927accb9ae5836040516100cb9190610190565b60405180910390a35050565b5f80fd5b5f819050919050565b6100ed816100db565b81146100f7575f80fd5b50565b5f81359050610108816100e4565b92915050565b5f8115159050919050565b6101228161010e565b811461012c575f80fd5b50565b5f8135905061013d81610119565b92915050565b5f8060408385031215610159576101586100d7565b5b5f610166858286016100fa565b92505060206101778582860161012f565b9150509250929050565b61018a8161010e565b82525050565b5f6020820190506101a35f830184610181565b9291505056fea2646970667358221220b8b07e3e6c97b5f22f65b596576f23d740e89deea8123507e9c3c8616fab8baa64736f6c63430008180033",
-        "sourceMap": "632:1913:21:-:0;;;;;;;;;;;;;;;;;;;",
+        "object": "0x608060405234801561000f575f80fd5b5061074a8061001d5f395ff3fe608060405234801561000f575f80fd5b506004361061004a575f3560e01c806375f760211461004e578063aadc3b721461007e578063b5dd6284146100ae578063bbd89cfb146100ca575b5f80fd5b61006860048036038101906100639190610474565b6100e6565b60405161007591906104b7565b60405180910390f35b610098600480360381019061009391906104fa565b610107565b6040516100a59190610552565b60405180910390f35b6100c860048036038101906100c391906105cb565b610168565b005b6100e460048036038101906100df919061062f565b610388565b005b5f8173ffffffffffffffffffffffffffffffffffffffff165f1b9050919050565b5f805f8481526020019081526020015f205f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f9054906101000a900460ff16905092915050565b5f801b83036101a3576040517f19b071de00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5f801b82036101de576040517f817f48ed00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b6002808111156101f1576101f061066d565b5b60ff168460ff161115610230576040517fe46cb78500000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5f808481526020019081526020015f205f3373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f9054906101000a900460ff16156102cc5782336040517f0bcf2ea30000000000000000000000000000000000000000000000000000000081526004016102c39291906106a9565b60405180910390fd5b60015f808581526020019081526020015f205f3373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff021916908315150217905550823373ffffffffffffffffffffffffffffffffffffffff167f4866b80505de2a9f11bc92df30aba8d340b203e4e3700be812a4477860fb7c2186858560405161037a939291906106df565b60405180910390a350505050565b5f801b82036103c3576040517f817f48ed00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b813373ffffffffffffffffffffffffffffffffffffffff167f79894f1cff1f4559d5bdf71389e2213f93539a2f03ba03edceec7927accb9ae58360405161040a9190610552565b60405180910390a35050565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6104438261041a565b9050919050565b61045381610439565b811461045d575f80fd5b50565b5f8135905061046e8161044a565b92915050565b5f6020828403121561048957610488610416565b5b5f61049684828501610460565b91505092915050565b5f819050919050565b6104b18161049f565b82525050565b5f6020820190506104ca5f8301846104a8565b92915050565b6104d98161049f565b81146104e3575f80fd5b50565b5f813590506104f4816104d0565b92915050565b5f80604083850312156105105761050f610416565b5b5f61051d858286016104e6565b925050602061052e85828601610460565b9150509250929050565b5f8115159050919050565b61054c81610538565b82525050565b5f6020820190506105655f830184610543565b92915050565b5f60ff82169050919050565b6105808161056b565b811461058a575f80fd5b50565b5f8135905061059b81610577565b92915050565b6105aa81610538565b81146105b4575f80fd5b50565b5f813590506105c5816105a1565b92915050565b5f805f80608085870312156105e3576105e2610416565b5b5f6105f08782880161058d565b9450506020610601878288016104e6565b9350506040610612878288016104e6565b9250506060610623878288016105b7565b91505092959194509250565b5f806040838503121561064557610644610416565b5b5f610652858286016104e6565b9250506020610663858286016105b7565b9150509250929050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52602160045260245ffd5b6106a381610439565b82525050565b5f6040820190506106bc5f8301856104a8565b6106c9602083018461069a565b9392505050565b6106d98161056b565b82525050565b5f6060820190506106f25f8301866106d0565b6106ff60208301856104a8565b61070c6040830184610543565b94935050505056fea2646970667358221220a404cb8fe409d0b24ee7f5e11fccc0d575402ee5884d5c501b43dd07bdfe25b464736f6c63430008180033",
+        "sourceMap": "774:5025:19:-:0;;;;;;;;;;;;;;;;;;;",
         "linkReferences": {}
     },
     "deployedBytecode": {
-        "object": "0x608060405234801561000f575f80fd5b5060043610610029575f3560e01c8063bbd89cfb1461002d575b5f80fd5b61004760048036038101906100429190610143565b610049565b005b5f801b8203610084576040517f817f48ed00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b813373ffffffffffffffffffffffffffffffffffffffff167f79894f1cff1f4559d5bdf71389e2213f93539a2f03ba03edceec7927accb9ae5836040516100cb9190610190565b60405180910390a35050565b5f80fd5b5f819050919050565b6100ed816100db565b81146100f7575f80fd5b50565b5f81359050610108816100e4565b92915050565b5f8115159050919050565b6101228161010e565b811461012c575f80fd5b50565b5f8135905061013d81610119565b92915050565b5f8060408385031215610159576101586100d7565b5b5f610166858286016100fa565b92505060206101778582860161012f565b9150509250929050565b61018a8161010e565b82525050565b5f6020820190506101a35f830184610181565b9291505056fea2646970667358221220b8b07e3e6c97b5f22f65b596576f23d740e89deea8123507e9c3c8616fab8baa64736f6c63430008180033",
-        "sourceMap": "632:1913:21:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2342:201;;;;;;;;;;;;;:::i;:::-;;:::i;:::-;;;2442:1;2434:10;;2420;:24;2416:54;;2453:17;;;;;;;;;;;;;;2416:54;2517:10;2505;2485:51;;;2529:6;2485:51;;;;;;:::i;:::-;;;;;;;;2342:201;;:::o;88:117:23:-;197:1;194;187:12;334:77;371:7;400:5;389:16;;334:77;;;:::o;417:122::-;490:24;508:5;490:24;:::i;:::-;483:5;480:35;470:63;;529:1;526;519:12;470:63;417:122;:::o;545:139::-;591:5;629:6;616:20;607:29;;645:33;672:5;645:33;:::i;:::-;545:139;;;;:::o;690:90::-;724:7;767:5;760:13;753:21;742:32;;690:90;;;:::o;786:116::-;856:21;871:5;856:21;:::i;:::-;849:5;846:32;836:60;;892:1;889;882:12;836:60;786:116;:::o;908:133::-;951:5;989:6;976:20;967:29;;1005:30;1029:5;1005:30;:::i;:::-;908:133;;;;:::o;1047:468::-;1112:6;1120;1169:2;1157:9;1148:7;1144:23;1140:32;1137:119;;;1175:79;;:::i;:::-;1137:119;1295:1;1320:53;1365:7;1356:6;1345:9;1341:22;1320:53;:::i;:::-;1310:63;;1266:117;1422:2;1448:50;1490:7;1481:6;1470:9;1466:22;1448:50;:::i;:::-;1438:60;;1393:115;1047:468;;;;;:::o;1521:109::-;1602:21;1617:5;1602:21;:::i;:::-;1597:3;1590:34;1521:109;;:::o;1636:210::-;1723:4;1761:2;1750:9;1746:18;1738:26;;1774:65;1836:1;1825:9;1821:17;1812:6;1774:65;:::i;:::-;1636:210;;;;:::o",
+        "object": "0x608060405234801561000f575f80fd5b506004361061004a575f3560e01c806375f760211461004e578063aadc3b721461007e578063b5dd6284146100ae578063bbd89cfb146100ca575b5f80fd5b61006860048036038101906100639190610474565b6100e6565b60405161007591906104b7565b60405180910390f35b610098600480360381019061009391906104fa565b610107565b6040516100a59190610552565b60405180910390f35b6100c860048036038101906100c391906105cb565b610168565b005b6100e460048036038101906100df919061062f565b610388565b005b5f8173ffffffffffffffffffffffffffffffffffffffff165f1b9050919050565b5f805f8481526020019081526020015f205f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f9054906101000a900460ff16905092915050565b5f801b83036101a3576040517f19b071de00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5f801b82036101de576040517f817f48ed00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b6002808111156101f1576101f061066d565b5b60ff168460ff161115610230576040517fe46cb78500000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5f808481526020019081526020015f205f3373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f9054906101000a900460ff16156102cc5782336040517f0bcf2ea30000000000000000000000000000000000000000000000000000000081526004016102c39291906106a9565b60405180910390fd5b60015f808581526020019081526020015f205f3373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff021916908315150217905550823373ffffffffffffffffffffffffffffffffffffffff167f4866b80505de2a9f11bc92df30aba8d340b203e4e3700be812a4477860fb7c2186858560405161037a939291906106df565b60405180910390a350505050565b5f801b82036103c3576040517f817f48ed00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b813373ffffffffffffffffffffffffffffffffffffffff167f79894f1cff1f4559d5bdf71389e2213f93539a2f03ba03edceec7927accb9ae58360405161040a9190610552565b60405180910390a35050565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6104438261041a565b9050919050565b61045381610439565b811461045d575f80fd5b50565b5f8135905061046e8161044a565b92915050565b5f6020828403121561048957610488610416565b5b5f61049684828501610460565b91505092915050565b5f819050919050565b6104b18161049f565b82525050565b5f6020820190506104ca5f8301846104a8565b92915050565b6104d98161049f565b81146104e3575f80fd5b50565b5f813590506104f4816104d0565b92915050565b5f80604083850312156105105761050f610416565b5b5f61051d858286016104e6565b925050602061052e85828601610460565b9150509250929050565b5f8115159050919050565b61054c81610538565b82525050565b5f6020820190506105655f830184610543565b92915050565b5f60ff82169050919050565b6105808161056b565b811461058a575f80fd5b50565b5f8135905061059b81610577565b92915050565b6105aa81610538565b81146105b4575f80fd5b50565b5f813590506105c5816105a1565b92915050565b5f805f80608085870312156105e3576105e2610416565b5b5f6105f08782880161058d565b9450506020610601878288016104e6565b9350506040610612878288016104e6565b9250506060610623878288016105b7565b91505092959194509250565b5f806040838503121561064557610644610416565b5b5f610652858286016104e6565b9250506020610663858286016105b7565b9150509250929050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52602160045260245ffd5b6106a381610439565b82525050565b5f6040820190506106bc5f8301856104a8565b6106c9602083018461069a565b9392505050565b6106d98161056b565b82525050565b5f6060820190506106f25f8301866106d0565b6106ff60208301856104a8565b61070c6040830184610543565b94935050505056fea2646970667358221220a404cb8fe409d0b24ee7f5e11fccc0d575402ee5884d5c501b43dd07bdfe25b464736f6c63430008180033",
+        "sourceMap": "774:5025:19:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;5665:132;;;;;;;;;;;;;:::i;:::-;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;;5405:179;;;;;;;;;;;;;:::i;:::-;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;;4053:608;;;;;;;;;;;;;:::i;:::-;;:::i;:::-;;5121:201;;;;;;;;;;;;;:::i;:::-;;:::i;:::-;;5665:132;5731:7;5781:6;5765:24;;5757:33;;5750:40;;5665:132;;;:::o;5405:179::-;5510:4;5537:16;:26;5554:8;5537:26;;;;;;;;;;;:40;5564:12;5537:40;;;;;;;;;;;;;;;;;;;;;;;;;5530:47;;5405:179;;;;:::o;4053:608::-;4223:1;4215:10;;4203:8;:22;4199:50;;4234:15;;;;;;;;;;;;;;4199:50;4285:1;4277:10;;4263;:24;4259:54;;4296:17;;;;;;;;;;;;;;4259:54;4346:17;4340:24;;;;;;;;:::i;:::-;;4327:37;;:10;:37;;;4323:69;;;4373:19;;;;;;;;;;;;;;4323:69;4406:16;:26;4423:8;4406:26;;;;;;;;;;;:38;4433:10;4406:38;;;;;;;;;;;;;;;;;;;;;;;;;4402:110;;;4480:8;4490:10;4467:34;;;;;;;;;;;;:::i;:::-;;;;;;;;4402:110;4563:4;4522:16;:26;4539:8;4522:26;;;;;;;;;;;:38;4549:10;4522:38;;;;;;;;;;;;;;;;:45;;;;;;;;;;;;;;;;;;4613:8;4601:10;4583:71;;;4623:10;4635;4647:6;4583:71;;;;;;;;:::i;:::-;;;;;;;;4053:608;;;;:::o;5121:201::-;5221:1;5213:10;;5199;:24;5195:54;;5232:17;;;;;;;;;;;;;;5195:54;5296:10;5284;5264:51;;;5308:6;5264:51;;;;;;:::i;:::-;;;;;;;;5121:201;;:::o;88:117:21:-;197:1;194;187:12;334:126;371:7;411:42;404:5;400:54;389:65;;334:126;;;:::o;466:96::-;503:7;532:24;550:5;532:24;:::i;:::-;521:35;;466:96;;;:::o;568:122::-;641:24;659:5;641:24;:::i;:::-;634:5;631:35;621:63;;680:1;677;670:12;621:63;568:122;:::o;696:139::-;742:5;780:6;767:20;758:29;;796:33;823:5;796:33;:::i;:::-;696:139;;;;:::o;841:329::-;900:6;949:2;937:9;928:7;924:23;920:32;917:119;;;955:79;;:::i;:::-;917:119;1075:1;1100:53;1145:7;1136:6;1125:9;1121:22;1100:53;:::i;:::-;1090:63;;1046:117;841:329;;;;:::o;1176:77::-;1213:7;1242:5;1231:16;;1176:77;;;:::o;1259:118::-;1346:24;1364:5;1346:24;:::i;:::-;1341:3;1334:37;1259:118;;:::o;1383:222::-;1476:4;1514:2;1503:9;1499:18;1491:26;;1527:71;1595:1;1584:9;1580:17;1571:6;1527:71;:::i;:::-;1383:222;;;;:::o;1611:122::-;1684:24;1702:5;1684:24;:::i;:::-;1677:5;1674:35;1664:63;;1723:1;1720;1713:12;1664:63;1611:122;:::o;1739:139::-;1785:5;1823:6;1810:20;1801:29;;1839:33;1866:5;1839:33;:::i;:::-;1739:139;;;;:::o;1884:474::-;1952:6;1960;2009:2;1997:9;1988:7;1984:23;1980:32;1977:119;;;2015:79;;:::i;:::-;1977:119;2135:1;2160:53;2205:7;2196:6;2185:9;2181:22;2160:53;:::i;:::-;2150:63;;2106:117;2262:2;2288:53;2333:7;2324:6;2313:9;2309:22;2288:53;:::i;:::-;2278:63;;2233:118;1884:474;;;;;:::o;2364:90::-;2398:7;2441:5;2434:13;2427:21;2416:32;;2364:90;;;:::o;2460:109::-;2541:21;2556:5;2541:21;:::i;:::-;2536:3;2529:34;2460:109;;:::o;2575:210::-;2662:4;2700:2;2689:9;2685:18;2677:26;;2713:65;2775:1;2764:9;2760:17;2751:6;2713:65;:::i;:::-;2575:210;;;;:::o;2791:86::-;2826:7;2866:4;2859:5;2855:16;2844:27;;2791:86;;;:::o;2883:118::-;2954:22;2970:5;2954:22;:::i;:::-;2947:5;2944:33;2934:61;;2991:1;2988;2981:12;2934:61;2883:118;:::o;3007:135::-;3051:5;3089:6;3076:20;3067:29;;3105:31;3130:5;3105:31;:::i;:::-;3007:135;;;;:::o;3148:116::-;3218:21;3233:5;3218:21;:::i;:::-;3211:5;3208:32;3198:60;;3254:1;3251;3244:12;3198:60;3148:116;:::o;3270:133::-;3313:5;3351:6;3338:20;3329:29;;3367:30;3391:5;3367:30;:::i;:::-;3270:133;;;;:::o;3409:755::-;3490:6;3498;3506;3514;3563:3;3551:9;3542:7;3538:23;3534:33;3531:120;;;3570:79;;:::i;:::-;3531:120;3690:1;3715:51;3758:7;3749:6;3738:9;3734:22;3715:51;:::i;:::-;3705:61;;3661:115;3815:2;3841:53;3886:7;3877:6;3866:9;3862:22;3841:53;:::i;:::-;3831:63;;3786:118;3943:2;3969:53;4014:7;4005:6;3994:9;3990:22;3969:53;:::i;:::-;3959:63;;3914:118;4071:2;4097:50;4139:7;4130:6;4119:9;4115:22;4097:50;:::i;:::-;4087:60;;4042:115;3409:755;;;;;;;:::o;4170:468::-;4235:6;4243;4292:2;4280:9;4271:7;4267:23;4263:32;4260:119;;;4298:79;;:::i;:::-;4260:119;4418:1;4443:53;4488:7;4479:6;4468:9;4464:22;4443:53;:::i;:::-;4433:63;;4389:117;4545:2;4571:50;4613:7;4604:6;4593:9;4589:22;4571:50;:::i;:::-;4561:60;;4516:115;4170:468;;;;;:::o;4644:180::-;4692:77;4689:1;4682:88;4789:4;4786:1;4779:15;4813:4;4810:1;4803:15;4830:118;4917:24;4935:5;4917:24;:::i;:::-;4912:3;4905:37;4830:118;;:::o;4954:332::-;5075:4;5113:2;5102:9;5098:18;5090:26;;5126:71;5194:1;5183:9;5179:17;5170:6;5126:71;:::i;:::-;5207:72;5275:2;5264:9;5260:18;5251:6;5207:72;:::i;:::-;4954:332;;;;;:::o;5292:112::-;5375:22;5391:5;5375:22;:::i;:::-;5370:3;5363:35;5292:112;;:::o;5410:422::-;5549:4;5587:2;5576:9;5572:18;5564:26;;5600:67;5664:1;5653:9;5649:17;5640:6;5600:67;:::i;:::-;5677:72;5745:2;5734:9;5730:18;5721:6;5677:72;:::i;:::-;5759:66;5821:2;5810:9;5806:18;5797:6;5759:66;:::i;:::-;5410:422;;;;;;:::o",
         "linkReferences": {}
     },
     "methodIdentifiers": {
-        "submitReport(bytes32,bool)": "bbd89cfb"
+        "addressToTargetId(address)": "75f76021",
+        "hasVoted(bytes32,address)": "aadc3b72",
+        "submitReport(bytes32,bool)": "bbd89cfb",
+        "submitVote(uint8,bytes32,bytes32,bool)": "b5dd6284"
     },
-    "rawMetadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"EmptyReasonHash\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"reporter\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"reasonHash\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"isScam\",\"type\":\"bool\"}],\"name\":\"ScamReportSubmitted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"reasonHash\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isScam\",\"type\":\"bool\"}],\"name\":\"submitReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Zero state variables \\u2192 zero SSTORE \\u2192 ~22-24k gas per call on Base.         The reasonHash must be the keccak256 of the off-chain payload so the         Supabase listener can verify on-chain \\u2194 off-chain consistency.\",\"errors\":{\"EmptyReasonHash()\":[{\"details\":\"Reverts when `reasonHash` is the zero value, which would make the      event unverifiable against any real off-chain record.\"}]},\"events\":{\"ScamReportSubmitted(address,bytes32,bool)\":{\"params\":{\"isScam\":\"True = reporter believes target is a scam.                   Non-indexed (boolean, low cardinality \\u2014 not useful as a                   filter topic, saves one topic slot per log entry).\",\"reasonHash\":\"keccak256 of the off-chain reason payload (indexed for                   integrity checks \\u2014 fetch the hash, verify the payload).\",\"reporter\":\"Address that submitted the report (indexed for                   per-address lookups in the off-chain indexer).\"}}},\"kind\":\"dev\",\"methods\":{\"submitReport(bytes32,bool)\":{\"params\":{\"isScam\":\"True if the reporter considers the target a scam.\",\"reasonHash\":\"keccak256 of the off-chain reason payload.                    Must not be bytes32(0).\"}}},\"title\":\"ScamReporter\",\"version\":1},\"userdoc\":{\"events\":{\"ScamReportSubmitted(address,bytes32,bool)\":{\"notice\":\"Emitted for every scam-report vote.\"}},\"kind\":\"user\",\"methods\":{\"submitReport(bytes32,bool)\":{\"notice\":\"Submit a scam-report vote.\"}},\"notice\":\"Decentralized scam-report vote submission for the Wallo platform.         All data lives off-chain (Supabase); this contract is the integrity         anchor \\u2014 it proves a given (reporter, reasonHash, isScam) triple was         witnessed by the chain at a specific block.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/ScamReporter.sol\":\"ScamReporter\"},\"evmVersion\":\"cancun\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/ScamReporter.sol\":{\"keccak256\":\"0xaf383aaf46d5c03d38d6b6672802324107f4a7ae2cbdb6aff0d279de67880ee4\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://ae303fa916babf4d0092bd7ac511c12e680e2e901974750dd292fe58c34b821a\",\"dweb:/ipfs/QmPoL7cR2bc9BtoQ6ucqeXfgdvUjKVfaA1GzGUiWQ9GJm9\"]}},\"version\":1}",
+    "rawMetadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"targetId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"reporter\",\"type\":\"address\"}],\"name\":\"AlreadyVoted\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EmptyReasonHash\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EmptyTargetId\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidTargetType\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"reporter\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"reasonHash\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"isScam\",\"type\":\"bool\"}],\"name\":\"ScamReportSubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"reporter\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"targetId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"targetType\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"reasonHash\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"isScam\",\"type\":\"bool\"}],\"name\":\"ScamVoteSubmitted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"addressToTargetId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"targetId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"reporterAddr\",\"type\":\"address\"}],\"name\":\"hasVoted\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"reasonHash\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isScam\",\"type\":\"bool\"}],\"name\":\"submitReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"targetType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"targetId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"reasonHash\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isScam\",\"type\":\"bool\"}],\"name\":\"submitVote\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Minimal on-chain state: only anti-double-vote tracking keyed by         (targetId, reporter). Payload strings stay off-chain and are         represented by hashes for gas-efficient, indexer-friendly logs.         The reasonHash must be the keccak256 of the off-chain payload so the         Supabase listener can verify on-chain \\u2194 off-chain consistency.\",\"errors\":{\"AlreadyVoted(bytes32,address)\":[{\"details\":\"Reverts when `reporter` already voted for `targetId`.\"}],\"EmptyReasonHash()\":[{\"details\":\"Reverts when `reasonHash` is the zero value, which would make the      event unverifiable against any real off-chain record.\"}],\"EmptyTargetId()\":[{\"details\":\"Reverts when `targetId` is zero.\"}],\"InvalidTargetType()\":[{\"details\":\"Reverts when `targetType` is outside [0..2].\"}]},\"events\":{\"ScamReportSubmitted(address,bytes32,bool)\":{\"params\":{\"isScam\":\"True = reporter believes target is a scam.                   Non-indexed (boolean, low cardinality \\u2014 not useful as a                   filter topic, saves one topic slot per log entry).\",\"reasonHash\":\"keccak256 of the off-chain reason payload (indexed for                   integrity checks \\u2014 fetch the hash, verify the payload).\",\"reporter\":\"Address that submitted the report (indexed for                   per-address lookups in the off-chain indexer).\"}},\"ScamVoteSubmitted(address,bytes32,uint8,bytes32,bool)\":{\"params\":{\"isScam\":\"True = reporter believes target is a scam.\",\"reasonHash\":\"keccak256 of off-chain reason payload.\",\"reporter\":\"Address that submitted the vote (indexed).\",\"targetId\":\"Normalized target identifier hash (indexed).\",\"targetType\":\"0=ADDRESS, 1=ENS, 2=DOMAIN.\"}}},\"kind\":\"dev\",\"methods\":{\"submitReport(bytes32,bool)\":{\"details\":\"Deprecated: this legacy method is target-agnostic and does not         include a target identifier, so indexers cannot map the vote to         a specific target directly from logs.\",\"params\":{\"isScam\":\"True if the reporter considers the target a scam.\",\"reasonHash\":\"keccak256 of the off-chain reason payload.                    Must not be bytes32(0).\"}},\"submitVote(uint8,bytes32,bytes32,bool)\":{\"params\":{\"isScam\":\"True if the reporter considers the target a scam.\",\"reasonHash\":\"keccak256 of off-chain reason payload. Must not be zero.\",\"targetId\":\"Normalized target identifier hash. Must not be zero.\",\"targetType\":\"0=ADDRESS, 1=ENS, 2=DOMAIN.\"}}},\"stateVariables\":{\"hasVotedByTarget\":{\"details\":\"targetId => reporter => has voted\"}},\"title\":\"ScamReporter\",\"version\":1},\"userdoc\":{\"events\":{\"ScamReportSubmitted(address,bytes32,bool)\":{\"notice\":\"Emitted for every scam-report vote.\"},\"ScamVoteSubmitted(address,bytes32,uint8,bytes32,bool)\":{\"notice\":\"Emitted for every target-based scam vote (primary event for         indexers such as Ponder).\"}},\"kind\":\"user\",\"methods\":{\"addressToTargetId(address)\":{\"notice\":\"Converts an address target to normalized bytes32 targetId.\"},\"hasVoted(bytes32,address)\":{\"notice\":\"Returns whether `reporter` has already voted for `targetId`.\"},\"submitReport(bytes32,bool)\":{\"notice\":\"Submit a scam-report vote.\"},\"submitVote(uint8,bytes32,bytes32,bool)\":{\"notice\":\"Submit a target-scoped scam vote.\"}},\"notice\":\"Decentralized scam-report vote submission for the Wallo platform.         All data lives off-chain (Supabase); this contract is the integrity         anchor \\u2014 it proves a given (reporter, reasonHash, isScam) triple was         witnessed by the chain at a specific block.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/ScamReporter.sol\":\"ScamReporter\"},\"evmVersion\":\"cancun\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"]},\"sources\":{\"src/ScamReporter.sol\":{\"keccak256\":\"0x62129036f589751d1b1ad1a0b2ade15cd0d7d5441b0c86426c026f9fd98e47f5\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://0a9ff1a7944f0eb88c88963fed73329743b44d66cb51e8bad1e4a2de1e46d6fc\",\"dweb:/ipfs/QmNsoeGJUjSfDAodPNmBpeGJZwvTXbNFrLNAYeM72iymvn\"]}},\"version\":1}",
     "metadata": {
         "compiler": {
             "version": "0.8.24+commit.e11b9ed9"
@@ -71,9 +208,35 @@
         "output": {
             "abi": [
                 {
+                    "inputs": [
+                        {
+                            "internalType": "bytes32",
+                            "name": "targetId",
+                            "type": "bytes32"
+                        },
+                        {
+                            "internalType": "address",
+                            "name": "reporter",
+                            "type": "address"
+                        }
+                    ],
+                    "type": "error",
+                    "name": "AlreadyVoted"
+                },
+                {
                     "inputs": [],
                     "type": "error",
                     "name": "EmptyReasonHash"
+                },
+                {
+                    "inputs": [],
+                    "type": "error",
+                    "name": "EmptyTargetId"
+                },
+                {
+                    "inputs": [],
+                    "type": "error",
+                    "name": "InvalidTargetType"
                 },
                 {
                     "inputs": [
@@ -103,6 +266,86 @@
                 {
                     "inputs": [
                         {
+                            "internalType": "address",
+                            "name": "reporter",
+                            "type": "address",
+                            "indexed": true
+                        },
+                        {
+                            "internalType": "bytes32",
+                            "name": "targetId",
+                            "type": "bytes32",
+                            "indexed": true
+                        },
+                        {
+                            "internalType": "uint8",
+                            "name": "targetType",
+                            "type": "uint8",
+                            "indexed": false
+                        },
+                        {
+                            "internalType": "bytes32",
+                            "name": "reasonHash",
+                            "type": "bytes32",
+                            "indexed": false
+                        },
+                        {
+                            "internalType": "bool",
+                            "name": "isScam",
+                            "type": "bool",
+                            "indexed": false
+                        }
+                    ],
+                    "type": "event",
+                    "name": "ScamVoteSubmitted",
+                    "anonymous": false
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "address",
+                            "name": "target",
+                            "type": "address"
+                        }
+                    ],
+                    "stateMutability": "pure",
+                    "type": "function",
+                    "name": "addressToTargetId",
+                    "outputs": [
+                        {
+                            "internalType": "bytes32",
+                            "name": "",
+                            "type": "bytes32"
+                        }
+                    ]
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "bytes32",
+                            "name": "targetId",
+                            "type": "bytes32"
+                        },
+                        {
+                            "internalType": "address",
+                            "name": "reporterAddr",
+                            "type": "address"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function",
+                    "name": "hasVoted",
+                    "outputs": [
+                        {
+                            "internalType": "bool",
+                            "name": "",
+                            "type": "bool"
+                        }
+                    ]
+                },
+                {
+                    "inputs": [
+                        {
                             "internalType": "bytes32",
                             "name": "reasonHash",
                             "type": "bytes32"
@@ -116,15 +359,51 @@
                     "stateMutability": "nonpayable",
                     "type": "function",
                     "name": "submitReport"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "uint8",
+                            "name": "targetType",
+                            "type": "uint8"
+                        },
+                        {
+                            "internalType": "bytes32",
+                            "name": "targetId",
+                            "type": "bytes32"
+                        },
+                        {
+                            "internalType": "bytes32",
+                            "name": "reasonHash",
+                            "type": "bytes32"
+                        },
+                        {
+                            "internalType": "bool",
+                            "name": "isScam",
+                            "type": "bool"
+                        }
+                    ],
+                    "stateMutability": "nonpayable",
+                    "type": "function",
+                    "name": "submitVote"
                 }
             ],
             "devdoc": {
                 "kind": "dev",
                 "methods": {
                     "submitReport(bytes32,bool)": {
+                        "details": "Deprecated: this legacy method is target-agnostic and does not         include a target identifier, so indexers cannot map the vote to         a specific target directly from logs.",
                         "params": {
                             "isScam": "True if the reporter considers the target a scam.",
                             "reasonHash": "keccak256 of the off-chain reason payload.                    Must not be bytes32(0)."
+                        }
+                    },
+                    "submitVote(uint8,bytes32,bytes32,bool)": {
+                        "params": {
+                            "isScam": "True if the reporter considers the target a scam.",
+                            "reasonHash": "keccak256 of off-chain reason payload. Must not be zero.",
+                            "targetId": "Normalized target identifier hash. Must not be zero.",
+                            "targetType": "0=ADDRESS, 1=ENS, 2=DOMAIN."
                         }
                     }
                 },
@@ -133,8 +412,17 @@
             "userdoc": {
                 "kind": "user",
                 "methods": {
+                    "addressToTargetId(address)": {
+                        "notice": "Converts an address target to normalized bytes32 targetId."
+                    },
+                    "hasVoted(bytes32,address)": {
+                        "notice": "Returns whether `reporter` has already voted for `targetId`."
+                    },
                     "submitReport(bytes32,bool)": {
                         "notice": "Submit a scam-report vote."
+                    },
+                    "submitVote(uint8,bytes32,bytes32,bool)": {
+                        "notice": "Submit a target-scoped scam vote."
                     }
                 },
                 "version": 1
@@ -163,15 +451,15 @@
         },
         "sources": {
             "src/ScamReporter.sol": {
-                "keccak256": "0xaf383aaf46d5c03d38d6b6672802324107f4a7ae2cbdb6aff0d279de67880ee4",
+                "keccak256": "0x62129036f589751d1b1ad1a0b2ade15cd0d7d5441b0c86426c026f9fd98e47f5",
                 "urls": [
-                    "bzz-raw://ae303fa916babf4d0092bd7ac511c12e680e2e901974750dd292fe58c34b821a",
-                    "dweb:/ipfs/QmPoL7cR2bc9BtoQ6ucqeXfgdvUjKVfaA1GzGUiWQ9GJm9"
+                    "bzz-raw://0a9ff1a7944f0eb88c88963fed73329743b44d66cb51e8bad1e4a2de1e46d6fc",
+                    "dweb:/ipfs/QmNsoeGJUjSfDAodPNmBpeGJZwvTXbNFrLNAYeM72iymvn"
                 ],
                 "license": "UNLICENSED"
             }
         },
         "version": 1
     },
-    "id": 21
+    "id": 19
 }
