@@ -60,7 +60,7 @@ export async function scanContract(address: string, checkerAddress?: string): Pr
       isVerified: false,
       patterns: [],
       similarScams: [],
-      reportCount: eoaRecord._count.reports,
+      reportCount: 0,
       votesFor: 0,
       votesAgainst: 0,
       scanDuration: Date.now() - startTime,
