@@ -22,7 +22,22 @@ export async function GET(request: NextRequest) {
       where,
       orderBy: { createdAt: "desc" },
       take: limit,
-      include: {
+      select: {
+        id: true,
+        addressId: true,
+        checkerAddress: true,
+        bytecodeHash: true,
+        riskScore: true,
+        riskLevel: true,
+        patterns: true,
+        detectedSignatures: true,
+        isVerified: true,
+        isProxy: true,
+        proxyType: true,
+        implementationAddress: true,
+        scannerVersion: true,
+        scanDuration: true,
+        createdAt: true,
         address: {
           select: { address: true, chain: true, category: true },
         },

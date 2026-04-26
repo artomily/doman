@@ -21,6 +21,23 @@ export async function getAddress(address: string): Promise<Address | null> {
       scans: {
         orderBy: { createdAt: 'desc' },
         take: 5,
+        select: {
+          id: true,
+          addressId: true,
+          checkerAddress: true,
+          bytecodeHash: true,
+          riskScore: true,
+          riskLevel: true,
+          patterns: true,
+          detectedSignatures: true,
+          isVerified: true,
+          isProxy: true,
+          proxyType: true,
+          implementationAddress: true,
+          scannerVersion: true,
+          scanDuration: true,
+          createdAt: true,
+        },
       },
       reports: {
         where: { status: 'PENDING' },
@@ -55,7 +72,25 @@ export async function getAddress(address: string): Promise<Address | null> {
       include: {
         tags: true,
         sourceLinks: true,
-        scans: true,
+        scans: {
+          select: {
+            id: true,
+            addressId: true,
+            checkerAddress: true,
+            bytecodeHash: true,
+            riskScore: true,
+            riskLevel: true,
+            patterns: true,
+            detectedSignatures: true,
+            isVerified: true,
+            isProxy: true,
+            proxyType: true,
+            implementationAddress: true,
+            scannerVersion: true,
+            scanDuration: true,
+            createdAt: true,
+          },
+        },
       },
     });
 

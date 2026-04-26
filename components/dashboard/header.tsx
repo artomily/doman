@@ -4,6 +4,45 @@ import { useState, useRef, useEffect } from "react";
 import { Bell, Search, Wallet, LogOut, ChevronDown, Copy, Check } from "lucide-react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 
+const ACTIVE_SCAN_CHAIN_ID = Number.parseInt(
+  process.env.NEXT_PUBLIC_SCAN_CHAIN_ID ?? process.env.NEXT_PUBLIC_BASE_CHAIN_ID ?? "84532",
+  10
+);
+
+function NetworkModeButtons() {
+  const isTestnetActive = ACTIVE_SCAN_CHAIN_ID === 84532;
+
+  return (
+    <div
+      className="hidden items-center rounded-xl border border-card-border bg-surface p-1 md:flex"
+      role="tablist"
+      aria-label="Scan network mode"
+    >
+      <button
+        type="button"
+        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+          isTestnetActive
+            ? "bg-accent/20 text-accent"
+            : "text-muted hover:text-foreground"
+        }`}
+        aria-pressed={isTestnetActive}
+        title="Scanning is currently enabled on Base Sepolia"
+      >
+        Testnet
+      </button>
+      <button
+        type="button"
+        disabled
+        className="cursor-not-allowed rounded-lg px-3 py-1.5 text-xs font-medium text-muted opacity-60"
+        aria-disabled="true"
+        title="Mainnet scan is not available yet"
+      >
+        Mainnet
+      </button>
+    </div>
+  );
+}
+
 function WalletButton() {
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
@@ -106,6 +145,7 @@ export function DashboardHeader() {
 
       {/* Right side */}
       <div className="flex items-center gap-3">
+        <NetworkModeButtons />
         <button className="relative rounded-lg p-2 text-muted transition-colors hover:bg-surface hover:text-foreground">
           <Bell size={18} />
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" />
