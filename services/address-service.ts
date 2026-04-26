@@ -217,9 +217,9 @@ export async function searchAddresses(query: string, options: {
   }
 
   if (type === 'contracts') {
-    where.isContract = true;
+    where.addressType = { in: ['SMART_CONTRACT', 'PROXY', 'FACTORY'] };
   } else if (type === 'eoa') {
-    where.isContract = false;
+    where.addressType = 'EOA';
   }
 
   const results = await prisma.address.findMany({

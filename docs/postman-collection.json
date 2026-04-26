@@ -3,7 +3,7 @@
     "name": "Wallo API v1",
     "description": "Wallo Web3 Scam Detection Platform - Base Chain API Collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "variable": [
     {
@@ -69,9 +69,93 @@
             "description": "Get address details including risk score, tags, and scan history"
           },
           "response": []
+        },
+        {
+          "name": "Get Address ENS Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/address/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045/ens",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "address", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", "ens"]
+            },
+            "description": "Get all ENS records associated with an address"
+          },
+          "response": []
         }
       ],
       "description": "Address lookup and management"
+    },
+    {
+      "name": "ENS Resolution",
+      "item": [
+        {
+          "name": "Resolve ENS Name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/resolve/vitalik.eth",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "resolve", "vitalik.eth"]
+            },
+            "description": "Resolve an ENS name to its associated address"
+          },
+          "response": []
+        }
+      ],
+      "description": "Ethereum Name Service resolution"
+    },
+    {
+      "name": "Domain Scam Check",
+      "item": [
+        {
+          "name": "Check Domain",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/check-domain?domain=example.com",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "check-domain"],
+              "query": [
+                {
+                  "key": "domain",
+                  "value": "example.com"
+                }
+              ]
+            },
+            "description": "Check if a domain is a known phishing/scam domain"
+          },
+          "response": []
+        },
+        {
+          "name": "List Scam Domains",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scam-domains?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "scam-domains"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get paginated list of known scam domains"
+          },
+          "response": []
+        }
+      ],
+      "description": "Phishing domain detection and lookup"
     },
     {
       "name": "Scanner",

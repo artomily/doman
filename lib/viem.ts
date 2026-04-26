@@ -82,13 +82,13 @@ export const publicClient = createPublicClient({
  */
 export const walletClient = privateKey
   ? createWalletClient({
-      chain: baseSepoliaConfig,
-      transport: http(rpcUrl, {
-        timeout: 30_000,
-        retryCount: 3,
-      }),
-      account: privateKey,
-    })
+    chain: baseSepoliaConfig,
+    transport: http(rpcUrl, {
+      timeout: 30_000,
+      retryCount: 3,
+    }),
+    account: privateKey,
+  })
   : null;
 
 /**

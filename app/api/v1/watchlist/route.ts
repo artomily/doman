@@ -15,6 +15,22 @@ const addWatchlistSchema = z.object({
   watchedAddress: addressSchema,
 });
 
+type WatchlistEntry = {
+  id: string;
+  userAddress: string;
+  createdAt: Date;
+  address: {
+    address: string;
+    riskScore: number | null;
+    status: string | null;
+    chain: string | null;
+    scans: Array<{
+      riskScore: number | null;
+      createdAt: Date;
+    }>;
+  };
+};
+
 export async function GET(request: NextRequest) {
   return withErrorHandler(async () => {
     const userAddress = request.nextUrl.searchParams.get('userAddress');
@@ -28,7 +44,7 @@ export async function GET(request: NextRequest) {
       return errors.invalidAddress(parsed.error.errors);
     }
 
-    const entries = await prisma.watchlist.findMany({
+    const entries: WatchlistEntry[] = await prisma.watchlist.findMany({
       where: { userAddress: parsed.data },
       include: {
         address: {

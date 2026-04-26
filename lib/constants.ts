@@ -244,7 +244,14 @@ export const EXTERNAL_APIS = {
   },
   SCAMSNIFFER: {
     REPO_URL: 'https://github.com/scamsniffer/scam-database',
-    RAW_URL: 'https://raw.githubusercontent.com/scamsniffer/scam-database/main',
+    RAW_URL: 'https://raw.githubusercontent.com/scamsniffer/scam-database/main/blacklist',
+    // Working endpoints:
+    // - address.json: Scam addresses
+    // - domains.json: Scam domains
+    // - combined.json: Combined address and domain data
+    ADDRESS_ENDPOINT: '/address.json',
+    DOMAINS_ENDPOINT: '/domains.json',
+    COMBINED_ENDPOINT: '/combined.json',
     TIMEOUT: 15_000,
   },
   CRYPTOSCAMDB: {

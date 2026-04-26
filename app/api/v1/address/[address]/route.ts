@@ -78,7 +78,7 @@ export async function GET(
       verifiedAt: addressData.verifiedAt?.toISOString() || null,
       createdAt: addressData.createdAt.toISOString(),
       updatedAt: addressData.updatedAt.toISOString(),
-      tags: addressData.tags.map(tag => ({
+      tags: addressData.tags.map((tag: any) => ({
         id: tag.id,
         tag: tag.tag,
         taggedBy: tag.taggedBy,
