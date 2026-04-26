@@ -1,8 +1,8 @@
 # Wallo Extension Design Guide
 
-**Version:** 1.0  
-**Date:** 2026-04-17  
-**Based on:** Dashboard Design System v1.0
+**Version:** 1.1  
+**Date:** 2026-04-26  
+**Based on:** Dashboard Design System v1.1
 
 ---
 
@@ -34,7 +34,7 @@
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Primary Action (Accent #beff00)              │
+│ Primary Action (Accent #3B82F6)              │
 │ → Most important, draws attention           │
 ├─────────────────────────────────────────────┤
 │ Secondary Action (Foreground #ededed)        │
@@ -51,31 +51,32 @@
 
 ### Base Colors
 
-| Role | CSS Variable | Value | Usage |
-|------|--------------|-------|-------|
-| Background | `--background` | `#0a0a0a` | Main background |
-| Foreground | `--foreground` | `#ededed` | Primary text |
-| Accent | `--accent` | `#beff00` | CTAs, links, highlights |
-| Accent Dark | `--accent-dark` | `#a3d900` | Hover states |
-| Muted | `--muted` | `#888888` | Secondary text |
-| Card | `--card` | `#141414` | Card backgrounds |
-| Card Border | `--card-border` | `#222222` | Borders, dividers |
-| Surface | `--surface` | `#1a1a1a` | Inputs, elevated surfaces |
+| Role        | CSS Variable    | Value     | Usage                     |
+| ----------- | --------------- | --------- | ------------------------- |
+| Background  | `--background`  | `#000000` | Main background           |
+| Foreground  | `--foreground`  | `#E5E7EB` | Primary text              |
+| Accent      | `--accent`      | `#3B82F6` | CTAs, links, highlights   |
+| Accent Dark | `--accent-dark` | `#2563EB` | Hover states              |
+| Glow        | `--glow`        | `#22D3EE` | Gradient/glow accents     |
+| Muted       | `--muted`       | `#9CA3AF` | Secondary text            |
+| Card        | `--card`        | `#0D0D0D` | Card backgrounds          |
+| Card Border | `--card-border` | `#1F1F1F` | Borders, dividers         |
+| Surface     | `--surface`     | `#0A0A0A` | Inputs, elevated surfaces |
 
 ### Status Colors
 
-| Status | Background | Border | Text | Usage |
-|--------|-----------|--------|------|-------|
-| Safe | `rgba(34, 197, 94, 0.2)` | `rgba(34, 197, 94, 0.3)` | `#4ade80` | Score ≥ 70 |
-| Warning | `rgba(234, 179, 8, 0.2)` | `rgba(234, 179, 8, 0.3)` | `#facc15` | Score 40-69 |
-| Danger | `rgba(239, 68, 68, 0.2)` | `rgba(239, 68, 68, 0.3)` | `#f87171` | Score < 40 |
-| Unknown | `rgba(113, 113, 122, 0.2)` | `rgba(113, 113, 122, 0.3)` | `#a1a1aa` | No data |
+| Status  | Background                 | Border                     | Text      | Usage       |
+| ------- | -------------------------- | -------------------------- | --------- | ----------- |
+| Safe    | `rgba(34, 197, 94, 0.2)`   | `rgba(34, 197, 94, 0.3)`   | `#4ade80` | Score ≥ 70  |
+| Warning | `rgba(234, 179, 8, 0.2)`   | `rgba(234, 179, 8, 0.3)`   | `#facc15` | Score 40-69 |
+| Danger  | `rgba(239, 68, 68, 0.2)`   | `rgba(239, 68, 68, 0.3)`   | `#f87171` | Score < 40  |
+| Unknown | `rgba(113, 113, 122, 0.2)` | `rgba(113, 113, 122, 0.3)` | `#a1a1aa` | No data     |
 
 ### Color Usage Guidelines
 
 ```css
 /* DO - Use accent for primary actions */
-<button className="bg-accent text-black">Check Address</button>
+<button className="bg-accent text-white">Check Address</button>
 
 /* DON'T - Don't overuse accent */
 <div className="bg-accent">Large content area</div>
@@ -95,22 +96,26 @@
 
 ```css
 /* Sans-serif - Headings, UI elements */
-font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+font-family:
+  "Space Grotesk",
+  system-ui,
+  -apple-system,
+  sans-serif;
 
 /* Monospace - Addresses, code, hashes */
-font-family: 'Geist Mono', 'SF Mono', Consolas, monospace;
+font-family: "Geist Mono", "SF Mono", Consolas, monospace;
 ```
 
 ### Type Scale
 
-| Usage | Size | Weight | Line Height | Font Family |
-|-------|------|--------|-------------|-------------|
-| H1 - Page Title | 24px | 700 (Bold) | 1.2 | Space Grotesk |
-| H2 - Card Title | 18px | 600 (Semi) | 1.3 | Space Grotesk |
-| H3 - Section | 14px | 600 (Semi) | 1.4 | Space Grotesk |
-| Body - Primary | 14px | 400 (Reg) | 1.5 | Space Grotesk |
-| Body - Small | 12px | 400 (Reg) | 1.5 | Space Grotesk |
-| Monospace - Address | 13px | 400 (Reg) | 1.4 | Geist Mono |
+| Usage               | Size | Weight     | Line Height | Font Family   |
+| ------------------- | ---- | ---------- | ----------- | ------------- |
+| H1 - Page Title     | 24px | 700 (Bold) | 1.2         | Space Grotesk |
+| H2 - Card Title     | 18px | 600 (Semi) | 1.3         | Space Grotesk |
+| H3 - Section        | 14px | 600 (Semi) | 1.4         | Space Grotesk |
+| Body - Primary      | 14px | 400 (Reg)  | 1.5         | Space Grotesk |
+| Body - Small        | 12px | 400 (Reg)  | 1.5         | Space Grotesk |
+| Monospace - Address | 13px | 400 (Reg)  | 1.4         | Geist Mono    |
 
 ### Typography Examples
 
@@ -132,7 +137,7 @@ h2 {
 
 /* Address Text */
 .address {
-  font-family: 'Geist Mono', monospace;
+  font-family: "Geist Mono", monospace;
   font-size: 13px;
   letter-spacing: 0.01em;
 }
@@ -152,23 +157,23 @@ h2 {
 
 ### Spacing Scale
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `xs` | 4px | Tight spacing, icon gaps |
-| `sm` | 8px | Small gaps, padding-sm |
-| `md` | 16px | Default spacing |
-| `lg` | 24px | Section spacing |
-| `xl` | 32px | Large gaps |
-| `2xl` | 48px | Component separation |
+| Token | Value | Usage                    |
+| ----- | ----- | ------------------------ |
+| `xs`  | 4px   | Tight spacing, icon gaps |
+| `sm`  | 8px   | Small gaps, padding-sm   |
+| `md`  | 16px  | Default spacing          |
+| `lg`  | 24px  | Section spacing          |
+| `xl`  | 32px  | Large gaps               |
+| `2xl` | 48px  | Component separation     |
 
 ### Border Radius
 
-| Size | Value | Usage |
-|------|-------|-------|
-| `sm` | 8px | Small elements, tags |
-| `md` | 12px | Cards, buttons |
-| `lg` | 16px | Large cards, modals |
-| `full` | 9999px | Pills, badges |
+| Size   | Value  | Usage                |
+| ------ | ------ | -------------------- |
+| `sm`   | 8px    | Small elements, tags |
+| `md`   | 12px   | Cards, buttons       |
+| `lg`   | 16px   | Large cards, modals  |
+| `full` | 9999px | Pills, badges        |
 
 ### Layout Patterns
 
@@ -212,7 +217,7 @@ h2 {
 /* Primary Button */
 .btn-primary {
   background: var(--accent);
-  color: #000000;
+  color: #ffffff;
   padding: 12px 24px;
   border-radius: 9999px;
   font-weight: 600;
@@ -487,8 +492,12 @@ h2 {
 }
 
 @keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 ```
 
@@ -508,32 +517,50 @@ npm install lucide
 
 ### Common Icons
 
-| Icon | Name | Usage |
-|------|------|-------|
-| `shield` | Shield | Logo, security |
-| `search` | Search | Search inputs |
+| Icon             | Name          | Usage             |
+| ---------------- | ------------- | ----------------- |
+| `shield`         | Shield        | Logo, security    |
+| `search`         | Search        | Search inputs     |
 | `alert-triangle` | AlertTriangle | Warnings, dangers |
-| `check-circle` | CheckCircle | Success, safe |
-| `x-circle` | XCircle | Error, blocked |
-| `clock` | Clock | Time, history |
-| `eye` | Eye | View, visible |
-| `eye-off` | EyeOff | Hide, hidden |
-| `bell` | Bell | Notifications |
-| `settings` | Settings | Settings menu |
-| `thumbs-up` | ThumbsUp | Vote up |
-| `thumbs-down` | ThumbsDown | Vote down |
-| `copy` | Copy | Copy address |
-| `external-link` | ExternalLink | Open externally |
+| `check-circle`   | CheckCircle   | Success, safe     |
+| `x-circle`       | XCircle       | Error, blocked    |
+| `clock`          | Clock         | Time, history     |
+| `eye`            | Eye           | View, visible     |
+| `eye-off`        | EyeOff        | Hide, hidden      |
+| `bell`           | Bell          | Notifications     |
+| `settings`       | Settings      | Settings menu     |
+| `thumbs-up`      | ThumbsUp      | Vote up           |
+| `thumbs-down`    | ThumbsDown    | Vote down         |
+| `copy`           | Copy          | Copy address      |
+| `external-link`  | ExternalLink  | Open externally   |
 
 ### Icon Sizing
 
 ```css
-.icon-xs { width: 12px; height: 12px; }
-.icon-sm { width: 14px; height: 14px; }
-.icon-md { width: 16px; height: 16px; }
-.icon-lg { width: 18px; height: 18px; }
-.icon-xl { width: 20px; height: 20px; }
-.icon-2xl { width: 24px; height: 24px; }
+.icon-xs {
+  width: 12px;
+  height: 12px;
+}
+.icon-sm {
+  width: 14px;
+  height: 14px;
+}
+.icon-md {
+  width: 16px;
+  height: 16px;
+}
+.icon-lg {
+  width: 18px;
+  height: 18px;
+}
+.icon-xl {
+  width: 20px;
+  height: 20px;
+}
+.icon-2xl {
+  width: 24px;
+  height: 24px;
+}
 ```
 
 ---
@@ -564,8 +591,12 @@ npm install lucide
 ```css
 /* Fade in */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .fade-in {
@@ -590,8 +621,13 @@ npm install lucide
 
 /* Pulse for alerts */
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .pulse {
@@ -600,8 +636,12 @@ npm install lucide
 
 /* Spin for loading */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spin {
@@ -622,7 +662,7 @@ npm install lucide
   min-height: 400px;
   max-height: 600px;
   background: var(--background);
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
 }
 
 /* Popup Header */
@@ -681,7 +721,7 @@ npm install lucide
   background: rgba(239, 68, 68, 0.15);
   border: 1px solid rgba(239, 68, 68, 0.4);
   border-radius: 6px;
-  font-family: 'Geist Mono', monospace;
+  font-family: "Geist Mono", monospace;
   font-size: 12px;
   color: #f87171;
   cursor: pointer;
@@ -716,7 +756,7 @@ npm install lucide
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   animation: fade-in 0.2s ease;
 }
 
@@ -742,7 +782,7 @@ npm install lucide
 }
 
 .wallo-scam-domain {
-  font-family: 'Geist Mono', monospace;
+  font-family: "Geist Mono", monospace;
   font-size: 16px;
   color: var(--foreground);
   word-break: break-all;
@@ -780,12 +820,18 @@ npm install lucide
   line-height: 1;
 }
 
-.wallo-tooltip-score.safe { color: #4ade80; }
-.wallo-tooltip-score.warning { color: #facc15; }
-.wallo-tooltip-score.danger { color: #f87171; }
+.wallo-tooltip-score.safe {
+  color: #4ade80;
+}
+.wallo-tooltip-score.warning {
+  color: #facc15;
+}
+.wallo-tooltip-score.danger {
+  color: #f87171;
+}
 
 .wallo-tooltip-address {
-  font-family: 'Geist Mono', monospace;
+  font-family: "Geist Mono", monospace;
   font-size: 12px;
   color: var(--muted);
   margin-top: 8px;
@@ -858,14 +904,15 @@ npm install lucide
 ```css
 /* Wallo Extension Base Styles */
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --accent: #beff00;
-  --accent-dark: #a3d900;
-  --muted: #888888;
-  --card: #141414;
-  --card-border: #222222;
-  --surface: #1a1a1a;
+  --background: #000000;
+  --foreground: #e5e7eb;
+  --accent: #3b82f6;
+  --accent-dark: #2563eb;
+  --glow: #22d3ee;
+  --muted: #9ca3af;
+  --card: #0d0d0d;
+  --card-border: #1f1f1f;
+  --surface: #0a0a0a;
 
   /* Status colors */
   --color-safe: #4ade80;
@@ -891,10 +938,28 @@ npm install lucide
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-family: "Space Grotesk", system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Accent utilities */
+.gradient-blue {
+  background: linear-gradient(to right, #3b82f6, #22d3ee);
+}
+
+.gradient-text {
+  background: linear-gradient(to right, #3b82f6, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glow-accent {
+  box-shadow:
+    0 0 20px rgba(59, 130, 246, 0.25),
+    0 0 40px rgba(59, 130, 246, 0.1);
 }
 
 /* Custom scrollbar */
@@ -921,59 +986,134 @@ body {
 
 ```css
 /* Spacing */
-.p-4 { padding: 16px; }
-.p-6 { padding: 24px; }
-.px-4 { padding-left: 16px; padding-right: 16px; }
-.py-2 { padding-top: 8px; padding-bottom: 8px; }
-.m-4 { margin: 16px; }
-.mb-4 { margin-bottom: 16px; }
-.mt-2 { margin-top: 8px; }
+.p-4 {
+  padding: 16px;
+}
+.p-6 {
+  padding: 24px;
+}
+.px-4 {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.py-2 {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.m-4 {
+  margin: 16px;
+}
+.mb-4 {
+  margin-bottom: 16px;
+}
+.mt-2 {
+  margin-top: 8px;
+}
 
 /* Flexbox */
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.justify-center { justify-content: center; }
-.gap-2 { gap: 8px; }
-.gap-4 { gap: 16px; }
+.flex {
+  display: flex;
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-center {
+  align-items: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.justify-center {
+  justify-content: center;
+}
+.gap-2 {
+  gap: 8px;
+}
+.gap-4 {
+  gap: 16px;
+}
 
 /* Text */
-.text-sm { font-size: 14px; }
-.text-xs { font-size: 12px; }
-.font-mono { font-family: 'Geist Mono', monospace; }
-.font-medium { font-weight: 500; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
-.text-muted { color: var(--muted); }
-.text-accent { color: var(--accent); }
+.text-sm {
+  font-size: 14px;
+}
+.text-xs {
+  font-size: 12px;
+}
+.font-mono {
+  font-family: "Geist Mono", monospace;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.font-bold {
+  font-weight: 700;
+}
+.text-muted {
+  color: var(--muted);
+}
+.text-accent {
+  color: var(--accent);
+}
+.text-glow {
+  color: var(--glow);
+}
 
 /* Borders */
-.rounded-xl { border-radius: 12px; }
-.rounded-2xl { border-radius: 16px; }
-.border { border: 1px solid var(--card-border); }
+.rounded-xl {
+  border-radius: 12px;
+}
+.rounded-2xl {
+  border-radius: 16px;
+}
+.border {
+  border: 1px solid var(--card-border);
+}
 
 /* Display */
-.hidden { display: none; }
-.block { display: block; }
+.hidden {
+  display: none;
+}
+.block {
+  display: block;
+}
 
 /* Width */
-.w-full { width: 100%; }
+.w-full {
+  width: 100%;
+}
 
 /* Overflow */
-.overflow-hidden { overflow: hidden; }
-.overflow-y-auto { overflow-y: auto; }
+.overflow-hidden {
+  overflow: hidden;
+}
+.overflow-y-auto {
+  overflow-y: auto;
+}
 
 /* Position */
-.relative { position: relative; }
-.absolute { position: absolute; }
-.fixed { position: fixed; }
+.relative {
+  position: relative;
+}
+.absolute {
+  position: absolute;
+}
+.fixed {
+  position: fixed;
+}
 
 /* Cursor */
-.cursor-pointer { cursor: pointer; }
+.cursor-pointer {
+  cursor: pointer;
+}
 
 /* Transition */
-.transition-all { transition: all 0.15s ease; }
+.transition-all {
+  transition: all 0.15s ease;
+}
 ```
 
 ---
@@ -986,20 +1126,32 @@ body {
 
 /* Small devices (landscape phones, 576px and up) */
 @media (min-width: 576px) {
-  .sm\:flex-row { flex-direction: row; }
-  .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .sm\:flex-row {
+    flex-direction: row;
+  }
+  .sm\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* Medium devices (tablets, 768px and up) */
 @media (min-width: 768px) {
-  .md\:block { display: block; }
-  .md\:hidden { display: none; }
-  .md\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .md\:block {
+    display: block;
+  }
+  .md\:hidden {
+    display: none;
+  }
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 /* Large devices (desktops, 1024px and up) */
 @media (min-width: 1024px) {
-  .lg\:flex { display: flex; }
+  .lg\:flex {
+    display: flex;
+  }
 }
 ```
 
@@ -1050,8 +1202,15 @@ body {
   <!-- Header -->
   <header class="popup-header">
     <div class="popup-logo">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     </div>
     <span class="popup-title">Wallo</span>
@@ -1061,11 +1220,17 @@ body {
   <div class="popup-content">
     <!-- Search -->
     <div class="input-with-icon mb-4">
-      <svg class="icon-md icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/>
-        <path d="m21 21-4.35-4.35"/>
+      <svg
+        class="icon-md icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
       </svg>
-      <input type="text" class="input" placeholder="Check address...">
+      <input type="text" class="input" placeholder="Check address..." />
     </div>
 
     <!-- Result -->
@@ -1115,10 +1280,11 @@ Before finalizing any UI component, verify:
 ## 🆘 Design Support
 
 For design questions:
+
 1. Check this guide first
 2. Reference dashboard components
 3. Maintain consistency with existing patterns
 4. Test in dark mode only (no light mode needed)
 
-**Design System Version:** 1.0  
-**Last Updated:** 2026-04-17
+**Design System Version:** 1.1  
+**Last Updated:** 2026-04-26
