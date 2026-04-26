@@ -44,3 +44,5 @@ next-env.d.ts
 .playwright-mcp/
 .mcp.json
 .settings.local.json
+
+.claude
