@@ -408,12 +408,6 @@ export async function syncCryptoScamDB(): Promise<SyncResult> {
           description: addressData.description,
           url: addressData.url,
         },
-        update: {
-          name: addressData.name,
-          description: addressData.description,
-          url: addressData.url,
-          updatedAt: new Date(),
-        },
         create: {
           address: addressData.address,
           name: addressData.name,

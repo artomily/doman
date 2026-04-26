@@ -11,6 +11,7 @@
 
 import { createPublicClient, createWalletClient, http, type Chain, type PublicClient, type WalletClient } from 'viem';
 import { baseSepolia, mainnet, sepolia } from 'viem/chains';
+import { baseSepolia, mainnet, sepolia } from 'viem/chains';
 
 /**
  * Validate required environment variables

@@ -133,8 +133,6 @@ model Address {
   scans          ContractScan[]
   tags           AddressTag[]
   sourceLinks    ExternalSource[]
-  ensRecords     EnsRecord[]
-  signatures     ContractSignature[] @relation("ContractSignatures") // Function signatures
   watchlist      Watchlist[]
   ensRecords     EnsRecord[]
   contractSignatures ContractSignature[] @relation("ContractSignatures")

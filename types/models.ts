@@ -5,7 +5,23 @@
  * These types provide better TypeScript support when working with database models.
  */
 
-import type { Address, Report, Vote, ContractScan, AddressTag, ExternalSource, SyncLog, UserProfile, ScamDomain, AddressStatus, AddressCategory, DataSource, ReportStatus, VoteType, RiskLevel } from '@prisma/client';
+import type {
+  Address,
+  Report,
+  Vote,
+  ContractScan,
+  AddressTag,
+  ExternalSource,
+  SyncLog,
+  UserProfile,
+  ScamDomain,
+  AddressStatus,
+  AddressCategory,
+  DataSource,
+  ReportStatus,
+  VoteType,
+  RiskLevel,
+} from '@prisma/client';
 
 // ============================================
 // ADDRESS TYPES
