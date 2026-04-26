@@ -19,6 +19,8 @@ type GetTagsResponse = {
   count: number;
 };
 
+type AddressTagItem = GetTagsResponse['data'][number];
+
 type DeleteTagResponse = {
   message: string;
   address: string;
@@ -55,7 +57,7 @@ export async function GET(
     }
 
     // Get tags
-    const tags = await prisma.addressTag.findMany({
+    const tags: AddressTagItem[] = await prisma.addressTag.findMany({
       where: { addressId: addressRecord.id },
       orderBy: { createdAt: 'desc' },
     });
