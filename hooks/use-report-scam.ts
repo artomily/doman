@@ -16,6 +16,7 @@ import {
 import { wagmiConfig } from '@/lib/wagmi';
 import artifact from '@/ScamReporter.json';
 import { isAddress, keccak256, pad, toBytes } from 'viem';
+import { base } from 'wagmi/chains';
 
 export type ReportStep =
   | 'idle'
@@ -151,6 +152,10 @@ export function useReportScam(): UseReportScamReturn {
         let contractAddress: `0x${string}` | '' = existingAddress;
 
         if (!contractAddress) {
+          if (chainId === base.id) {
+            throw new Error('Mainnet contract address is not configured. Set NEXT_PUBLIC_SCAM_REPORTER_BASE_ADDRESS.');
+          }
+
           // Deploy the contract — user approves in wallet
           setStep('deploying');
           const deployTxHash = await deployContractAsync({

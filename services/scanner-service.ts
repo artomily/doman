@@ -5,7 +5,7 @@
  * Uses bytecode analysis and pattern matching to calculate risk scores.
  */
 
-import { getBytecode, isContract, publicClient } from '@/lib/viem';
+import { getBytecode, isContract, getScanClient } from '@/lib/viem';
 import { SCAM_PATTERNS, getRiskLevelFromScore, SCAN_LIMITS } from '@/lib/constants';
 import { allScamPatterns, calculateRiskScore, getRiskLevel } from '@/config/scam-patterns';
 import type { DetectedPattern, ScanResult, QuickScanResult, SimilarScam } from '@/types/api';
@@ -25,7 +25,11 @@ async function trackChecker(checkerAddress: string) {
 /**
  * Scan contract for potential risks
  */
-export async function scanContract(address: string, checkerAddress?: string): Promise<ScanResult> {
+export async function scanContract(
+  address: string,
+  checkerAddress?: string,
+  chainId?: number
+): Promise<ScanResult> {
   const startTime = Date.now();
 
   // Validate address format
@@ -34,10 +38,10 @@ export async function scanContract(address: string, checkerAddress?: string): Pr
   }
 
   // Detect address type first
-  const addressTypeInfo = await detectAddressType(address);
-
+  const addressTypeInfo = await detectAddressType(address, chainId);
   // Check if it's a contract
-  const hasCode = await isContract(address);
+  const hasCode = await isContract(address, chainId);
+  
   if (!hasCode) {
     // EOA (Externally Owned Account) - low risk but not a contract
     // Update address record with EOA type
@@ -69,7 +73,7 @@ export async function scanContract(address: string, checkerAddress?: string): Pr
   }
 
   // Get bytecode for analysis
-  const bytecode = await getBytecode(address);
+  const bytecode = await getBytecode(address, chainId);
   if (!bytecode) {
     throw new Error('Failed to get bytecode');
   }
@@ -184,6 +188,12 @@ export async function quickScan(address: string): Promise<QuickScanResult> {
         scans: {
           orderBy: { createdAt: 'desc' },
           take: 1,
+          select: {
+            id: true,
+            riskScore: true,
+            riskLevel: true,
+            createdAt: true,
+          },
         },
       },
     });
@@ -232,7 +242,7 @@ export async function quickScan(address: string): Promise<QuickScanResult> {
 /**
  * Detect address type (EOA, SMART_CONTRACT, PROXY, FACTORY)
  */
-export async function detectAddressType(address: string): Promise<{
+export async function detectAddressType(address: string, chainId?: number): Promise<{
   addressType: AddressType;
   contractType?: ContractType;
   isProxy: boolean;
@@ -240,7 +250,7 @@ export async function detectAddressType(address: string): Promise<{
   implementationAddress?: string;
 }> {
   // Check if it's a contract
-  const hasCode = await isContract(address);
+  const hasCode = await isContract(address, chainId);
 
   if (!hasCode) {
     return {
@@ -250,7 +260,7 @@ export async function detectAddressType(address: string): Promise<{
   }
 
   // Get bytecode for further analysis
-  const bytecode = await getBytecode(address);
+  const bytecode = await getBytecode(address, chainId);
   if (!bytecode) {
     return {
       addressType: 'SMART_CONTRACT',
@@ -259,7 +269,7 @@ export async function detectAddressType(address: string): Promise<{
   }
 
   // Check for proxy patterns
-  const proxyInfo = await detectProxy(bytecode, address);
+  const proxyInfo = await detectProxy(bytecode, address, chainId);
 
   // Detect contract type based on bytecode and function selectors
   const contractType = await detectContractType(bytecode);
@@ -279,7 +289,7 @@ export async function detectAddressType(address: string): Promise<{
 /**
  * Detect if contract is a proxy and get proxy info
  */
-async function detectProxy(bytecode: `0x${string}`, address: string): Promise<{
+async function detectProxy(bytecode: `0x${string}`, address: string, chainId?: number): Promise<{
   isProxy: boolean;
   proxyType?: string;
   implementationAddress?: string;
@@ -290,7 +300,7 @@ async function detectProxy(bytecode: `0x${string}`, address: string): Promise<{
 
   try {
     // Check ERC1967 implementation slot
-    const implementationSlot = await publicClient.getStorageAt({
+    const implementationSlot = await getScanClient(chainId).getStorageAt({
       address: address as `0x${string}`,
       slot: ERC1967_IMPLEMENTATION_SLOT,
     });

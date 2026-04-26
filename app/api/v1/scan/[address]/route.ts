@@ -23,6 +23,12 @@ export async function GET(
 
     // Optional: wallet address of the user performing the check
     const checkerAddress = request.nextUrl.searchParams.get('checker') ?? undefined;
+    const chainIdParam = request.nextUrl.searchParams.get('chainId');
+    const chainId = chainIdParam ? parseInt(chainIdParam, 10) : undefined;
+
+    if (chainIdParam && chainId !== 8453 && chainId !== 84532) {
+      return errors.validation('Unsupported chainId. Use 8453 (Base) or 84532 (Base Sepolia).');
+    }
 
     if (!input || input.length < 2) {
       return errors.validation('Input must be at least 2 characters');
@@ -49,7 +55,7 @@ export async function GET(
       return errors.invalidAddress([{ message: 'Invalid Ethereum address format' }]);
     }
 
-    const result = await scanContract(address, checkerAddress);
+    const result = await scanContract(address, checkerAddress, chainId);
     return apiSuccess({
       ...result,
       inputType,

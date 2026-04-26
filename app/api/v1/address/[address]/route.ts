@@ -48,6 +48,10 @@ export async function GET(
         scans: {
           orderBy: { createdAt: 'desc' },
           take: 1,
+          select: {
+            id: true,
+            createdAt: true,
+          },
         },
         _count: {
           select: { reports: true },

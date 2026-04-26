@@ -10,19 +10,24 @@
  */
 
 import { createPublicClient, createWalletClient, http, type Chain, type PublicClient, type WalletClient } from 'viem';
-import { baseSepolia, mainnet, sepolia } from 'viem/chains';
+import { base, baseSepolia, mainnet } from 'viem/chains';
 
 /**
  * Validate required environment variables
  */
 function validateEnv(): {
-  rpcUrl: string;
+  sepoliaRpcUrl: string;
+  mainnetRpcUrl: string;
   privateKey?: `0x${string}`;
 } {
-  const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL;
-  if (!rpcUrl) {
-    throw new Error('NEXT_PUBLIC_BASE_RPC_URL is not defined');
-  }
+  const sepoliaRpcUrl =
+    process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL ??
+    process.env.NEXT_PUBLIC_BASE_RPC_URL ??
+    'https://sepolia.base.org';
+
+  const mainnetRpcUrl =
+    process.env.NEXT_PUBLIC_BASE_MAINNET_RPC_URL ??
+    'https://mainnet.base.org';
 
   const privateKey = process.env.WALLET_PRIVATE_KEY as `0x${string}` | undefined;
 
@@ -35,8 +40,21 @@ function validateEnv(): {
     throw new Error('WALLET_PRIVATE_KEY must be 66 characters (0x + 64 hex chars)');
   }
 
-  return { rpcUrl, privateKey };
+  return { sepoliaRpcUrl, mainnetRpcUrl, privateKey };
 }
+
+/**
+ * Custom Base Sepolia chain configuration with additional metadata
+ */
+export const baseMainnetConfig: Chain = {
+  ...base,
+  name: 'Base',
+  nativeCurrency: {
+    name: 'Ether',
+    symbol: 'ETH',
+    decimals: 18,
+  },
+};
 
 /**
  * Custom Base Sepolia chain configuration with additional metadata
@@ -51,7 +69,38 @@ export const baseSepoliaConfig: Chain = {
   },
 };
 
-const { rpcUrl, privateKey } = validateEnv();
+const { sepoliaRpcUrl, mainnetRpcUrl, privateKey } = validateEnv();
+
+function getDefaultScanChainId(): number {
+  const raw =
+    process.env.NEXT_PUBLIC_SCAN_CHAIN_ID ??
+    process.env.NEXT_PUBLIC_BASE_CHAIN_ID ??
+    `${baseSepolia.id}`;
+  const parsed = Number.parseInt(raw, 10);
+  if (parsed === base.id || parsed === baseSepolia.id) return parsed;
+  return baseSepolia.id;
+}
+
+const baseMainnetClient = createPublicClient({
+  chain: baseMainnetConfig,
+  transport: http(mainnetRpcUrl, {
+    timeout: 30_000,
+    retryCount: 3,
+  }),
+});
+
+const baseSepoliaClient = createPublicClient({
+  chain: baseSepoliaConfig,
+  transport: http(sepoliaRpcUrl, {
+    timeout: 30_000,
+    retryCount: 3,
+  }),
+});
+
+export function getScanClient(chainId?: number): PublicClient {
+  const targetChainId = chainId ?? getDefaultScanChainId();
+  return targetChainId === base.id ? baseMainnetClient : baseSepoliaClient;
+}
 
 /**
  * Public Client
@@ -62,13 +111,7 @@ const { rpcUrl, privateKey } = validateEnv();
  * - getBalance() - Get address balance
  * - etc.
  */
-export const publicClient = createPublicClient({
-  chain: baseSepoliaConfig,
-  transport: http(rpcUrl, {
-    timeout: 30_000, // 30 second timeout
-    retryCount: 3,
-  }),
-});
+export const publicClient = getScanClient();
 
 /**
  * Wallet Client (Server-Side Only!)
@@ -83,7 +126,7 @@ export const publicClient = createPublicClient({
 export const walletClient = privateKey
   ? createWalletClient({
     chain: baseSepoliaConfig,
-    transport: http(rpcUrl, {
+    transport: http(sepoliaRpcUrl, {
       timeout: 30_000,
       retryCount: 3,
     }),
@@ -130,13 +173,13 @@ export function isValidAddress(address: string): boolean {
  * Get contract bytecode
  * Returns null if address has no code (EOA)
  */
-export async function getBytecode(address: string): Promise<`0x${string}` | null> {
+export async function getBytecode(address: string, chainId?: number): Promise<`0x${string}` | null> {
   if (!isValidAddress(address)) {
     throw new Error('Invalid address format');
   }
 
   try {
-    const bytecode = await publicClient.getCode({
+    const bytecode = await getScanClient(chainId).getCode({
       address: address as `0x${string}`,
     });
 
@@ -154,8 +197,8 @@ export async function getBytecode(address: string): Promise<`0x${string}` | null
 /**
  * Get bytecode hash for similarity detection
  */
-export async function getBytecodeHash(address: string): Promise<string | null> {
-  const bytecode = await getBytecode(address);
+export async function getBytecodeHash(address: string, chainId?: number): Promise<string | null> {
+  const bytecode = await getBytecode(address, chainId);
   if (!bytecode) return null;
 
   // Simple hash: first 10 bytes + last 10 bytes for quick comparison
@@ -166,20 +209,20 @@ export async function getBytecodeHash(address: string): Promise<string | null> {
 /**
  * Check if address is a contract (has bytecode)
  */
-export async function isContract(address: string): Promise<boolean> {
-  const bytecode = await getBytecode(address);
+export async function isContract(address: string, chainId?: number): Promise<boolean> {
+  const bytecode = await getBytecode(address, chainId);
   return bytecode !== null && bytecode !== '0x';
 }
 
 /**
  * Get transaction receipt
  */
-export async function getTransactionReceipt(txHash: string) {
+export async function getTransactionReceipt(txHash: string, chainId?: number) {
   if (!txHash.startsWith('0x') || txHash.length !== 66) {
     throw new Error('Invalid transaction hash format');
   }
 
-  return publicClient.getTransactionReceipt({
+  return getScanClient(chainId).getTransactionReceipt({
     hash: txHash as `0x${string}`,
   });
 }
@@ -212,7 +255,7 @@ export function detectInputType(input: string): ScanInputType {
  */
 export async function resolveEns(ensName: string): Promise<`0x${string}` | null> {
   try {
-    const address = await mainnetClient.getEnsAddress({
+    const address = await ensClient.getEnsAddress({
       name: ensName,
     });
     return address ?? null;

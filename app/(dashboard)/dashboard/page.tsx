@@ -29,7 +29,10 @@ export default async function DashboardPage() {
     prisma.contractScan.findMany({
       orderBy: { createdAt: "desc" },
       take: 5,
-      include: {
+      select: {
+        id: true,
+        riskScore: true,
+        createdAt: true,
         address: {
           select: { address: true, chain: true, category: true },
         },

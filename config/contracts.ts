@@ -102,11 +102,15 @@ export const DOMAN_CONTRACT_ABI = [
 
 /**
  * Contract addresses keyed by chainId.
- * Leave as empty string until the contract is deployed.
+ * Configure via environment variables:
+ * - NEXT_PUBLIC_SCAM_REPORTER_BASE_ADDRESS
+ * - NEXT_PUBLIC_SCAM_REPORTER_BASE_SEPOLIA_ADDRESS
  */
 export const CONTRACT_ADDRESSES: Record<number, `0x${string}` | ''> = {
-  [base.id]: '',       // TODO: replace with Base Mainnet address after deployment
-  [baseSepolia.id]: '', // TODO: replace with Base Sepolia address after deployment
+  [base.id]:
+    (process.env.NEXT_PUBLIC_SCAM_REPORTER_BASE_ADDRESS as `0x${string}` | undefined) ?? '',
+  [baseSepolia.id]:
+    (process.env.NEXT_PUBLIC_SCAM_REPORTER_BASE_SEPOLIA_ADDRESS as `0x${string}` | undefined) ?? '',
 };
 
 /** Chain IDs that Doman supports */
