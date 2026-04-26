@@ -214,43 +214,42 @@ export async function syncScamSniffer(): Promise<SyncResult> {
       throw new Error(`ScamSniffer API error: ${response.status}`);
     }
 
-    const data: { address?: string[]; domain?: string[]; combined?: Record<string, string[]> } = await response.json();
+    const data: { address?: string[]; domain?: string[] } = await response.json();
+    const addresses = data.address ?? [];
+    const domains = data.domain ?? [];
 
-    // Process scam addresses
-    if (Array.isArray(data.address)) {
-      for (const address of data.address.slice(0, 500)) { // Limit to 500 per sync
-        if (!address || typeof address !== 'string') continue;
-        if (!address.startsWith('0x')) continue;
-        if (address.length !== 42) continue;
+    // Process scam addresses (limit to 100 per sync)
+    for (const address of addresses.slice(0, 100)) {
+      if (!address || !address.startsWith('0x')) {
+        continue;
+      }
 
-        const existing = await prisma.address.findUnique({
-          where: { address },
-        });
+      const normalized = address.toLowerCase();
+      const existing = await prisma.address.findUnique({
+        where: { address: normalized },
+      });
 
-        await prisma.address.upsert({
-          where: { address },
-          update: {
-            status: 'SCAM',
-            riskScore: 85,
-            category: 'PHISHING',
-          },
-          create: {
-            address,
-            name: `Scam Contract from ScamSniffer`,
-            category: 'PHISHING',
-            description: 'Flagged by ScamSniffer as a scam address',
-            status: 'SCAM',
-            riskScore: 85,
-            chain: 'base',
-            source: 'EXTERNAL',
-          },
-        });
+      const record = await prisma.address.upsert({
+        where: { address: normalized },
+        update: {
+          description: 'Flagged by ScamSniffer',
+          updatedAt: new Date(),
+        },
+        create: {
+          address: normalized,
+          status: 'SCAM',
+          riskScore: 80,
+          category: 'OTHER',
+          source: 'EXTERNAL',
+          chain: 'base',
+          description: 'Flagged by ScamSniffer',
+        },
+      });
 
-        if (existing) {
-          addressesUpdated++;
-        } else {
-          addressesAdded++;
-        }
+      if (existing) {
+        addressesUpdated++;
+      } else {
+        addressesAdded++;
       }
     }
 
@@ -281,14 +280,45 @@ export async function syncScamSniffer(): Promise<SyncResult> {
             riskScore: 90,
             status: 'ACTIVE',
             source: 'scamsniffer',
+            sourceId: cleanDomain,
           },
         });
+      };
+    }
 
-        if (existing) {
-          domainsUpdated++;
-        } else {
-          domainsAdded++;
-        }
+    // Process scam domains (limit to 100 per sync)
+    for (const domain of domains.slice(0, 100)) {
+      const normalized = domain?.trim().toLowerCase();
+      if (!normalized) {
+        continue;
+      }
+
+      const existing = await prisma.scamDomain.findUnique({
+        where: { domain: normalized },
+      });
+
+      await prisma.scamDomain.upsert({
+        where: { domain: normalized },
+        update: {
+          description: 'Flagged by ScamSniffer',
+          rawData: { domain: normalized },
+          updatedAt: new Date(),
+        },
+        create: {
+          domain: normalized,
+          category: 'PHISHING',
+          status: 'ACTIVE',
+          source: 'scamsniffer',
+          riskScore: 80,
+          description: 'Flagged by ScamSniffer',
+          rawData: { domain: normalized },
+        },
+      });
+
+      if (existing) {
+        domainsUpdated++;
+      } else {
+        domainsAdded++;
       }
     }
 
