@@ -130,6 +130,8 @@ model Address {
   ensRecords     EnsRecord[]
   signatures     ContractSignature[] @relation("ContractSignatures") // Function signatures
   watchlist      Watchlist[]
+  ensRecords     EnsRecord[]
+  contractSignatures ContractSignature[] @relation("ContractSignatures")
 
   @@index([status])
   @@index([category])
