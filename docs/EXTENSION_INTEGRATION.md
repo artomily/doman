@@ -1,7 +1,7 @@
 # Browser Extension Integration Guide
 
-**Version:** 1.1  
-**Date:** 2026-04-17  
+**Version:** 1.2  
+**Date:** 2026-04-26  
 **API Version:** v1  
 **Manifest Version:** 3
 
@@ -64,15 +64,8 @@
   "name": "Wallo - Web3 Scam Detector",
   "version": "1.0.0",
   "description": "Protect yourself from Web3 scams on Base chain",
-  "permissions": [
-    "storage",
-    "activeTab",
-    "scripting"
-  ],
-  "host_permissions": [
-    "https://*/*",
-    "http://localhost:3000/*"
-  ],
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["https://*/*", "http://localhost:3000/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -112,11 +105,11 @@
 
 ## 🔐 Permission Requirements
 
-| Permission | Purpose |
-|------------|---------|
-| `storage` | Cache API responses, user settings |
-| `activeTab` | Detect addresses on current page |
-| `scripting` | Inject warning banners dynamically |
+| Permission         | Purpose                               |
+| ------------------ | ------------------------------------- |
+| `storage`          | Cache API responses, user settings    |
+| `activeTab`        | Detect addresses on current page      |
+| `scripting`        | Inject warning banners dynamically    |
 | `host_permissions` | Access Wallo API, detect on all sites |
 
 ### Why These Permissions?
@@ -168,23 +161,30 @@ Content scripts run in the context of web pages and can:
 
 ```typescript
 // content.ts
-import { detectAddresses } from './utils/detector';
-import { checkAddress } from './utils/api';
-import { injectWarning } from './utils/ui';
+import { detectAddresses } from "./utils/detector";
+import { batchScanAddresses } from "./utils/api";
+import { injectWarning } from "./utils/ui";
 
 // Configuration
 const CHECK_INTERVAL = 2000; // Check every 2 seconds
-const CACHE_DURATION = 60000; // Cache results for 1 minute
+const CACHE_DURATION = 5 * 60 * 1000; // Cache results for 5 minutes
+const WARN_LEVELS = new Set(["HIGH", "CRITICAL"]);
 
-const addressCache = new Map<string, {
-  data: any;
+type CachedScan = {
+  data: {
+    address: string;
+    riskScore: number;
+    riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  };
   timestamp: number;
-}>();
+};
+
+const addressCache = new Map<string, CachedScan>();
 
 /**
  * Check if address is scam from cache
  */
-function getCachedResult(address: string): any | null {
+function getCachedResult(address: string): CachedScan["data"] | null {
   const cached = addressCache.get(address);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     return cached.data;
@@ -195,37 +195,65 @@ function getCachedResult(address: string): any | null {
 /**
  * Cache address check result
  */
-function setCachedResult(address: string, data: any): void {
+function setCachedResult(address: string, data: CachedScan["data"]): void {
   addressCache.set(address, {
     data,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
+}
+
+/**
+ * Determine if a scan result should show a warning
+ */
+function shouldWarn(result: CachedScan["data"]): boolean {
+  return WARN_LEVELS.has(result.riskLevel);
+}
+
+/**
+ * Split array into chunks
+ */
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
 }
 
 /**
  * Process detected addresses
  */
 async function processAddresses(addresses: string[]): Promise<void> {
-  for (const address of addresses) {
-    // Check cache first
+  const normalized = Array.from(
+    new Set(addresses.map((addr) => addr.toLowerCase()))
+  );
+  const toScan: string[] = [];
+
+  for (const address of normalized) {
     const cached = getCachedResult(address);
     if (cached) {
-      if (cached.isScam || cached.riskScore > 50) {
+      if (shouldWarn(cached)) {
         injectWarning(address, cached);
       }
       continue;
     }
+    toScan.push(address);
+  }
 
-    // Check via API
+  if (toScan.length === 0) return;
+
+  // Batch scan to reduce API calls (max 25 per request)
+  for (const batch of chunk(toScan, 25)) {
     try {
-      const result = await checkAddress(address);
-      setCachedResult(address, result);
-
-      if (result.isScam || result.riskScore > 50) {
-        injectWarning(address, result);
+      const result = await batchScanAddresses(batch);
+      for (const scan of result.results) {
+        setCachedResult(scan.address, scan);
+        if (shouldWarn(scan)) {
+          injectWarning(scan.address, scan);
+        }
       }
     } catch (error) {
-      console.error(`Failed to check address ${address}:`, error);
+      console.error("Batch scan failed:", error);
     }
   }
 }
@@ -234,7 +262,7 @@ async function processAddresses(addresses: string[]): Promise<void> {
  * Initialize content script
  */
 function init(): void {
-  console.log('Wallo content script initialized');
+  console.log("Wallo content script initialized");
 
   // Initial scan
   const addresses = detectAddresses();
@@ -259,7 +287,7 @@ function init(): void {
 
   observer.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
   });
 
   // Periodic scan
@@ -270,8 +298,8 @@ function init(): void {
 }
 
 // Start when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
 } else {
   init();
 }
@@ -292,10 +320,10 @@ The background service worker handles:
 
 ```typescript
 // background.ts
-import { checkAddress, checkDomain } from './utils/api';
+import { scanInput, checkDomain } from "./utils/api";
 
 // Cache configuration
-const CACHE_KEY = 'wallo_cache';
+const CACHE_KEY = "wallo_cache";
 const CACHE_DURATION = 3600000; // 1 hour
 
 // In-memory cache for faster access
@@ -311,7 +339,7 @@ async function initCache(): Promise<void> {
       memoryCache = new Map(Object.entries(result[CACHE_KEY]));
     }
   } catch (error) {
-    console.error('Failed to initialize cache:', error);
+    console.error("Failed to initialize cache:", error);
   }
 }
 
@@ -322,10 +350,10 @@ async function saveCache(): Promise<void> {
   try {
     const cacheObj = Object.fromEntries(memoryCache);
     await chrome.storage.local.set({
-      [CACHE_KEY]: cacheObj
+      [CACHE_KEY]: cacheObj,
     });
   } catch (error) {
-    console.error('Failed to save cache:', error);
+    console.error("Failed to save cache:", error);
   }
 }
 
@@ -350,7 +378,7 @@ function getCached(key: string): any | null {
 function setCached(key: string, data: any): void {
   memoryCache.set(key, {
     data,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
   saveCache(); // Debounce in production
 }
@@ -362,34 +390,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const { type, data } = message;
 
   switch (type) {
-    case 'CHECK_ADDRESS':
+    case "CHECK_ADDRESS":
       handleCheckAddress(data.address)
         .then(sendResponse)
-        .catch(error => sendResponse({ error: error.message }));
+        .catch((error) => sendResponse({ error: error.message }));
       return true; // Async response
 
-    case 'CHECK_DOMAIN':
+    case "CHECK_DOMAIN":
       handleCheckDomain(data.domain)
         .then(sendResponse)
-        .catch(error => sendResponse({ error: error.message }));
+        .catch((error) => sendResponse({ error: error.message }));
       return true;
 
-    case 'CLEAR_CACHE':
+    case "GET_PAGE_STATUS":
+      handleGetPageStatus(data.url)
+        .then(sendResponse)
+        .catch((error) => sendResponse({ error: error.message }));
+      return true;
+
+    case "CLEAR_CACHE":
       memoryCache.clear();
       chrome.storage.local.remove(CACHE_KEY);
       sendResponse({ success: true });
       break;
 
     default:
-      sendResponse({ error: 'Unknown message type' });
+      sendResponse({ error: "Unknown message type" });
   }
 });
 
 /**
- * Handle address check with caching
+ * Handle scan input with caching
  */
-async function handleCheckAddress(address: string): Promise<any> {
-  const cacheKey = `address_${address}`;
+async function handleCheckAddress(input: string): Promise<any> {
+  const cacheKey = `scan_${input}`;
 
   // Check cache
   const cached = getCached(cacheKey);
@@ -398,7 +432,7 @@ async function handleCheckAddress(address: string): Promise<any> {
   }
 
   // API call
-  const result = await checkAddress(address);
+  const result = await scanInput(input);
   setCached(cacheKey, result);
 
   return { ...result, cached: false };
@@ -424,21 +458,34 @@ async function handleCheckDomain(domain: string): Promise<any> {
 }
 
 /**
+ * Get page status for the current tab URL
+ */
+async function handleGetPageStatus(url: string): Promise<any> {
+  const domain = new URL(url).hostname;
+  const result = await handleCheckDomain(domain);
+
+  return {
+    ...result,
+    isScam: result.isScam || result.riskScore >= 80,
+  };
+}
+
+/**
  * Check current tab's domain on navigation
  */
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.url) {
+  if (changeInfo.status === "complete" && tab.url) {
     try {
       const url = new URL(tab.url);
       const domain = url.hostname;
 
       // Check domain in background
-      handleCheckDomain(domain).then(result => {
-        if (result.isScam || result.riskScore > 70) {
+      handleCheckDomain(domain).then((result) => {
+        if (result.isScam || result.riskScore >= 80) {
           // Send warning to content script
           chrome.tabs.sendMessage(tabId, {
-            type: 'SCAM_DOMAIN_DETECTED',
-            data: result
+            type: "SCAM_DOMAIN_DETECTED",
+            data: result,
           });
         }
       });
@@ -450,7 +497,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 // Initialize on install
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Wallo extension installed');
+  console.log("Wallo extension installed");
   initCache();
 });
 
@@ -474,67 +521,65 @@ The popup provides quick access to:
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wallo - Web3 Scam Detector</title>
-  <link rel="stylesheet" href="popup.css">
-</head>
-<body>
-  <div class="container">
-    <!-- Header -->
-    <header class="header">
-      <img src="icons/icon48.png" alt="Wallo" class="logo">
-      <h1>Wallo</h1>
-    </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wallo - Web3 Scam Detector</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <img src="icons/icon48.png" alt="Wallo" class="logo" />
+        <h1>Wallo</h1>
+      </header>
 
-    <!-- Search Section -->
-    <div class="search-section">
-      <input
-        type="text"
-        id="addressInput"
-        placeholder="Enter address or ENS..."
-        class="search-input"
-      />
-      <button id="searchBtn" class="search-btn">
-        <span class="btn-text">Check</span>
-      </button>
-    </div>
-
-    <!-- Results Section -->
-    <div id="results" class="results hidden">
-      <!-- Dynamic content -->
-    </div>
-
-    <!-- Page Status -->
-    <div class="page-status">
-      <h3>Current Page</h3>
-      <div id="pageStatus" class="status-loading">
-        Checking...
+      <!-- Search Section -->
+      <div class="search-section">
+        <input
+          type="text"
+          id="addressInput"
+        placeholder="Enter address, ENS, or domain..."
+          class="search-input"
+        />
+        <button id="searchBtn" class="search-btn">
+          <span class="btn-text">Check</span>
+        </button>
       </div>
+
+      <!-- Results Section -->
+      <div id="results" class="results hidden">
+        <!-- Dynamic content -->
+      </div>
+
+      <!-- Page Status -->
+      <div class="page-status">
+        <h3>Current Page</h3>
+        <div id="pageStatus" class="status-loading">Checking...</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-label">Scams Detected</span>
+          <span id="scamCount" class="stat-value">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Addresses Checked</span>
+          <span id="checkCount" class="stat-value">-</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <button id="settingsBtn" class="footer-btn">Settings</button>
+        <button id="clearCacheBtn" class="footer-btn">Clear Cache</button>
+      </footer>
     </div>
 
-    <!-- Stats -->
-    <div class="stats">
-      <div class="stat-item">
-        <span class="stat-label">Scams Detected</span>
-        <span id="scamCount" class="stat-value">-</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Addresses Checked</span>
-        <span id="checkCount" class="stat-value">-</span>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <button id="settingsBtn" class="footer-btn">Settings</button>
-      <button id="clearCacheBtn" class="footer-btn">Clear Cache</button>
-    </footer>
-  </div>
-
-  <script src="popup.js"></script>
-</body>
+    <script src="popup.js"></script>
+  </body>
 </html>
 ```
 
@@ -542,38 +587,74 @@ The popup provides quick access to:
 
 ```typescript
 // popup.ts
-const API_BASE = 'http://localhost:3000';
+const API_BASE = "http://localhost:3000";
 
 // DOM Elements
-const addressInput = document.getElementById('addressInput') as HTMLInputElement;
-const searchBtn = document.getElementById('searchBtn') as HTMLButtonElement;
-const resultsDiv = document.getElementById('results') as HTMLDivElement;
-const pageStatusDiv = document.getElementById('pageStatus') as HTMLDivElement;
-const clearCacheBtn = document.getElementById('clearCacheBtn') as HTMLButtonElement;
+const addressInput = document.getElementById(
+  "addressInput",
+) as HTMLInputElement;
+const searchBtn = document.getElementById("searchBtn") as HTMLButtonElement;
+const resultsDiv = document.getElementById("results") as HTMLDivElement;
+const pageStatusDiv = document.getElementById("pageStatus") as HTMLDivElement;
+const clearCacheBtn = document.getElementById(
+  "clearCacheBtn",
+) as HTMLButtonElement;
 
 /**
- * Check address via API
+ * Scan address / ENS / domain via API
  */
-async function checkAddress(address: string): Promise<any> {
-  const response = await fetch(`${API_BASE}/api/v1/address/${address}`);
+async function scanInput(input: string): Promise<any> {
+  const response = await fetch(
+    `${API_BASE}/api/v1/scan/${encodeURIComponent(input)}`,
+  );
   const data = await response.json();
-  return data;
+  if (!data.success) {
+    throw new Error(data.error?.message || "Scan failed");
+  }
+  return data.data;
+}
+
+/**
+ * Fetch address details (if known)
+ */
+async function getAddressDetails(address: string): Promise<any | null> {
+  const response = await fetch(`${API_BASE}/api/v1/address/${address}`);
+  if (response.status === 404) {
+    return null;
+  }
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.error?.message || "Address lookup failed");
+  }
+  return data.data;
 }
 
 /**
  * Display scan results
  */
-function displayResults(data: any): void {
-  resultsDiv.classList.remove('hidden');
+function displayResults(scan: any, details?: any | null): void {
+  resultsDiv.classList.remove("hidden");
 
-  const { address, name, status, riskScore, category } = data.data;
+  const address = scan.resolvedAddress || scan.address;
+  const name = details?.name || null;
+  const status = details?.status || "UNKNOWN";
+  const category = details?.category || "OTHER";
+  const riskScore = scan.riskScore;
+  const riskLevel = scan.riskLevel;
+  const trustScore = Math.max(0, 100 - riskScore);
+  const trustLabel =
+    trustScore >= 70 ? "Safe" : trustScore >= 40 ? "Caution" : "Danger";
+  const trustVariant =
+    trustScore >= 70 ? "safe" : trustScore >= 40 ? "warning" : "danger";
 
-  const statusColor = status === 'SCAM' ? 'red' :
-                      status === 'LEGIT' ? 'green' :
-                      status === 'SUSPICIOUS' ? 'yellow' : 'gray';
-
-  const riskLevel = riskScore > 70 ? 'HIGH' :
-                    riskScore > 40 ? 'MEDIUM' : 'LOW';
+  const statusColor =
+    status === "SCAM"
+      ? "danger"
+      : status === "LEGIT"
+        ? "safe"
+        : status === "SUSPICIOUS"
+          ? "warning"
+          : "unknown";
 
   resultsDiv.innerHTML = `
     <div class="result-card status-${statusColor}">
@@ -583,6 +664,12 @@ function displayResults(data: any): void {
       </div>
 
       <div class="result-body">
+        <div class="result-row">
+          <span>Trust Score:</span>
+          <span class="trust-badge ${trustVariant}">
+            ${trustScore}/100 · ${trustLabel}
+          </span>
+        </div>
         <div class="result-row">
           <span>Risk Score:</span>
           <div class="risk-bar">
@@ -615,8 +702,8 @@ function displayResults(data: any): void {
   `;
 
   // Add event listeners to action buttons
-  document.querySelectorAll('.action-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+  document.querySelectorAll(".action-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
       const action = (e.target as HTMLElement).dataset.action;
       handleAction(action, address);
     });
@@ -627,9 +714,10 @@ function displayResults(data: any): void {
  * Get risk color
  */
 function getRiskColor(score: number): string {
-  if (score > 70) return '#ef4444';
-  if (score > 40) return '#f59e0b';
-  return '#10b981';
+  if (score >= 80) return "#ef4444";
+  if (score >= 60) return "#f97316";
+  if (score >= 40) return "#facc15";
+  return "#22c55e";
 }
 
 /**
@@ -637,12 +725,14 @@ function getRiskColor(score: number): string {
  */
 function handleAction(action: string, address: string): void {
   switch (action) {
-    case 'copy':
+    case "copy":
       navigator.clipboard.writeText(address);
-      showToast('Address copied!');
+      showToast("Address copied!");
       break;
-    case 'basescan':
-      chrome.tabs.create({ url: `https://sepolia.basescan.org/address/${address}` });
+    case "basescan":
+      chrome.tabs.create({
+        url: `https://basescan.org/address/${address}`,
+      });
       break;
   }
 }
@@ -651,8 +741,8 @@ function handleAction(action: string, address: string): void {
  * Show toast notification
  */
 function showToast(message: string): void {
-  const toast = document.createElement('div');
-  toast.className = 'toast';
+  const toast = document.createElement("div");
+  toast.className = "toast";
   toast.textContent = message;
   document.body.appendChild(toast);
 
@@ -669,8 +759,8 @@ async function getCurrentTabInfo(): Promise<any> {
 
   // Check page status via background script
   const response = await chrome.runtime.sendMessage({
-    type: 'GET_PAGE_STATUS',
-    data: { url: tab.url }
+    type: "GET_PAGE_STATUS",
+    data: { url: tab.url },
   });
 
   return response;
@@ -679,39 +769,40 @@ async function getCurrentTabInfo(): Promise<any> {
 /**
  * Search button handler
  */
-searchBtn.addEventListener('click', async () => {
+searchBtn.addEventListener("click", async () => {
   const address = addressInput.value.trim();
 
   if (!address) {
-    showToast('Please enter an address');
+    showToast("Please enter an address");
     return;
   }
 
   searchBtn.disabled = true;
-  searchBtn.textContent = 'Checking...';
+  searchBtn.textContent = "Checking...";
 
   try {
-    const result = await checkAddress(address);
+    const scan = await scanInput(address);
+    const lookupAddress =
+      scan.inputType === "domain" ? null : scan.resolvedAddress || scan.address;
+    const details = lookupAddress
+      ? await getAddressDetails(lookupAddress).catch(() => null)
+      : null;
 
-    if (result.success) {
-      displayResults(result);
-    } else {
-      showToast(result.error?.message || 'Check failed');
-    }
+    displayResults(scan, details);
   } catch (error) {
-    showToast('Network error');
+    showToast(error instanceof Error ? error.message : "Network error");
   } finally {
     searchBtn.disabled = false;
-    searchBtn.textContent = 'Check';
+    searchBtn.textContent = "Check";
   }
 });
 
 /**
  * Clear cache handler
  */
-clearCacheBtn.addEventListener('click', async () => {
-  await chrome.runtime.sendMessage({ type: 'CLEAR_CACHE' });
-  showToast('Cache cleared');
+clearCacheBtn.addEventListener("click", async () => {
+  await chrome.runtime.sendMessage({ type: "CLEAR_CACHE" });
+  showToast("Cache cleared");
 });
 
 /**
@@ -719,19 +810,19 @@ clearCacheBtn.addEventListener('click', async () => {
  */
 async function init(): Promise<void> {
   // Load stats from storage
-  const stats = await chrome.storage.local.get(['scamCount', 'checkCount']);
-  document.getElementById('scamCount')!.textContent = stats.scamCount || '0';
-  document.getElementById('checkCount')!.textContent = stats.checkCount || '0';
+  const stats = await chrome.storage.local.get(["scamCount", "checkCount"]);
+  document.getElementById("scamCount")!.textContent = stats.scamCount || "0";
+  document.getElementById("checkCount")!.textContent = stats.checkCount || "0";
 
   // Get current page status
   const pageInfo = await getCurrentTabInfo();
   if (pageInfo) {
-    pageStatusDiv.className = `status-${pageInfo.isScam ? 'danger' : 'safe'}`;
+    pageStatusDiv.className = `status-${pageInfo.isScam ? "danger" : "safe"}`;
     pageStatusDiv.textContent = pageInfo.isScam
-      ? `⚠️ Scam detected: ${pageInfo.reason}`
-      : '✅ No scams detected';
+      ? `⚠️ Scam detected: ${pageInfo.domain}`
+      : "✅ No scam signals detected";
   } else {
-    pageStatusDiv.textContent = 'Unable to check page';
+    pageStatusDiv.textContent = "Unable to check page";
   }
 }
 
@@ -748,12 +839,15 @@ Communication between extension components:
 
 ```typescript
 // content.ts
-chrome.runtime.sendMessage({
-  type: 'CHECK_ADDRESS',
-  data: { address: '0x1234...' }
-}, (response) => {
-  console.log('Address check result:', response);
-});
+chrome.runtime.sendMessage(
+  {
+    type: "CHECK_ADDRESS",
+    data: { address: "0x1234..." },
+  },
+  (response) => {
+    console.log("Address check result:", response);
+  },
+);
 ```
 
 ### From Background to Content Script
@@ -761,8 +855,8 @@ chrome.runtime.sendMessage({
 ```typescript
 // background.ts
 chrome.tabs.sendMessage(tabId, {
-  type: 'SCAM_DETECTED',
-  data: { address: '0x1234...', riskScore: 90 }
+  type: "SCAM_DETECTED",
+  data: { address: "0x1234...", riskScore: 90, riskLevel: "CRITICAL" },
 });
 ```
 
@@ -770,12 +864,15 @@ chrome.tabs.sendMessage(tabId, {
 
 ```typescript
 // popup.ts
-chrome.runtime.sendMessage({
-  type: 'GET_PAGE_STATUS',
-  data: { url: currentTab.url }
-}, (response) => {
-  console.log('Page status:', response);
-});
+chrome.runtime.sendMessage(
+  {
+    type: "GET_PAGE_STATUS",
+    data: { url: currentTab.url },
+  },
+  (response) => {
+    console.log("Page status:", response);
+  },
+);
 ```
 
 ---
@@ -814,16 +911,19 @@ export function detectAddresses(): string[] {
       acceptNode: (node) => {
         // Skip script and style tags
         const parent = node.parentElement;
-        if (parent && ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(parent.tagName)) {
+        if (
+          parent &&
+          ["SCRIPT", "STYLE", "NOSCRIPT"].includes(parent.tagName)
+        ) {
           return NodeFilter.FILTER_REJECT;
         }
         return NodeFilter.FILTER_ACCEPT;
-      }
-    }
+      },
+    },
   );
 
   let node: Text | null;
-  while (node = treeWalker.nextNode() as Text) {
+  while ((node = treeWalker.nextNode() as Text)) {
     const matches = node.textContent?.matchAll(ADDRESS_REGEX);
     if (matches) {
       for (const match of matches) {
@@ -833,9 +933,11 @@ export function detectAddresses(): string[] {
   }
 
   // Scan attributes (href, data-address, etc.)
-  const elements = document.querySelectorAll('[href], [data-address], [data-to], [data-from]');
-  elements.forEach(el => {
-    const href = el.getAttribute('href');
+  const elements = document.querySelectorAll(
+    "[href], [data-address], [data-to], [data-from]",
+  );
+  elements.forEach((el) => {
+    const href = el.getAttribute("href");
     if (href) {
       const matches = href.matchAll(ADDRESS_REGEX);
       for (const match of matches) {
@@ -843,7 +945,7 @@ export function detectAddresses(): string[] {
       }
     }
 
-    ['data-address', 'data-to', 'data-from'].forEach(attr => {
+    ["data-address", "data-to", "data-from"].forEach((attr) => {
       const value = el.getAttribute(attr);
       if (value && ADDRESS_REGEX.test(value)) {
         addresses.add(value);
@@ -862,11 +964,11 @@ export function detectENSNames(): string[] {
 
   const treeWalker = document.createTreeWalker(
     document.body,
-    NodeFilter.SHOW_TEXT
+    NodeFilter.SHOW_TEXT,
   );
 
   let node: Text | null;
-  while (node = treeWalker.nextNode() as Text) {
+  while ((node = treeWalker.nextNode() as Text)) {
     const matches = node.textContent?.matchAll(ENS_REGEX);
     if (matches) {
       for (const match of matches) {
@@ -882,7 +984,7 @@ export function detectENSNames(): string[] {
  * Get element containing address
  */
 export function getAddressElement(address: string): Element | null {
-  const elements = document.querySelectorAll('*');
+  const elements = document.querySelectorAll("*");
   for (const el of elements) {
     if (el.textContent?.includes(address)) {
       return el;
@@ -901,7 +1003,7 @@ Check if current domain is a known phishing site:
 ```typescript
 // utils/domainChecker.ts
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = "http://localhost:3000";
 
 /**
  * Check if current page domain is a scam
@@ -911,7 +1013,7 @@ export async function checkCurrentDomain(): Promise<any> {
 
   try {
     const response = await fetch(
-      `${API_BASE}/api/v1/check-domain?domain=${encodeURIComponent(domain)}`
+      `${API_BASE}/api/v1/check-domain?domain=${encodeURIComponent(domain)}`,
     );
     const data = await response.json();
 
@@ -920,13 +1022,16 @@ export async function checkCurrentDomain(): Promise<any> {
         domain,
         isScam: data.data.isScam,
         riskScore: data.data.riskScore,
-        category: data.data.category
+        category: data.data.category,
+        description: data.data.description,
+        source: data.data.source,
+        checkedAt: data.data.checkedAt,
       };
     }
 
     return null;
   } catch (error) {
-    console.error('Domain check failed:', error);
+    console.error("Domain check failed:", error);
     return null;
   }
 }
@@ -936,8 +1041,8 @@ export async function checkCurrentDomain(): Promise<any> {
  */
 export function showScamWarning(data: any): void {
   // Create warning overlay
-  const overlay = document.createElement('div');
-  overlay.id = 'wallo-scam-warning';
+  const overlay = document.createElement("div");
+  overlay.id = "wallo-scam-warning";
   overlay.innerHTML = `
     <div class="wallo-warning-container">
       <div class="wallo-warning-icon">⚠️</div>
@@ -963,7 +1068,7 @@ export function showScamWarning(data: any): void {
   `;
 
   // Inject styles
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.textContent = `
     #wallo-scam-warning {
       position: fixed;
@@ -976,31 +1081,35 @@ export function showScamWarning(data: any): void {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
     }
     .wallo-warning-container {
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
-      max-width: 500px;
+      background: #0D0D0D;
+      border: 1px solid #1F1F1F;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 460px;
       text-align: center;
+      color: #E5E7EB;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     }
     .wallo-warning-icon {
       font-size: 64px;
       margin-bottom: 20px;
     }
     .wallo-warning-container h1 {
-      color: #dc2626;
+      color: #f87171;
       margin-bottom: 10px;
     }
     .wallo-warning-domain {
       font-size: 18px;
       font-weight: bold;
-      color: #374151;
+      color: #E5E7EB;
+      font-family: 'Geist Mono', monospace;
       margin-bottom: 20px;
     }
     .wallo-warning-reason {
-      color: #6b7280;
+      color: #9CA3AF;
       margin-bottom: 30px;
     }
     .wallo-warning-actions {
@@ -1011,23 +1120,24 @@ export function showScamWarning(data: any): void {
     }
     .wallo-btn {
       padding: 12px 24px;
-      border-radius: 8px;
-      border: none;
+      border-radius: 9999px;
+      border: 1px solid transparent;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
     }
     .wallo-btn-danger {
-      background: #dc2626;
+      background: #ef4444;
       color: white;
     }
     .wallo-btn-secondary {
-      background: #e5e7eb;
-      color: #374151;
+      background: transparent;
+      border-color: #1F1F1F;
+      color: #E5E7EB;
     }
     .wallo-warning-disclaimer {
       font-size: 12px;
-      color: #9ca3af;
+      color: #9CA3AF;
     }
   `;
 
@@ -1035,15 +1145,17 @@ export function showScamWarning(data: any): void {
   document.body.appendChild(overlay);
 
   // Event listeners
-  document.getElementById('wallo-leave-site')?.addEventListener('click', () => {
+  document.getElementById("wallo-leave-site")?.addEventListener("click", () => {
     window.history.back();
   });
 
-  document.getElementById('wallo-ignore-warning')?.addEventListener('click', () => {
-    overlay.remove();
-    // Store in session storage to not show again
-    sessionStorage.setItem('wallo-warning-dismissed', data.domain);
-  });
+  document
+    .getElementById("wallo-ignore-warning")
+    ?.addEventListener("click", () => {
+      overlay.remove();
+      // Store in session storage to not show again
+      sessionStorage.setItem("wallo-warning-dismissed", data.domain);
+    });
 }
 
 /**
@@ -1051,7 +1163,7 @@ export function showScamWarning(data: any): void {
  */
 export async function initDomainChecker(): Promise<void> {
   // Check if already dismissed
-  const dismissed = sessionStorage.getItem('wallo-warning-dismissed');
+  const dismissed = sessionStorage.getItem("wallo-warning-dismissed");
   if (dismissed === window.location.hostname) {
     return;
   }
@@ -1073,93 +1185,104 @@ export async function initDomainChecker(): Promise<void> {
 ```typescript
 // utils/api.ts
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = "http://localhost:3000";
 
-interface ApiResponse<T> {
-  success: boolean;
+type ApiSuccess<T> = {
+  success: true;
   data: T;
-  error?: {
+  meta?: {
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    cached?: boolean;
+  };
+};
+
+type ApiError = {
+  success: false;
+  error: {
     code: string;
     message: string;
+    details?: unknown;
   };
+};
+
+type ApiResponse<T> = ApiSuccess<T> | ApiError;
+
+async function apiCall<T>(
+  endpoint: string,
+  init?: RequestInit,
+): Promise<ApiSuccess<T>> {
+  const response = await fetch(`${API_BASE}${endpoint}`, init);
+  const data: ApiResponse<T> = await response.json();
+
+  if (!response.ok || !data.success) {
+    const message = data.success
+      ? `API error: ${response.status}`
+      : data.error.message;
+    throw new Error(message);
+  }
+
+  return data;
 }
 
 /**
- * Check address via Wallo API
+ * Get address details via Wallo API
  */
-export async function checkAddress(address: string): Promise<any> {
-  const response = await fetch(`${API_BASE}/api/v1/address/${address}`);
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const data: ApiResponse<any> = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.error?.message || 'Request failed');
-  }
-
-  return data.data;
+export async function getAddress(address: string): Promise<any> {
+  const result = await apiCall<any>(`/api/v1/address/${address}`);
+  return result.data;
 }
 
 /**
- * Scan contract via Wallo API
+ * Scan address / ENS / domain via Wallo API
  */
-export async function scanContract(address: string): Promise<any> {
-  const response = await fetch(`${API_BASE}/api/v1/scan/${address}`);
+export async function scanInput(
+  input: string,
+  checker?: string,
+): Promise<any> {
+  const encoded = encodeURIComponent(input.trim());
+  const endpoint = checker
+    ? `/api/v1/scan/${encoded}?checker=${checker}`
+    : `/api/v1/scan/${encoded}`;
+  const result = await apiCall<any>(endpoint);
+  return result.data;
+}
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
+/**
+ * Batch scan addresses (max 25)
+ */
+export async function batchScanAddresses(addresses: string[]): Promise<any> {
+  const result = await apiCall<any>("/api/v1/scan-batch", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ addresses }),
+  });
 
-  const data: ApiResponse<any> = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.error?.message || 'Request failed');
-  }
-
-  return data.data;
+  return result.data;
 }
 
 /**
  * Check domain via Wallo API
  */
 export async function checkDomain(domain: string): Promise<any> {
-  const response = await fetch(
-    `${API_BASE}/api/v1/check-domain?domain=${encodeURIComponent(domain)}`
+  const result = await apiCall<any>(
+    `/api/v1/check-domain?domain=${encodeURIComponent(domain)}`,
   );
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const data: ApiResponse<any> = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.error?.message || 'Request failed');
-  }
-
-  return data.data;
+  return result.data;
 }
 
 /**
  * Get platform stats
  */
 export async function getStats(): Promise<any> {
-  const response = await fetch(`${API_BASE}/api/v1/stats`);
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const data: ApiResponse<any> = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.error?.message || 'Request failed');
-  }
-
-  return data.data;
+  const result = await apiCall<any>("/api/v1/stats");
+  return result.data;
 }
 
 /**
@@ -1171,25 +1294,15 @@ export async function submitReport(reportData: {
   category: string;
   reporterAddress: string;
 }): Promise<any> {
-  const response = await fetch(`${API_BASE}/api/v1/report`, {
-    method: 'POST',
+  const result = await apiCall<any>("/api/v1/report", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(reportData),
   });
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const data: ApiResponse<any> = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.error?.message || 'Request failed');
-  }
-
-  return data.data;
+  return result.data;
 }
 
 /**
@@ -1200,23 +1313,13 @@ export async function createAddressTag(data: {
   tag: string;
   taggedBy?: string;
 }): Promise<any> {
-  const response = await fetch(`${API_BASE}/api/v1/address-tags`, {
-    method: 'POST',
+  const result = await apiCall<any>("/api/v1/address-tags", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const result: ApiResponse<any> = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error?.message || 'Request failed');
-  }
 
   return result.data;
 }
@@ -1225,41 +1328,23 @@ export async function createAddressTag(data: {
  * Get tags for address
  */
 export async function getAddressTags(address: string): Promise<any> {
-  const response = await fetch(`${API_BASE}/api/v1/address/${address}/tags`);
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const data: ApiResponse<any> = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.error?.message || 'Request failed');
-  }
-
-  return data.data;
+  const result = await apiCall<any>(`/api/v1/address/${address}/tags`);
+  return result.data;
 }
 
 /**
  * Delete address tag
  */
-export async function deleteAddressTag(address: string, tag: string): Promise<any> {
-  const response = await fetch(
-    `${API_BASE}/api/v1/address/${address}/tags?tag=${encodeURIComponent(tag)}`,
-    { method: 'DELETE' }
+export async function deleteAddressTag(
+  address: string,
+  tag: string,
+): Promise<any> {
+  const result = await apiCall<any>(
+    `/api/v1/address/${address}/tags?tag=${encodeURIComponent(tag)}`,
+    { method: "DELETE" },
   );
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const data: ApiResponse<any> = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.error?.message || 'Request failed');
-  }
-
-  return data.data;
+  return result.data;
 }
 ```
 
@@ -1276,22 +1361,31 @@ export interface WalloMessage {
 }
 
 export type MessageType =
-  | 'CHECK_ADDRESS'
-  | 'CHECK_DOMAIN'
-  | 'GET_PAGE_STATUS'
-  | 'SCAM_DETECTED'
-  | 'SCAM_DOMAIN_DETECTED'
-  | 'CLEAR_CACHE';
+  | "CHECK_ADDRESS"
+  | "CHECK_DOMAIN"
+  | "GET_PAGE_STATUS"
+  | "SCAM_DETECTED"
+  | "SCAM_DOMAIN_DETECTED"
+  | "CLEAR_CACHE";
 
 export interface AddressCheckResult {
   address: string;
   name: string | null;
-  status: 'LEGIT' | 'SCAM' | 'SUSPICIOUS' | 'UNKNOWN';
+  chain: string;
+  status: "LEGIT" | "SCAM" | "SUSPICIOUS" | "UNKNOWN";
   riskScore: number;
   category: string;
-  tags: string[];
+  source: string;
+  description: string | null;
+  url: string | null;
+  logoUrl: string | null;
+  tvl: number | null;
+  verifiedBy: string | null;
+  verifiedAt: string | null;
+  tags: AddressTag[];
   reportCount: number;
-  cached: boolean;
+  lastScanned: string | null;
+  cached?: boolean;
 }
 
 export interface DomainCheckResult {
@@ -1299,29 +1393,49 @@ export interface DomainCheckResult {
   isScam: boolean;
   riskScore: number;
   category: string;
-  cached: boolean;
+  description?: string;
+  source?: string;
+  checkedAt: string;
+  cached?: boolean;
 }
 
 export interface ScanResult {
   address: string;
+  inputType?: "address" | "ens" | "domain";
+  resolvedAddress?: string;
   riskScore: number;
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   isVerified: boolean;
   patterns: ScanPattern[];
   similarScams: SimilarScam[];
   reportCount: number;
+  votesFor: number;
+  votesAgainst: number;
+  scanDuration: number;
+  scannedAt: string;
 }
 
 export interface ScanPattern {
   name: string;
-  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   description: string;
 }
 
 export interface SimilarScam {
   address: string;
-  name: string;
+  name: string | null;
   similarity: number;
+}
+
+export interface QuickScanResult {
+  address: string;
+  riskScore: number;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+}
+
+export interface BatchScanResponse {
+  scanned: number;
+  results: QuickScanResult[];
 }
 
 export interface ExtensionState {
@@ -1370,7 +1484,7 @@ export interface AddressTagsResponse {
 // Debounce rapid checks
 function debounce<T extends (...args: any[]) => any>(
   fn: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -1409,17 +1523,17 @@ setInterval(cleanCache, 60 * 60 * 1000); // Every hour
 // Always handle errors gracefully
 async function safeCheck(address: string): Promise<any | null> {
   try {
-    return await checkAddress(address);
+    return await scanInput(address);
   } catch (error) {
     console.error(`Check failed for ${address}:`, error);
 
     // Track error for analytics
-    chrome.storage.local.get(['errors'], (result) => {
+    chrome.storage.local.get(["errors"], (result) => {
       const errors = result.errors || [];
       errors.push({
         address,
-        error: error instanceof Error ? error.message : 'Unknown',
-        timestamp: Date.now()
+        error: error instanceof Error ? error.message : "Unknown",
+        timestamp: Date.now(),
       });
       chrome.storage.local.set({ errors });
     });
@@ -1442,7 +1556,7 @@ function sanitizeAddress(address: string): string {
 async function requestPermission(action: string): Promise<boolean> {
   return new Promise((resolve) => {
     const confirmed = confirm(
-      `Wallo wants to: ${action}\n\nDo you allow this action?`
+      `Wallo wants to: ${action}\n\nDo you allow this action?`,
     );
     resolve(confirmed);
   });
@@ -1454,16 +1568,16 @@ async function requestPermission(action: string): Promise<boolean> {
 ```typescript
 // Add ARIA labels to injected elements
 function injectWarning(address: string, data: any): void {
-  const warning = document.createElement('div');
-  warning.setAttribute('role', 'alert');
-  warning.setAttribute('aria-live', 'polite');
-  warning.setAttribute('aria-label', `Scam warning for ${address}`);
+  const warning = document.createElement("div");
+  warning.setAttribute("role", "alert");
+  warning.setAttribute("aria-live", "polite");
+  warning.setAttribute("aria-label", `Scam warning for ${address}`);
   // ...
 }
 
 // Keyboard navigation
-warning.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') {
+warning.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
     // Activate warning
   }
 });
@@ -1519,6 +1633,7 @@ npm run package
 ## 🆘 Support
 
 For extension-specific issues:
+
 1. Check browser console for errors
 2. Verify API is accessible
 3. Clear extension cache
