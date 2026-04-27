@@ -568,7 +568,9 @@ export async function scanDomain(domain: string, checkerAddress?: string): Promi
         { name: { contains: normalised, mode: 'insensitive' } },
       ],
     },
-    include: {
+    select: {
+      riskScore: true,
+      verifiedBy: true,
       _count: { select: { reports: true } },
     },
   });
