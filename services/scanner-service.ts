@@ -91,6 +91,8 @@ async function getSafeContractResult(address: string, startTime: number): Promis
 }
 
 /**
+ * Save a trusted address to the database
+ */
 async function saveTrustedAddress(address: string): Promise<void> {
   const normalizedAddress = address.toLowerCase() as `0x${string}`;
 
