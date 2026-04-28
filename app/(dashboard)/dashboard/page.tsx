@@ -33,21 +33,16 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const { address: walletAddress, isConnected, isConnecting } = useAccount();
+  const { address: walletAddress, isConnected } = useAccount();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchIdRef = useRef(0);
   const prevAddressRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    // Skip during wallet connection transition
-    if (isConnecting) return;
-    // Only refetch when address actually changes
-    if (walletAddress === prevAddressRef.current) return;
-    prevAddressRef.current = walletAddress;
-
-    const fetchId = ++fetchIdRef.current;
     setLoading(true);
+    const params = new URLSearchParams();
+    if (isConnected && walletAddress) params.set("checker", walletAddress);
 
     Promise.all([
       fetch("/api/v1/stats").then((r) => r.json()),
@@ -55,20 +50,19 @@ export default function DashboardPage() {
       isConnected && walletAddress
         ? fetch(`/api/v1/watchlist?userAddress=${walletAddress}`).then((r) => r.json())
         : Promise.resolve({ data: [] }),
-    ]).then(([statsRes, historyRes, watchlistRes]) => {
-      if (fetchId !== fetchIdRef.current) return;
-
-      setData({
-        totalChecks: statsRes.data?.totalScans ?? statsRes.data?.scansToday ?? 0,
-        myChecks: historyRes.data?.length ?? 0,
-        flaggedCount: statsRes.data?.scamCount ?? 0,
-        watchlistCount: Array.isArray(watchlistRes.data) ? watchlistRes.data.length : 0,
-        trustScoreAvg: statsRes.data?.trustScoreAvg ?? 0,
-        recentScans: historyRes.data ?? [],
-      });
-      setLoading(false);
-    });
-  }, [walletAddress, isConnected, isConnecting]);
+    ])
+      .then(([stats, history, watchlist]) => {
+        setData({
+          totalChecks: stats.data?.totalScans ?? stats.data?.scansToday ?? 0,
+          myChecks: history.data?.length ?? 0,
+          flaggedCount: stats.data?.scamCount ?? 0,
+          watchlistCount: Array.isArray(watchlist.data) ? watchlist.data.length : 0,
+          trustScoreAvg: stats.data?.trustScoreAvg ?? 0,
+          recentScans: history.data ?? [],
+        });
+      })
+      .finally(() => setLoading(false));
+  }, [walletAddress, isConnected]);
 
   const stats = [
     {
