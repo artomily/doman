@@ -10,7 +10,15 @@
 
 import prisma from '@/lib/prisma';
 import { EXTERNAL_APIS } from '@/lib/constants';
+import { isValidAddress } from '@/lib/viem';
 import type { SyncResult, BatchSyncResult } from '@/types/models';
+
+function normalizeAddress(value: string | undefined | null): `0x${string}` | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!isValidAddress(trimmed)) return null;
+  return trimmed.toLowerCase() as `0x${string}`;
+}
 
 /**
  * Sync DeFiLlama protocols (Base chain)
@@ -44,11 +52,11 @@ export async function syncDefiLlama(): Promise<SyncResult> {
     );
 
     for (const protocol of baseProtocols) {
-      const address = protocol.address?.[0] || '';
-      if (!address || !address.startsWith('0x')) continue;
+      const normalizedAddress = normalizeAddress(protocol.address?.[0]);
+      if (!normalizedAddress) continue;
 
       const addressData = {
-        address,
+        address: normalizedAddress,
         name: protocol.name,
         category: categorizeProtocol(protocol.category),
         description: protocol.description,
@@ -220,11 +228,8 @@ export async function syncScamSniffer(): Promise<SyncResult> {
 
     // Process scam addresses (limit to 100 per sync)
     for (const address of addresses.slice(0, 100)) {
-      if (!address || !address.startsWith('0x')) {
-        continue;
-      }
-
-      const normalized = address.toLowerCase();
+      const normalized = normalizeAddress(address);
+      if (!normalized) continue;
       const existing = await prisma.address.findUnique({
         where: { address: normalized },
       });

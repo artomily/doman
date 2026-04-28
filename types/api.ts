@@ -272,6 +272,7 @@ export type ScanInputType = 'address' | 'ens' | 'domain';
 export interface ScanResult {
   address: string;
   inputType?: ScanInputType;
+  displayInput?: string; // ENS display value (original input)
   resolvedAddress?: string; // ENS → resolved 0x address
   riskScore: number;
   riskLevel: RiskLevel;

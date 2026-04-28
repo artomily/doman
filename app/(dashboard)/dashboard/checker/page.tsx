@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAccount, useConnect } from "wagmi";
 import { Card } from "@/components/ui/card";
@@ -40,8 +40,9 @@ function CheckerContent() {
   const { address: walletAddress } = useAccount();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [state, setState] = useState<ScanState>({ status: "idle" });
+  const didAutoRun = useRef(false);
 
-  const runCheck = async (address: string) => {
+  const runCheck = useCallback(async (address: string) => {
     if (!address.trim()) return;
     setState({ status: "loading" });
     try {
@@ -60,17 +61,16 @@ function CheckerContent() {
     } catch {
       setState({ status: "error", message: "Network error. Please try again." });
     }
-  };
+  }, [walletAddress]);
 
-  // Pre-fill from URL query param
+  // Auto-run once when query param exists (avoid setState inside effect)
   useEffect(() => {
     const q = searchParams.get("q");
-    if (q) {
-      setQuery(q);
+    if (q && !didAutoRun.current) {
+      didAutoRun.current = true;
       runCheck(q);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams, runCheck]);
 
   const handleCheck = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,13 +131,13 @@ function CheckerContent() {
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div>
                 {/* ENS or original input label */}
-                {(state.data as any).displayInput && (
+                {state.data.displayInput && (
                   <p className="text-sm font-medium">
-                    {(state.data as any).displayInput}
+                    {state.data.displayInput}
                   </p>
                 )}
                 <p className="font-mono text-sm text-muted">
-                  {(state.data as any).resolvedAddress ?? state.data.address}
+                  {state.data.resolvedAddress ?? state.data.address}
                 </p>
                 <div className="mt-3 flex items-center gap-4">
                   <div className="text-5xl font-bold text-accent">
@@ -157,8 +157,8 @@ function CheckerContent() {
                     state.data.riskLevel === "LOW"
                       ? "safe"
                       : state.data.riskLevel === "MEDIUM"
-                      ? "warning"
-                      : "danger"
+                        ? "warning"
+                        : "danger"
                   }
                 >
                   {state.data.riskLevel} Risk
@@ -166,10 +166,10 @@ function CheckerContent() {
                 {state.data.isVerified && (
                   <Badge variant="safe">Verified</Badge>
                 )}
-                {(state.data as any).inputType === "ens" && (
+                {state.data.inputType === "ens" && (
                   <Badge variant="unknown">ENS</Badge>
                 )}
-                {(state.data as any).inputType === "domain" && (
+                {state.data.inputType === "domain" && (
                   <Badge variant="unknown">Domain</Badge>
                 )}
               </div>
@@ -214,8 +214,8 @@ function CheckerContent() {
                               p.severity === "LOW"
                                 ? "unknown"
                                 : p.severity === "MEDIUM"
-                                ? "warning"
-                                : "danger"
+                                  ? "warning"
+                                  : "danger"
                             }
                           >
                             {p.severity}
@@ -241,11 +241,10 @@ function CheckerContent() {
             {/* Scam flagged banner */}
             {(state.data.votesFor > 0 || state.data.votesAgainst > 0) && (
               <div
-                className={`mb-4 mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                  state.data.votesFor >= 3
+                className={`mb-4 mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${state.data.votesFor >= 3
                     ? "border-red-900 bg-red-950/30 text-red-400"
                     : "border-yellow-900 bg-yellow-950/20 text-yellow-400"
-                }`}
+                  }`}
               >
                 <AlertTriangle size={14} className="shrink-0" />
                 {state.data.votesFor >= 3
@@ -258,17 +257,17 @@ function CheckerContent() {
               Help the community by reporting suspicious activity.
             </p>
             <div className="flex flex-col gap-4">
-              {(state.data as any).inputType !== "domain" && (
+              {state.data.inputType !== "domain" && (
                 <VoteButtons
-                  address={(state.data as any).resolvedAddress ?? state.data.address}
+                  address={state.data.resolvedAddress ?? state.data.address}
                   votesFor={state.data.votesFor}
                   votesAgainst={state.data.votesAgainst}
                 />
               )}
               <div>
                 <ReportScamButton
-                  address={(state.data as any).resolvedAddress ?? state.data.address}
-                  isDomain={(state.data as any).inputType === 'domain'}
+                  address={state.data.resolvedAddress ?? state.data.address}
+                  isDomain={state.data.inputType === 'domain'}
                 />
               </div>
             </div>
@@ -332,7 +331,7 @@ function VoteButtons({
           setMyVoteType(json.data.voteType);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => controller.abort();
   }, [address, walletAddress, isConnected]);

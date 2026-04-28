@@ -6,7 +6,7 @@
  */
 
 import { getBytecode, isContract, getScanClient } from '@/lib/viem';
-import { SCAM_PATTERNS, getRiskLevelFromScore, SCAN_LIMITS } from '@/lib/constants';
+import { SCAN_LIMITS } from '@/lib/constants';
 import { allScamPatterns, calculateRiskScore, getRiskLevel } from '@/config/scam-patterns';
 import type { DetectedPattern, ScanResult, QuickScanResult, SimilarScam } from '@/types/api';
 import type { RiskLevel } from '@/lib/validation';
@@ -136,7 +136,7 @@ export async function scanContract(
   const addressTypeInfo = await detectAddressType(address, chainId);
   // Check if it's a contract
   const hasCode = await isContract(address, chainId);
-  
+
   if (!hasCode) {
     // EOA (Externally Owned Account) - low risk but not a contract
     // Update address record with EOA type
@@ -174,16 +174,10 @@ export async function scanContract(
   }
 
   // Detect patterns
-  const detectedPatterns = await detectPatterns(bytecode);
+  const { detectedPatterns, matchedPatterns } = await detectPatterns(bytecode);
 
-  // Calculate risk score from patterns
-  const calculatedRiskScore = detectedPatterns.reduce((total, pattern) => {
-    const severityScore = { LOW: 10, MEDIUM: 25, HIGH: 50, CRITICAL: 80 };
-    return total + (severityScore[pattern.severity] || 10);
-  }, 0);
-
-  // Cap at 100
-  const riskScore = Math.min(calculatedRiskScore, 100);
+  // Calculate risk score from matched patterns
+  const riskScore = calculateRiskScore(matchedPatterns);
   const riskLevel = getRiskLevel(riskScore) as RiskLevel;
 
   if (checkerAddress) await trackChecker(checkerAddress);
@@ -487,6 +481,12 @@ async function detectContractType(bytecode: `0x${string}`): Promise<ContractType
     '0x1a6b7620': 'STAKING', // stake (common)
     '0x84d7a10a': 'STAKING', // withdraw (staking)
     '0x3d18b513': 'YIELD', // harvest (yield farming)
+
+    // Governance / reporting (ScamReporter)
+    '0xbbd89cfb': 'GOVERNANCE', // submitReport(bytes32,bool)
+    '0xb5dd6284': 'GOVERNANCE', // submitVote(uint8,bytes32,bytes32,bool)
+    '0xaadc3b72': 'GOVERNANCE', // hasVoted(bytes32,address)
+    '0x75f76021': 'GOVERNANCE', // addressToTargetId(address)
   };
 
   // Check bytecode length - very short contracts might be proxies or factories
@@ -527,93 +527,105 @@ async function isFactoryContract(bytecode: `0x${string}`): Promise<boolean> {
   return false;
 }
 
+function normalizeHex(value: string): string {
+  return value.toLowerCase().replace(/^0x/, '');
+}
+
+function extractOpcodeSet(bytecode: `0x${string}`): Set<string> {
+  const data = normalizeHex(bytecode);
+  const opcodes = new Set<string>();
+  let i = 0;
+
+  while (i + 1 < data.length) {
+    const opcodeHex = data.slice(i, i + 2);
+    opcodes.add(`0x${opcodeHex}`);
+    const opcode = Number.parseInt(opcodeHex, 16);
+    i += 2;
+
+    // Skip push data to avoid false positives from embedded constants
+    if (!Number.isNaN(opcode) && opcode >= 0x60 && opcode <= 0x7f) {
+      const pushBytes = opcode - 0x5f;
+      i += pushBytes * 2;
+    }
+  }
+
+  return opcodes;
+}
+
 /**
  * Detect patterns in bytecode
  */
-async function detectPatterns(bytecode: `0x${string}`): Promise<DetectedPattern[]> {
-  const patterns: DetectedPattern[] = [];
+async function detectPatterns(bytecode: `0x${string}`): Promise<{
+  detectedPatterns: DetectedPattern[];
+  matchedPatterns: (typeof allScamPatterns)[number][];
+}> {
+  const detectedPatterns: DetectedPattern[] = [];
+  const matchedPatterns: (typeof allScamPatterns)[number][] = [];
+  const normalizedBytecode = normalizeHex(bytecode);
+  const opcodeSet = extractOpcodeSet(bytecode);
 
-  // Check for known opcode patterns
-  // Self-destruct (0xff)
-  if (bytecode.includes('ff')) {
-    const selfDestructPattern = allScamPatterns.find((p) => p.id === 'selfdestruct');
-    if (selfDestructPattern) {
-      patterns.push({
-        name: selfDestructPattern.name,
-        severity: selfDestructPattern.severity,
-        description: selfDestructPattern.description,
-      });
+  const addMatch = (pattern: (typeof allScamPatterns)[number]) => {
+    if (matchedPatterns.some((existing) => existing.id === pattern.id)) return;
+    matchedPatterns.push(pattern);
+    detectedPatterns.push({
+      name: pattern.name,
+      severity: pattern.severity,
+      description: pattern.description,
+    });
+  };
+
+  const matchesOpcode = (pattern: string | string[]) => {
+    const values = Array.isArray(pattern) ? pattern : [pattern];
+    return values.some((value) => opcodeSet.has(`0x${normalizeHex(value)}`));
+  };
+
+  const matchesBytecode = (pattern: string | string[]) => {
+    const values = Array.isArray(pattern) ? pattern : [pattern];
+    return values.some((value) => normalizedBytecode.includes(normalizeHex(value)));
+  };
+
+  for (const pattern of allScamPatterns) {
+    if (pattern.detector === 'opcode' && matchesOpcode(pattern.pattern)) {
+      addMatch(pattern);
+    }
+
+    if (pattern.detector === 'bytecode' && matchesBytecode(pattern.pattern)) {
+      addMatch(pattern);
     }
   }
 
-  // Delegate call (0xf4)
-  if (bytecode.includes('f4')) {
-    const delegateCallPattern = allScamPatterns.find((p) => p.id === 'delegatecall');
-    if (delegateCallPattern) {
-      patterns.push({
-        name: delegateCallPattern.name,
-        severity: delegateCallPattern.severity,
-        description: delegateCallPattern.description,
-      });
-    }
-  }
-
-  // Check for function selectors (first 4 bytes of calldata)
-  // This is simplified - in production would use proper bytecode analysis
-
-  // Check if bytecode is very short (might be a proxy)
-  if (bytecode.length < 100) {
-    const proxyPattern = allScamPatterns.find((p) => p.id === 'upgradeable_proxy');
-    if (proxyPattern) {
-      patterns.push({
-        name: proxyPattern.name,
-        severity: proxyPattern.severity,
-        description: proxyPattern.description,
-      });
-    }
-  }
-
-  // Check for specific bytecode signatures
-  // ERC1967 proxy implementation slot
-  if (bytecode.includes('360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc')) {
-    const beaconProxyPattern = allScamPatterns.find((p) => p.id === 'beacon_proxy');
-    if (beaconProxyPattern) {
-      patterns.push({
-        name: beaconProxyPattern.name,
-        severity: beaconProxyPattern.severity,
-        description: beaconProxyPattern.description,
-      });
-    }
-  }
-
-  return patterns;
+  return { detectedPatterns, matchedPatterns };
 }
 
 /**
  * Find similar contracts by bytecode hash
  */
 async function findSimilarScams(bytecodeHash: string, excludeAddress: string): Promise<SimilarScam[]> {
-  // Find addresses with high risk scores
-  const similarAddresses = await prisma.address.findMany({
+  if (!bytecodeHash) return [];
+  const normalizedExclude = excludeAddress.toLowerCase();
+
+  const similarScans = await prisma.contractScan.findMany({
     where: {
-      address: { not: excludeAddress },
-      riskScore: { gte: 70 }, // High risk addresses
-      status: { in: ['SCAM', 'SUSPICIOUS'] },
+      bytecodeHash,
+      address: { address: { not: normalizedExclude } },
     },
     take: 5,
+    distinct: ['addressId'],
     select: {
-      address: true,
-      name: true,
-      riskScore: true,
+      address: {
+        select: {
+          address: true,
+          name: true,
+        },
+      },
     },
-    orderBy: { riskScore: 'desc' },
+    orderBy: { createdAt: 'desc' },
   });
 
-  // Calculate similarity based on risk score difference
-  return similarAddresses.map((addr) => ({
-    address: addr.address,
-    name: addr.name,
-    similarity: 1 - (Math.abs(addr.riskScore - 80) / 100), // Simple similarity metric
+  return similarScans.map((scan) => ({
+    address: scan.address.address,
+    name: scan.address.name,
+    similarity: 1,
   }));
 }
 
