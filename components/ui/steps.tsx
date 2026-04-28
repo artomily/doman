@@ -1,3 +1,5 @@
+import { Fragment } from 'react';
+
 interface StepsProps {
   steps: string[];
   current: number; // 1-based
@@ -5,16 +7,17 @@ interface StepsProps {
 
 export function Steps({ steps, current }: StepsProps) {
   return (
-    <div className="flex items-center gap-0">
+    <div className="flex items-start">
       {steps.map((label, idx) => {
         const num = idx + 1;
         const isCompleted = num < current;
         const isCurrent = num === current;
+        const isLast = idx === steps.length - 1;
 
         return (
-          <div key={label} className="flex flex-1 items-center">
-            {/* Step circle */}
-            <div className="flex flex-col items-center gap-1">
+          <Fragment key={label}>
+            {/* Circle + label */}
+            <div className="flex shrink-0 flex-col items-center gap-1">
               <div
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${
                   isCompleted
@@ -41,15 +44,15 @@ export function Steps({ steps, current }: StepsProps) {
               </span>
             </div>
 
-            {/* Connector line (not after last step) */}
-            {idx < steps.length - 1 && (
+            {/* Connector line — between circles, flex-1 so both gaps are equal */}
+            {!isLast && (
               <div
-                className={`h-px flex-1 mx-2 mb-4 transition-colors ${
+                className={`mt-3.5 h-px flex-1 mx-2 transition-colors ${
                   isCompleted ? 'bg-accent' : 'bg-card-border'
                 }`}
               />
             )}
-          </div>
+          </Fragment>
         );
       })}
     </div>

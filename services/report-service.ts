@@ -6,6 +6,7 @@
  */
 
 import prisma from '@/lib/prisma';
+import { createHash } from 'crypto';
 import type {
   Report,
   ReportStatus,
@@ -21,15 +22,24 @@ import { AppError } from '@/lib/error-handler';
  * Create a new report
  */
 export async function createReport(data: CreateReportRequest): Promise<Report> {
-  // Check if address exists, if not create it
+  // Determine if target is a domain/ENS (not a 42-char 0x ETH address)
+  const isDomainTarget = !(data.address.startsWith('0x') && data.address.length === 42);
+
+  // For domain/ENS targets: generate a deterministic 42-char key so it fits ADDRESS VARCHAR(42).
+  // Full target string is stored in the `url` and `name` fields.
+  const addressKey = isDomainTarget
+    ? ('0x' + createHash('sha256').update(data.address.toLowerCase()).digest('hex').slice(0, 40))
+    : data.address;
+
   let address = await prisma.address.findUnique({
-    where: { address: data.address },
+    where: { address: addressKey },
   });
 
   if (!address) {
     address = await prisma.address.create({
       data: {
-        address: data.address,
+        address: addressKey,
+        ...(isDomainTarget && { name: data.address, url: data.address }),
         status: 'UNKNOWN',
         riskScore: 50,
         category: data.category,
@@ -50,7 +60,7 @@ export async function createReport(data: CreateReportRequest): Promise<Report> {
   });
 
   if (existingReport) {
-    throw new Error('You have already reported this address recently');
+    throw new AppError('DUPLICATE_REPORT', 'You have already reported this address recently', 409);
   }
 
   // Create report
