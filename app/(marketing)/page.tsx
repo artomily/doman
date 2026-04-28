@@ -13,7 +13,6 @@ import {
   Lock,
   MonitorSmartphone,
   ArrowDownLeft,
-  Plus,
   GitBranch,
   BookOpen,
   Code2,
@@ -27,73 +26,218 @@ import {
 /* ───────── Hero ───────── */
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-background">
-      {/* Abstract gradient background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -left-1/4 h-200 w-200 rounded-full bg-accent/10 blur-[120px]" />
-        <div className="absolute -bottom-1/2 -right-1/4 h-150 w-150 rounded-full bg-zinc-400/10 blur-[100px]" />
+    <section className="relative min-h-[90vh] overflow-hidden bg-background">
+      {/* Multi-layer gradient background */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-1/3 -left-1/4 h-[600px] w-[600px] rounded-full bg-accent/15 blur-[140px]" />
+        <div className="absolute -bottom-1/4 -right-1/5 h-[500px] w-[500px] rounded-full bg-blue-500/8 blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[800px] w-[800px] rounded-full bg-accent/5 blur-[180px]" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-6 pb-24 pt-20 md:pb-32 md:pt-28">
-        {/* Top nav row */}
-        {/* <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-card-border pb-4 text-xs uppercase tracking-wider text-muted">
-          <span>How It Works</span>
-          <span>SEO</span>
-          <span>Marketing</span>
-          <span>Connect Us</span>
-        </div> */}
+      {/* Grid overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
 
-        {/* Brand wordmark */}
-        <div className="py-20 flex items-center justify-between">
-          <Plus size={20} strokeWidth={1.5} className="text-muted/50" />
-          <p className="text-center text-[20vw] font-bold tracking-tighter sm:text-[15vw] md:text-[20vw]">
-            DOMA<span className="text-accent">N</span>
-          </p>
-          <Plus size={20} strokeWidth={1.5} className="text-muted/50" />
+      {/* Animations */}
+      <style>{`
+        @keyframes hero-scan {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100vh); }
+        }
+        @keyframes hero-pulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 1; }
+        }
+        @keyframes hero-float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-12px); }
+        }
+      `}</style>
+
+      {/* Scan line */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-accent/30"
+        style={{ animation: "hero-scan 6s linear infinite" }}
+      />
+
+      {/* Floating geometric accents */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute top-[15%] right-[8%] h-28 w-28 rounded-full border border-accent/10"
+          style={{ animation: "hero-float 7s ease-in-out infinite" }}
+        />
+        <div
+          className="absolute top-[60%] left-[5%] h-16 w-16 rounded-full border border-accent/8"
+          style={{ animation: "hero-float 5s ease-in-out infinite 1s" }}
+        />
+        <div
+          className="absolute bottom-[20%] right-[15%] h-3 w-3 rounded-full bg-accent/40"
+          style={{ animation: "hero-pulse 3s ease-in-out infinite" }}
+        />
+        <div
+          className="absolute top-[30%] left-[12%] h-2 w-2 rounded-full bg-accent/30"
+          style={{ animation: "hero-pulse 4s ease-in-out infinite 0.5s" }}
+        />
+        <div className="absolute top-[8%] left-[30%] h-px w-24 bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
+        <div className="absolute bottom-[35%] right-[5%] h-px w-32 bg-gradient-to-r from-transparent via-accent/15 to-transparent" />
+      </div>
+
+      {/* Content */}
+      <div className="relative mx-auto flex min-h-[90vh] max-w-7xl flex-col items-center justify-center px-6 py-32 md:py-40">
+        {/* Headline */}
+        <div className="mb-10 text-center">
+          <h1 className="text-5xl font-bold leading-[1.05] tracking-tight md:text-7xl lg:text-8xl">
+            SCAN BEFORE
+            <br />
+            <span className="relative inline-block">
+              YOU SEND
+              <span
+                className="absolute -right-6 -top-2 h-3 w-3 rounded-full bg-accent md:-right-8 md:h-4 md:w-4"
+                style={{ animation: "hero-pulse 2s ease-in-out infinite" }}
+              />
+            </span>
+            <span className="text-accent">.</span>
+            <br />
+            <span className="text-muted/70">TRUST BEFORE</span>
+            <br />
+            <span className="text-muted/70">YOU TRANSACT</span>
+            <span className="text-accent">.</span>
+          </h1>
         </div>
 
-        {/* Hero visual placeholder */}
-        <div className="relative mb-16 h-75 overflow-hidden rounded-3xl border border-card-border bg-linear-to-br from-accent/5 to-zinc-800/50 md:h-100">
-          <div className="absolute -top-1/2 -left-1/4 h-200 w-200 rounded-full bg-accent/5 blur-[100px]" />
-          <div className="absolute -bottom-1/2 -right-1/4 h-150 w-150 rounded-full bg-zinc-400/5 blur-[80px]" />
-          <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
-            <div>
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">
-                <Shield size={12} /> Web3 Security Engine
-              </div>
-            </div>
-            <div className="hidden text-right text-xs text-muted md:block">
-              Trusted by 10,000+ users
-            </div>
+        {/* Description + CTA */}
+        <div className="flex max-w-2xl flex-col items-center text-center">
+          <p className="max-w-lg text-sm leading-relaxed text-muted md:text-base">
+            Real-time on-chain analysis, smart contract inspection, and community
+            reputation — fused into a single trust score.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button size="lg" href="/dashboard/checker">
+              <Shield size={16} className="mr-2" />
+              Launch Checker
+            </Button>
+            <Button variant="secondary" size="lg" href="#features">
+              See How It Works
+            </Button>
           </div>
         </div>
 
-        {/* Main headline */}
-        <div className="max-w-5xl py-80">
-          <h1 className="text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
-            SCAN BEFORE
-            <br />
-            YOU SEND.
-            <br />
-            <span className="text-muted">TRUST BEFORE</span>
-            <br />
-            <span className="text-muted">YOU TRANSACT</span>
-            <span className="inline-block ml-3 h-12 w-12 rounded-full bg-accent md:h-16 md:w-16" />
-          </h1>
+        {/* Floating checker preview */}
+        <div
+          className="relative mt-16 w-full max-w-2xl md:mt-20 lg:max-w-3xl"
+          style={{ animation: "hero-float 8s ease-in-out infinite" }}
+        >
+          <div className="relative overflow-hidden rounded-2xl border border-card-border/60 bg-card/60 backdrop-blur-xl">
+            {/* Inner glow */}
+            <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-accent/10 blur-[60px]" />
+            <div className="pointer-events-none absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-blue-500/8 blur-[50px]" />
 
-          <p className="mt-8 max-w-xl text-sm leading-relaxed text-muted md:text-base">
-            Doman combines on-chain analysis, smart contract inspection, and
-            community reputation signals into a single trust score — so you know
-            what&apos;s safe before you click or send.
-          </p>
+            {/* Header bar */}
+            <div className="flex items-center gap-3 border-b border-card-border/50 bg-surface/30 px-5 py-3">
+              <div className="flex gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
+                <div className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
+                <div className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
+              </div>
+              <div className="flex-1 rounded-md bg-background/60 px-3 py-1 text-center font-mono text-[10px] text-muted">
+                domanprotocol.vercel.app/dashboard/checker
+              </div>
+              <div className="flex h-6 w-6 items-center justify-center rounded bg-accent/15">
+                <Shield size={11} className="text-accent" />
+              </div>
+            </div>
 
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Button size="lg" href="/dashboard/checker">
-              Try the Checker <ArrowRight size={16} className="ml-2" />
-            </Button>
-            <Button variant="secondary" size="lg" href="#features">
-              Explore Features
-            </Button>
+            {/* Checker body */}
+            <div className="p-5 md:p-6">
+              {/* Address input */}
+              <div className="mb-4 flex items-center gap-3 rounded-xl border border-card-border/50 bg-background/40 px-4 py-3">
+                <Search size={14} className="shrink-0 text-muted" />
+                <span className="flex-1 truncate font-mono text-xs text-muted">
+                  0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+                </span>
+                <div
+                  className="h-2 w-2 shrink-0 rounded-full bg-accent"
+                  style={{ animation: "hero-pulse 1.5s ease-in-out infinite" }}
+                />
+              </div>
+
+              {/* Scan result — split layout */}
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Score circle */}
+                <div className="flex flex-col items-center justify-center rounded-xl border border-green-500/15 bg-green-500/5 p-5">
+                  <div className="relative mb-3 flex h-20 w-20 items-center justify-center rounded-full border-2 border-green-500/30">
+                    <div className="absolute inset-2 rounded-full border border-green-500/20" />
+                    <span className="text-3xl font-bold text-green-400">91</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle size={13} className="text-green-400" />
+                    <span className="text-xs font-semibold text-green-400">SAFE</span>
+                  </div>
+                </div>
+
+                {/* Detail rows */}
+                <div className="flex flex-col justify-center gap-3 rounded-xl border border-card-border/40 bg-surface/20 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted">Tx History</span>
+                    <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-400">Clean</span>
+                  </div>
+                  <div className="h-px bg-card-border/40" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted">Contract Risk</span>
+                    <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-400">None</span>
+                  </div>
+                  <div className="h-px bg-card-border/40" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted">Funding</span>
+                    <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">Verified</span>
+                  </div>
+                  <div className="h-px bg-card-border/40" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted">Risk Level</span>
+                    <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-400">LOW</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data source strip */}
+              <div className="mt-4 flex items-center justify-center gap-3 text-[9px] uppercase tracking-widest text-muted/30">
+                <span>Base</span>
+                <span className="text-muted/15">|</span>
+                <span>GoPlus</span>
+                <span className="text-muted/15">|</span>
+                <span>Basescan</span>
+                <span className="text-muted/15">|</span>
+                <span>Community Signals</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom glow shadow */}
+          <div className="absolute -bottom-6 left-1/2 h-12 w-2/3 -translate-x-1/2 rounded-full bg-accent/8 blur-2xl" />
+        </div>
+
+        {/* Bottom stat counters */}
+        <div className="mt-16 flex items-center gap-8 text-center md:mt-20">
+          <div>
+            <p className="text-lg font-bold text-accent">10K+</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted/50">Users</p>
+          </div>
+          <div className="h-6 w-px bg-card-border/30" />
+          <div>
+            <p className="text-lg font-bold">500K+</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted/50">Scanned</p>
+          </div>
+          <div className="h-6 w-px bg-card-border/30" />
+          <div>
+            <p className="text-lg font-bold text-glow">90%+</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted/50">Detection</p>
           </div>
         </div>
       </div>
@@ -125,7 +269,7 @@ function About() {
         </h2>
 
         <p className="mt-8 max-w-2xl text-sm leading-relaxed text-muted md:text-base">
-          Web3 scam losses reached $3.8B in 2023 — mostly from phishing, bad
+          Web3 scam losses reached $14B in 2024 — mostly from phishing, bad
           approvals, and fake addresses. Existing tools are too technical and
           developer-focused. Doman makes security accessible to everyone.
         </p>

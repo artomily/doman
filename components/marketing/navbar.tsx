@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useConnect } from "wagmi";
@@ -56,10 +57,14 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent glow-accent">
-            <span className="text-sm font-bold text-white">D</span>
-          </div>
-          <span className="text-lg font-bold tracking-tight">DOMAN</span>
+          <Image
+            src="/logo2.png"
+            alt="Doman"
+            width={120}
+            height={32}
+            priority
+            className="h-14 w-auto"
+          />
         </Link>
 
         {/* Desktop Nav */}
