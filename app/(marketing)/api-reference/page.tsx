@@ -53,7 +53,7 @@ interface Section {
 }
 
 /* ── Data ───────────────────────────────────────────────────── */
-const BASE_URL = "https://your-domain.com";
+const BASE_URL = "https://domanprotocol.vercel.app";
 
 const sections: Section[] = [
   {

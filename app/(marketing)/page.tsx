@@ -723,7 +723,7 @@ function OpenSource() {
           </div>
           <pre className="overflow-x-auto p-5 text-xs leading-relaxed text-zinc-300">
             <code>{
-`fetch('https://your-domain.com/api/v1/scan/0x4200000000000000000000000000000000000006')
+`fetch('https://domanprotocol.vercel.app/api/v1/scan/0x4200000000000000000000000000000000000006')
   .then(r => r.json())
   .then(({ data }) => {
     console.log(data.riskScore)  // 0–100
