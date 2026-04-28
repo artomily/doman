@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveEns } from '@/services/ens-service';
 import { apiSuccess, apiError } from '@/lib/api-response';
+import prisma from '@/lib/prisma';
 import { z } from 'zod';
 
 const paramsSchema = z.object({
@@ -44,11 +45,27 @@ export async function GET(
       return apiError('NOT_FOUND', `ENS name '${ensName}' not found or does not resolve to an address`, undefined, 404);
     }
 
-    return apiSuccess({
+    const checker = request.nextUrl.searchParams.get('checker') ?? undefined;
+    const resolvedData = {
       ens: ensName.endsWith('.eth') ? ensName : `${ensName}.eth`,
       address,
       resolvedAt: new Date().toISOString(),
-    });
+    };
+
+    // Record search history (fire-and-forget)
+    prisma.searchHistory.create({
+      data: {
+        checkerAddress: checker ?? null,
+        searchType: 'ens',
+        query: resolvedData.ens,
+        resolvedTo: address,
+        riskScore: 0,
+        riskLevel: 'LOW',
+        result: resolvedData as any,
+      },
+    }).catch(() => {});
+
+    return apiSuccess(resolvedData);
   } catch (error) {
     console.error('ENS resolution error:', error);
     return apiError('INTERNAL_ERROR', 'Failed to resolve ENS name', undefined, 500);

@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const domain = searchParams.get('domain');
+    const checker = searchParams.get('checker') || undefined;
 
     if (!domain) {
       return errors.validation('Domain parameter is required');
@@ -43,15 +44,30 @@ export async function GET(request: NextRequest) {
       where: { domain: cleanDomain },
     });
 
+    const riskScore = scamDomain?.riskScore ?? 0;
+    const riskLevel = riskScore >= 80 ? 'CRITICAL' : riskScore >= 60 ? 'HIGH' : riskScore >= 30 ? 'MEDIUM' : 'LOW';
+
     const result: DomainCheckResult = {
       domain: cleanDomain,
       isScam: !!scamDomain,
-      riskScore: scamDomain?.riskScore ?? 0,
+      riskScore,
       category: scamDomain?.category ?? 'UNKNOWN',
       description: scamDomain?.description || undefined,
       source: scamDomain?.source || undefined,
       checkedAt: new Date().toISOString(),
     };
+
+    // Record search history (fire-and-forget)
+    prisma.searchHistory.create({
+      data: {
+        checkerAddress: checker ?? null,
+        searchType: 'domain',
+        query: cleanDomain,
+        riskScore,
+        riskLevel,
+        result: result as any,
+      },
+    }).catch(() => {});
 
     return apiSuccess(result);
   });

@@ -13,8 +13,8 @@ export const APP_NAME = 'Doman';
 export const APP_VERSION = '1.0.0';
 export const APP_DESCRIPTION = 'Web3 Scam Detection Platform for Base Chain';
 
-// Security constants
-export const CRON_SECRET = process.env.CRON_SECRET || 'dev-secret-change-in-production';
+// Security constants — must be set via environment variable
+export const CRON_SECRET = process.env.CRON_SECRET;
 
 // ============================================
 // RISK SCORE THRESHOLDS

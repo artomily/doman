@@ -406,3 +406,22 @@ model ContractSignature {
   @@index([isMalicious])
   @@map("contract_signatures")
 }
+
+// Universal search history — captures every address/ENS/domain check per user
+model SearchHistory {
+  id             String   @id @default(cuid())
+  checkerAddress String?  @db.VarChar(42) // wallet that triggered the search
+  searchType     String   @db.VarChar(20) // "address" | "ens" | "domain"
+  query          String   @db.VarChar(500) // raw search query
+  resolvedTo     String?  @db.VarChar(500) // resolved address or canonical form
+  riskScore      Int      @default(0) @db.SmallInt
+  riskLevel      String   @default("LOW") @db.VarChar(20)
+  result         Json?    // full result snapshot (optional)
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([checkerAddress])
+  @@index([searchType])
+  @@index([createdAt])
+  @@index([checkerAddress, createdAt])
+  @@map("search_history")
+}

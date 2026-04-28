@@ -5,7 +5,7 @@ const footerLinks = {
     { label: "Features", href: "#features" },
     { label: "Trust Score", href: "#how-it-works" },
     { label: "Extension", href: "#features" },
-    { label: "API", href: "#features" },
+    { label: "API Reference", href: "/api-reference" },
   ],
   Company: [
     { label: "About", href: "#about" },
@@ -14,9 +14,9 @@ const footerLinks = {
     { label: "Contact", href: "#contact" },
   ],
   Resources: [
-    { label: "Documentation", href: "#" },
-    { label: "API Reference", href: "#" },
-    { label: "Status", href: "#" },
+    { label: "Documentation", href: "https://doman-docs.vercel.app" },
+    { label: "API Reference", href: "/api-reference" },
+    { label: "Open Source", href: "#open-source" },
     { label: "Changelog", href: "#" },
   ],
 };

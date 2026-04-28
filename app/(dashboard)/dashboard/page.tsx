@@ -1,86 +1,94 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 import { Card } from "@/components/ui/card";
 import { TrustScoreBadge } from "@/components/ui/badge";
-import prisma from "@/lib/prisma";
 import {
   Search,
   Shield,
   Eye,
   AlertTriangle,
   ArrowUpRight,
-  ArrowDownRight,
+  Loader2,
 } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+interface DashboardData {
+  totalChecks: number;
+  myChecks: number;
+  flaggedCount: number;
+  watchlistCount: number;
+  trustScoreAvg: number;
+  recentScans: { id: string; riskScore: number; createdAt: string; address: { address: string; chain: string; category: string } }[];
+}
 
-export default async function DashboardPage() {
-  const [
-    totalScans,
-    flaggedCount,
-    watchlistCount,
-    riskScoreAvg,
-    recentScans,
-  ] = await Promise.all([
-    prisma.contractScan.count(),
-    prisma.address.count({
-      where: { status: { in: ["SCAM", "SUSPICIOUS"] } },
-    }),
-    prisma.watchlist.count(),
-    prisma.address.aggregate({ _avg: { riskScore: true } }),
-    prisma.contractScan.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        riskScore: true,
-        createdAt: true,
-        address: {
-          select: { address: true, chain: true, category: true },
-        },
-      },
-    }),
-  ]);
+export default function DashboardPage() {
+  const { address: walletAddress, isConnected } = useAccount();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const trustScoreAvg = riskScoreAvg._avg.riskScore
-    ? Math.round(100 - riskScoreAvg._avg.riskScore)
-    : 0;
+  useEffect(() => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (isConnected && walletAddress) params.set("checker", walletAddress);
+
+    Promise.all([
+      fetch(`/api/v1/stats`).then((r) => r.json()),
+      fetch(`/api/v1/history?limit=5${isConnected && walletAddress ? `&checker=${walletAddress}` : ""}`).then((r) => r.json()),
+      isConnected && walletAddress
+        ? fetch(`/api/v1/watchlist?owner=${walletAddress}`).then((r) => r.json())
+        : Promise.resolve({ data: [] }),
+    ])
+      .then(([stats, history, watchlist]) => {
+        setData({
+          totalChecks: stats.data?.totalScans ?? stats.data?.scansToday ?? 0,
+          myChecks: history.data?.length ?? 0,
+          flaggedCount: stats.data?.scamCount ?? 0,
+          watchlistCount: Array.isArray(watchlist.data) ? watchlist.data.length : 0,
+          trustScoreAvg: stats.data?.trustScoreAvg ?? 0,
+          recentScans: history.data ?? [],
+        });
+      })
+      .finally(() => setLoading(false));
+  }, [walletAddress, isConnected]);
 
   const stats = [
     {
-      label: "Total Checks",
-      value: totalScans.toLocaleString(),
-      change: null,
+      label: isConnected ? "My Checks" : "Total Checks",
+      value: loading ? "—" : (isConnected ? data?.myChecks : data?.totalChecks ?? 0)?.toLocaleString() ?? "0",
       up: true,
       icon: Search,
     },
     {
       label: "Flagged Addresses",
-      value: flaggedCount.toLocaleString(),
-      change: null,
+      value: loading ? "—" : (data?.flaggedCount ?? 0).toLocaleString(),
       up: true,
       icon: AlertTriangle,
     },
     {
       label: "Watchlist",
-      value: watchlistCount.toLocaleString(),
-      change: null,
+      value: loading ? "—" : (data?.watchlistCount ?? 0).toLocaleString(),
       up: false,
       icon: Eye,
     },
     {
       label: "Trust Score Avg",
-      value: trustScoreAvg.toString(),
-      change: null,
+      value: loading ? "—" : (data?.trustScoreAvg ?? 0).toString(),
       up: true,
       icon: Shield,
     },
   ];
+
+  const recentScans = data?.recentScans ?? [];
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="mt-1 text-sm text-muted">
-          Overview of your Web3 security activity
+          {isConnected
+            ? "Your personal Web3 security overview"
+            : "Connect your wallet to see your personal activity"}
         </p>
       </div>
 
@@ -90,20 +98,7 @@ export default async function DashboardPage() {
           <Card key={stat.label} className="flex flex-col justify-between min-h-32">
             <div className="flex items-center justify-between">
               <stat.icon size={18} className="text-muted" />
-              {stat.change && (
-                <span
-                  className={`flex items-center gap-1 text-xs ${
-                    stat.up ? "text-green-400" : "text-muted"
-                  }`}
-                >
-                  {stat.up ? (
-                    <ArrowUpRight size={12} />
-                  ) : (
-                    <ArrowDownRight size={12} />
-                  )}
-                  {stat.change}
-                </span>
-              )}
+              {loading && <Loader2 size={14} className="animate-spin text-muted/50" />}
             </div>
             <div>
               <p className="mt-3 text-2xl font-bold">{stat.value}</p>
