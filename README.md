@@ -12,7 +12,7 @@ _Scan before you send. Trust before you transact._
 [![Prisma](https://img.shields.io/badge/Prisma-7.7.0-2D3748?logo=prisma)](https://www.prisma.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-[Quick Start](#-quick-start) · [Architecture](#-architecture) · [API Docs](#-api-overview) · [Contributing](#-contributing) · [Full Docs](https://doman-docs.vercel.app)
+[Quick Start](#-quick-start) · [Architecture](#-architecture) · [API Docs](https://domanprotocol.vercel.app/api-reference) · [Contributing](#-contributing) · [Full Docs](https://doman-docs.vercel.app)
 
 </div>
 
@@ -20,21 +20,21 @@ _Scan before you send. Trust before you transact._
 
 ## Table of Contents
 
-- [What is DOMAN?](#-what-is-doman)
-- [Why DOMAN?](#-why-doman)
-- [How DOMAN Works](#-how-doman-works)
-- [User Journeys](#-user-journeys)
-- [Architecture](#-architecture)
-- [Tech Stack](#-tech-stack)
-- [Features](#-features)
-- [Quick Start](#-quick-start)
-- [Project Structure](#-project-structure)
-- [API Overview](#-api-overview)
-- [Environment Variables](#-environment-variables)
-- [Database](#-database)
-- [Contributing](#-contributing)
-- [Roadmap](#-roadmap)
-- [License](#-license)
+- [What is DOMAN?](#what-is-doman)
+- [Why DOMAN?](#why-doman)
+- [How DOMAN Works](#how-doman-works)
+- [User Journeys](#user-journeys)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [API Overview](#api-overview)
+- [Environment Variables](#environment-variables)
+- [Database](#database)
+- [Contributing](#contributing)
+- [Roadmap](#roadmap)
+- [License](#license)
 
 ---
 
