@@ -280,7 +280,6 @@ export async function syncScamSniffer(): Promise<SyncResult> {
             riskScore: 90,
             status: 'ACTIVE',
             source: 'scamsniffer',
-            sourceId: cleanDomain,
           },
         });
       };
