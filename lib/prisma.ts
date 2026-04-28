@@ -14,7 +14,10 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 
 const pool = new pg.Pool({
-  connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL,
+  max: 3,
+  idleTimeoutMillis: 20_000,
+  connectionTimeoutMillis: 5_000,
 });
 
 const adapter = new PrismaPg(pool);
