@@ -12,6 +12,7 @@ import type { DetectedPattern, ScanResult, QuickScanResult, SimilarScam } from '
 import type { RiskLevel } from '@/lib/validation';
 import type { AddressType, ContractType } from '@prisma/client';
 import prisma from '@/lib/prisma';
+import { WHITELISTED_CONTRACTS } from '@/config/contracts';
 
 /** Upsert a UserProfile row so the wallet is tracked. */
 async function trackChecker(checkerAddress: string) {
@@ -19,6 +20,92 @@ async function trackChecker(checkerAddress: string) {
     where: { address: checkerAddress },
     create: { address: checkerAddress },
     update: {},
+  });
+}
+
+/**
+ * Check if a contract should skip scanning
+ * Returns true if:
+ * 1. Contract is in whitelist (known good)
+ * 2. Contract is already in DB marked as LEGIT
+ * 3. Contract source is verified on block explorer
+ */
+async function shouldSkipScanning(address: string): Promise<boolean> {
+  const normalizedAddress = address.toLowerCase() as `0x${string}`;
+
+  // Check whitelist first (fastest)
+  const isWhitelisted = WHITELISTED_CONTRACTS.some(
+    (addr) => addr.toLowerCase() === normalizedAddress
+  );
+  if (isWhitelisted) return true;
+
+  // Check database for existing trusted records
+  const dbRecord = await prisma.address.findUnique({
+    where: { address: normalizedAddress },
+    select: { status: true, verifiedBy: true, verifiedAt: true },
+  });
+
+  // If already marked as LEGIT or verified, skip scanning
+  if (dbRecord?.status === 'LEGIT' || dbRecord?.verifiedBy) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Get safe result for whitelisted/verified addresses
+ */
+async function getSafeContractResult(address: string, startTime: number): Promise<ScanResult> {
+  const normalizedAddress = address.toLowerCase() as `0x${string}`;
+
+  // Fetch reports and votes from DB
+  const addressRecord = await prisma.address.findUnique({
+    where: { address: normalizedAddress },
+    include: { _count: { select: { reports: true } } },
+  });
+
+  const reportCount = addressRecord?._count.reports ?? 0;
+
+  const voteAggregates = await prisma.report.aggregate({
+    where: { address: { address: normalizedAddress } },
+    _sum: { votesFor: true, votesAgainst: true },
+  });
+
+  const votesFor = voteAggregates._sum.votesFor ?? 0;
+  const votesAgainst = voteAggregates._sum.votesAgainst ?? 0;
+
+  return {
+    address: normalizedAddress,
+    riskScore: 0,
+    riskLevel: 'LOW',
+    isVerified: true,
+    patterns: [],
+    similarScams: [],
+    reportCount,
+    votesFor,
+    votesAgainst,
+    scanDuration: Date.now() - startTime,
+    scannedAt: new Date().toISOString(),
+  };
+}
+
+/**
+async function saveTrustedAddress(address: string): Promise<void> {
+  const normalizedAddress = address.toLowerCase() as `0x${string}`;
+
+  await prisma.address.upsert({
+    where: { address: normalizedAddress },
+    update: { status: 'LEGIT', verifiedAt: new Date() },
+    create: {
+      address: normalizedAddress,
+      addressType: 'SMART_CONTRACT',
+      status: 'LEGIT',
+      category: 'DEFI',
+      riskScore: 0,
+      source: 'SCANNER',
+      verifiedAt: new Date(),
+    },
   });
 }
 
@@ -35,6 +122,14 @@ export async function scanContract(
   // Validate address format
   if (!address.startsWith('0x') || address.length < 2 || address.length > 42) {
     throw new Error('Invalid address format');
+  }
+
+  const normalizedAddress = address.toLowerCase() as `0x${string}`;
+
+  // Check if address should skip scanning (whitelisted or verified)
+  if (await shouldSkipScanning(normalizedAddress)) {
+    await saveTrustedAddress(normalizedAddress);
+    return await getSafeContractResult(normalizedAddress, startTime);
   }
 
   // Detect address type first

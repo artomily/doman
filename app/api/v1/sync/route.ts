@@ -14,6 +14,9 @@ import { CRON_SECRET } from '@/lib/constants';
 export async function POST(request: NextRequest) {
   return withErrorHandler(async () => {
     // Verify cron secret
+    if (!CRON_SECRET) {
+      return errors.unauthorized('CRON_SECRET not configured');
+    }
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.replace('Bearer ', '');
 

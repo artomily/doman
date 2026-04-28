@@ -1,8 +1,69 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Key, Shield } from "lucide-react";
+import { User, Bell, Key, Shield, Loader2 } from "lucide-react";
+
+interface UserProfile {
+  address: string;
+  ensName: string | null;
+  reportsSubmitted: number;
+  reportsVerified: number;
+  reputation: number;
+  createdAt: string;
+}
 
 export default function SettingsPage() {
+  const { address: walletAddress, isConnected } = useAccount();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isConnected || !walletAddress) {
+      setProfile(null);
+      return;
+    }
+    setLoading(true);
+    fetch(`/api/v1/address/${walletAddress}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setProfile({
+            address: walletAddress,
+            ensName: json.data.ensName ?? null,
+            reportsSubmitted: json.data.reportsSubmitted ?? 0,
+            reportsVerified: json.data.reportsVerified ?? 0,
+            reputation: json.data.reputation ?? 0,
+            createdAt: json.data.createdAt ?? new Date().toISOString(),
+          });
+        } else {
+          // User exists in wallet but not DB yet — show wallet defaults
+          setProfile({
+            address: walletAddress,
+            ensName: null,
+            reportsSubmitted: 0,
+            reportsVerified: 0,
+            reputation: 0,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      })
+      .catch(() => {
+        setProfile({
+          address: walletAddress,
+          ensName: null,
+          reportsSubmitted: 0,
+          reportsVerified: 0,
+          reputation: 0,
+          createdAt: new Date().toISOString(),
+        });
+      })
+      .finally(() => setLoading(false));
+  }, [walletAddress, isConnected]);
+
+  const truncate = (addr: string) => `${addr.slice(0, 10)}...${addr.slice(-8)}`;
   return (
     <div className="space-y-8">
       <div>
@@ -17,28 +78,62 @@ export default function SettingsPage() {
         <div className="flex items-center gap-3 mb-6">
           <User size={18} className="text-muted" />
           <h2 className="text-lg font-semibold">Profile</h2>
+          {loading && <Loader2 size={14} className="animate-spin text-muted ml-auto" />}
         </div>
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs text-muted">Wallet Address</label>
-            <p className="mt-1 font-mono text-sm">
-              0x1a2b3c4d5e6f7890abcdef1234567890abcdef12
-            </p>
-          </div>
-          <div>
-            <label className="text-xs text-muted">Connected Since</label>
-            <p className="mt-1 text-sm">April 1, 2026</p>
-          </div>
-          <div>
-            <label className="text-xs text-muted">Plan</label>
-            <div className="mt-1 flex items-center gap-3">
-              <p className="text-sm font-medium">Free</p>
-              <Button size="sm" variant="secondary">
-                Upgrade
-              </Button>
+
+        {!isConnected ? (
+          <p className="text-sm text-muted">Connect your wallet to view profile details.</p>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-muted">Wallet Address</label>
+              <p className="mt-1 font-mono text-sm break-all">
+                {profile?.address ?? walletAddress ?? "—"}
+              </p>
+            </div>
+            {profile?.ensName && (
+              <div>
+                <label className="text-xs text-muted">ENS Name</label>
+                <p className="mt-1 text-sm">{profile.ensName}</p>
+              </div>
+            )}
+            <div>
+              <label className="text-xs text-muted">Member Since</label>
+              <p className="mt-1 text-sm">
+                {profile
+                  ? new Date(profile.createdAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                  : "—"}
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-4 pt-2">
+              <div className="rounded-xl border border-card-border bg-surface px-4 py-3 text-center">
+                <p className="text-lg font-bold">{profile?.reportsSubmitted ?? 0}</p>
+                <p className="text-xs text-muted mt-0.5">Reports Submitted</p>
+              </div>
+              <div className="rounded-xl border border-card-border bg-surface px-4 py-3 text-center">
+                <p className="text-lg font-bold">{profile?.reportsVerified ?? 0}</p>
+                <p className="text-xs text-muted mt-0.5">Reports Verified</p>
+              </div>
+              <div className="rounded-xl border border-card-border bg-surface px-4 py-3 text-center">
+                <p className="text-lg font-bold">{profile?.reputation ?? 0}</p>
+                <p className="text-xs text-muted mt-0.5">Reputation</p>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-muted">Plan</label>
+              <div className="mt-1 flex items-center gap-3">
+                <p className="text-sm font-medium">Free</p>
+                <Button size="sm" variant="secondary">
+                  Upgrade
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </Card>
 
       {/* Notifications */}

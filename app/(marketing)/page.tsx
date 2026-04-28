@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Shield,
@@ -13,6 +14,14 @@ import {
   MonitorSmartphone,
   ArrowDownLeft,
   Plus,
+  GitBranch,
+  BookOpen,
+  Code2,
+  ExternalLink,
+  Puzzle,
+  Bell,
+  ScanSearch,
+  ShieldAlert,
 } from "lucide-react";
 
 /* ───────── Hero ───────── */
@@ -424,6 +433,311 @@ function ProductHighlights() {
   );
 }
 
+/* ───────── Extension ───────── */
+const extensionFeatures = [
+  {
+    icon: ScanSearch,
+    title: "Real-Time Address Scanning",
+    desc: "Automatically detects Ethereum and EVM addresses on any page and overlays instant trust badges.",
+  },
+  {
+    icon: ShieldAlert,
+    title: "Phishing & Scam Warnings",
+    desc: "Full-screen danger overlays block known scam domains before you can connect your wallet.",
+  },
+  {
+    icon: Globe,
+    title: "Works on Every Crypto Site",
+    desc: "Etherscan, OpenSea, Uniswap, Blur — the extension silently scans in the background wherever you go.",
+  },
+  {
+    icon: Zap,
+    title: "Sub-300ms Response",
+    desc: "Powered by the DOMAN API with edge caching so warnings appear before you even notice the scan.",
+  },
+];
+
+function Extension() {
+  return (
+    <section
+      id="extension"
+      className="border-t border-card-border bg-background py-24 md:py-32"
+    >
+      <div className="mx-auto max-w-7xl px-6">
+        {/* Header */}
+        <div className="mb-16 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-card-border bg-card px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-muted">
+                <Puzzle size={11} />
+                Browser Extension
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-yellow-400">
+                <Bell size={10} />
+                Coming Soon — Chrome Web Store
+              </span>
+            </div>
+
+            <h2 className="mt-2 max-w-2xl text-3xl font-bold leading-[1.1] tracking-tight md:text-5xl">
+              PROTECT EVERY
+              <br />
+              CLICK.
+              <br />
+              <span className="text-muted">EVERYWHERE YOU BROWSE.</span>
+            </h2>
+            <p className="mt-6 max-w-lg text-sm leading-relaxed text-muted">
+              The DOMAN browser extension brings the full power of our trust
+              engine directly into your browser. Scan addresses, detect
+              phishing domains, and get real-time warnings — without ever
+              leaving the page.
+            </p>
+          </div>
+
+          {/* Visual mock */}
+          <div className="relative flex-none">
+            <div className="relative h-52 w-72 overflow-hidden rounded-2xl border border-card-border bg-card md:h-60 md:w-80">
+              <div className="absolute inset-0 bg-linear-to-br from-accent/5 via-transparent to-zinc-800/30" />
+              {/* Mock browser bar */}
+              <div className="flex items-center gap-2 border-b border-card-border bg-[#080808] px-4 py-2.5">
+                <div className="flex gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
+                </div>
+                <div className="flex-1 rounded bg-zinc-800 px-3 py-1 text-[9px] text-muted">
+                  https://app.uniswap.org/swap
+                </div>
+                {/* Extension icon */}
+                <div className="flex h-5 w-5 items-center justify-center rounded bg-accent/20">
+                  <Shield size={10} className="text-accent" />
+                </div>
+              </div>
+              {/* Mock content area */}
+              <div className="relative p-4">
+                {/* Address badge */}
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex-1 rounded bg-zinc-800 px-2 py-1.5 font-mono text-[8px] text-zinc-400">
+                    0x4200...0006
+                  </div>
+                  <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[8px] font-semibold text-green-400">
+                    SAFE · 91
+                  </span>
+                </div>
+                {/* Warning overlay */}
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3">
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <ShieldAlert size={10} className="text-red-400" />
+                    <span className="text-[8px] font-bold uppercase tracking-wider text-red-400">
+                      Phishing Domain Detected
+                    </span>
+                  </div>
+                  <p className="text-[7px] leading-relaxed text-red-300/70">
+                    This site is flagged as a known scam. Do not connect your
+                    wallet.
+                  </p>
+                </div>
+                {/* Scanning indicator */}
+                <div className="mt-3 flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+                  <span className="text-[8px] text-muted">Scanning page...</span>
+                </div>
+              </div>
+            </div>
+            {/* Glow */}
+            <div className="absolute -bottom-6 -right-6 h-32 w-32 rounded-full bg-accent/10 blur-2xl" />
+          </div>
+        </div>
+
+        {/* Feature grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {extensionFeatures.map((feat) => (
+            <div
+              key={feat.title}
+              className="group rounded-2xl border border-card-border bg-card p-6 transition-colors hover:border-accent/30"
+            >
+              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10">
+                <feat.icon size={16} className="text-accent" />
+              </div>
+              <h3 className="text-sm font-semibold leading-snug">{feat.title}</h3>
+              <p className="mt-2 text-xs leading-relaxed text-muted">{feat.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA strip */}
+        <div className="mt-10 flex flex-col items-center justify-between gap-6 overflow-hidden rounded-2xl border border-card-border bg-card p-8 md:flex-row">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted">
+              doman-extension · Releasing on Chrome Web Store
+            </p>
+            <p className="mt-1 text-lg font-bold">
+              Be the first to know when it drops.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="secondary"
+              size="lg"
+              href="https://github.com/your-org/doman-extension"
+            >
+              <GitBranch size={15} className="mr-2" />
+              View Extension Source
+              <ExternalLink size={12} className="ml-2 opacity-50" />
+            </Button>
+            <button
+              disabled
+              className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-accent/20 px-5 py-3 text-sm font-medium text-accent/60 opacity-70 ring-1 ring-accent/20"
+            >
+              <Puzzle size={15} />
+              Add to Chrome
+              <span className="ml-1 rounded-full bg-yellow-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-yellow-400">
+                Soon
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ───────── Open Source / Developer ───────── */
+function OpenSource() {
+  return (
+    <section
+      id="open-source"
+      className="border-t border-card-border bg-background py-24 md:py-32"
+    >
+      <div className="mx-auto max-w-7xl px-6">
+        {/* Header */}
+        <div className="mb-16 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1 text-xs text-accent">
+              <GitBranch size={11} />
+              Open Source · MIT License
+            </div>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight md:text-5xl">
+              BUILT IN THE OPEN.
+              <br />
+              <span className="text-muted">FREE TO BUILD ON.</span>
+            </h2>
+            <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted">
+              DOMAN is fully open source. The entire API — 22+ endpoints
+              covering scanning, reporting, watchlists, ENS, and more — is
+              documented and ready for you to integrate into your own
+              applications, bots, or extensions.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 md:flex-col">
+            <Button href="/api-reference" size="lg">
+              <BookOpen size={15} className="mr-2" />
+              API Reference
+            </Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              href="https://github.com/your-org/doman"
+            >
+              <GitBranch size={15} className="mr-2" />
+              View on GitHub
+              <ExternalLink size={12} className="ml-2 opacity-50" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Cards */}
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* REST API */}
+          <div className="group rounded-2xl border border-card-border bg-card p-7 transition-colors hover:border-accent/30">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+              <Zap size={18} className="text-accent" />
+            </div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider">
+              REST API
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              22+ endpoints for address scanning, risk scoring, ENS resolution,
+              domain checks, reports, and more. All responses follow a
+              consistent JSON envelope.
+            </p>
+            <Link
+              href="/api-reference"
+              className="mt-5 inline-flex items-center gap-1.5 text-xs text-accent opacity-80 transition-opacity hover:opacity-100"
+            >
+              Browse endpoints <ArrowRight size={12} />
+            </Link>
+          </div>
+
+          {/* Open Source */}
+          <div className="group rounded-2xl border border-card-border bg-card p-7 transition-colors hover:border-accent/30">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+              <Code2 size={18} className="text-accent" />
+            </div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider">
+              Open Source
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              Full source code on GitHub under the MIT license. Fork it, deploy
+              your own instance, or contribute improvements directly.
+            </p>
+            <a
+              href="https://github.com/your-org/doman"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex items-center gap-1.5 text-xs text-accent opacity-80 transition-opacity hover:opacity-100"
+            >
+              Star on GitHub <ExternalLink size={11} />
+            </a>
+          </div>
+
+          {/* Extension */}
+          <div className="group rounded-2xl border border-card-border bg-card p-7 transition-colors hover:border-accent/30">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+              <Shield size={18} className="text-accent" />
+            </div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider">
+              Browser Extension
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              Chrome extension source is also open. Inspect how we call the API
+              for real-time phishing detection and in-page address scanning.
+            </p>
+            <a
+              href="https://github.com/your-org/doman"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex items-center gap-1.5 text-xs text-accent opacity-80 transition-opacity hover:opacity-100"
+            >
+              View extension source <ExternalLink size={11} />
+            </a>
+          </div>
+        </div>
+
+        {/* Quick code snippet */}
+        <div className="mt-10 overflow-hidden rounded-2xl border border-card-border bg-[#080808]">
+          <div className="flex items-center justify-between border-b border-card-border px-5 py-3">
+            <span className="text-xs text-muted font-mono">Quick example — scan an address</span>
+            <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] text-accent">
+              GET
+            </span>
+          </div>
+          <pre className="overflow-x-auto p-5 text-xs leading-relaxed text-zinc-300">
+            <code>{
+`fetch('https://your-domain.com/api/v1/scan/0x4200000000000000000000000000000000000006')
+  .then(r => r.json())
+  .then(({ data }) => {
+    console.log(data.riskScore)  // 0–100
+    console.log(data.riskLevel)  // 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+    console.log(data.isVerified) // true
+  })`
+            }</code>
+          </pre>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ───────── CTA ───────── */
 function CTA() {
   return (
@@ -460,6 +774,8 @@ export default function LandingPage() {
       <Manifesto />
       <Advantage />
       <ProductHighlights />
+      <Extension />
+      <OpenSource />
       <CTA />
     </>
   );

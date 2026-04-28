@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAccount, useConnect } from "wagmi";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -9,8 +11,42 @@ const navLinks = [
   { label: "How It Works", href: "#how-it-works" },
   { label: "Features", href: "#features" },
   { label: "Use Cases", href: "#use-cases" },
+  { label: "API Reference", href: "/api-reference" },
   { label: "Contact", href: "#contact" },
 ];
+
+function LaunchAppButton({ className }: { className?: string }) {
+  const { isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const router = useRouter();
+  const [connecting, setConnecting] = useState(false);
+
+  const handleLaunch = async () => {
+    if (isConnected) {
+      router.push("/dashboard/checker");
+      return;
+    }
+    setConnecting(true);
+    try {
+      connect(
+        { connector: connectors[0] },
+        {
+          onSuccess: () => router.push("/dashboard/checker"),
+          onError: () => setConnecting(false),
+          onSettled: () => setConnecting(false),
+        }
+      );
+    } catch {
+      setConnecting(false);
+    }
+  };
+
+  return (
+    <Button size="sm" className={className} onClick={handleLaunch} disabled={connecting}>
+      {connecting ? "Connecting..." : "Launch App"}
+    </Button>
+  );
+}
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -41,12 +77,7 @@ export function Navbar() {
 
         {/* Desktop CTA */}
         <div className="hidden items-center gap-3 md:flex">
-          {/* <Button variant="secondary" size="sm" href="/dashboard">
-            Dashboard
-          </Button> */}
-          <Button size="sm" href="/dashboard/checker">
-            Launch App
-          </Button>
+          <LaunchAppButton />
         </div>
 
         {/* Mobile Toggle */}
@@ -74,12 +105,7 @@ export function Navbar() {
               </a>
             ))}
             <div className="mt-2 flex flex-col gap-2">
-              {/* <Button variant="secondary" size="sm" href="/dashboard">
-                Dashboard
-              </Button> */}
-              <Button size="sm" href="/dashboard/checker">
-                Launch App
-              </Button>
+              <LaunchAppButton className="w-full" />
             </div>
           </nav>
         </div>
