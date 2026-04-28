@@ -90,7 +90,7 @@ async function getSafeContractResult(address: string, startTime: number): Promis
   };
 }
 
-/**
+
 async function saveTrustedAddress(address: string): Promise<void> {
   const normalizedAddress = address.toLowerCase() as `0x${string}`;
 
