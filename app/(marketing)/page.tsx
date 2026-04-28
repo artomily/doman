@@ -578,7 +578,7 @@ function Extension() {
             <Button
               variant="secondary"
               size="lg"
-              href="https://github.com/your-org/doman-extension"
+              href="https://github.com/domanprotocol/extension"
             >
               <GitBranch size={15} className="mr-2" />
               View Extension Source
@@ -636,7 +636,7 @@ function OpenSource() {
             <Button
               variant="secondary"
               size="lg"
-              href="https://github.com/your-org/doman"
+              href="https://github.com/domanprotocol/doman"
             >
               <GitBranch size={15} className="mr-2" />
               View on GitHub
@@ -681,7 +681,7 @@ function OpenSource() {
               your own instance, or contribute improvements directly.
             </p>
             <a
-              href="https://github.com/your-org/doman"
+              href="https://github.com/domanprotocol/doman"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-5 inline-flex items-center gap-1.5 text-xs text-accent opacity-80 transition-opacity hover:opacity-100"
