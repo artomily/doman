@@ -147,8 +147,8 @@ export const CONTRACT_ADDRESSES: Record<number, `0x${string}` | ''> = {
 export const WHITELISTED_CONTRACTS: `0x${string}`[] = [
   // === DOMAN INFRASTRUCTURE ===
   // ScamReporter contract (add when deployed)
-  (process.env.NEXT_PUBLIC_SCAM_REPORTER_BASE_ADDRESS as `0x${string}`) || '0x0',
-  (process.env.NEXT_PUBLIC_SCAM_REPORTER_BASE_SEPOLIA_ADDRESS as `0x${string}`) || '0x0',
+  ...(process.env.NEXT_PUBLIC_SCAM_REPORTER_BASE_ADDRESS ? [process.env.NEXT_PUBLIC_SCAM_REPORTER_BASE_ADDRESS as `0x${string}`] : []),
+  ...(process.env.NEXT_PUBLIC_SCAM_REPORTER_BASE_SEPOLIA_ADDRESS ? [process.env.NEXT_PUBLIC_SCAM_REPORTER_BASE_SEPOLIA_ADDRESS as `0x${string}`] : []),
 
   // === POPULAR DEX & ROUTERS ===
   // Uniswap V3 Router - Ethereum
@@ -189,7 +189,7 @@ export const WHITELISTED_CONTRACTS: `0x${string}`[] = [
   // LayerZero Endpoint - Multi-chain infrastructure
   // TVL: $2B+ | Verified on Etherscan
   '0x66a71dcef29a0ffbdbe3c6a460a3b5618545cffb',
-].filter((addr) => addr !== '0x0');
+];
 
 /** Chain IDs that Doman supports */
 export const SUPPORTED_CHAIN_IDS = [base.id, baseSepolia.id] as const;
