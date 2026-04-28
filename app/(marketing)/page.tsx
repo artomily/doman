@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { GuardedButton } from "@/components/marketing/guarded-button";
 import {
   Shield,
   Search,
@@ -118,11 +119,10 @@ function Hero() {
             reputation — fused into a single trust score.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" href="/dashboard/checker">
-              <Shield size={16} className="mr-2" />
-              Launch Checker
-            </Button>
+          <div className="mt-8 flex flex-wrap gap-4">
+            <GuardedButton size="lg" href="/dashboard/checker">
+              Try the Checker <ArrowRight size={16} className="ml-2" />
+            </GuardedButton>
             <Button variant="secondary" size="lg" href="#features">
               See How It Works
             </Button>
@@ -895,9 +895,9 @@ function CTA() {
           powerful when you need it.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <Button size="lg" href="/dashboard/checker">
+          <GuardedButton size="lg" href="/dashboard/checker">
             Launch Checker <ArrowRight size={16} className="ml-2" />
-          </Button>
+          </GuardedButton>
           <Button variant="secondary" size="lg" href="#">
             Get Extension
           </Button>

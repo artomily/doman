@@ -32,12 +32,14 @@ const TYPE_LABEL = {
 type FilterType = "all" | "address" | "ens" | "domain";
 
 export default function HistoryPage() {
-  const { address: walletAddress, isConnected } = useAccount();
+  const { address: walletAddress, isConnected, status } = useAccount();
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>("all");
 
   useEffect(() => {
+    // Wait until wagmi has finished resolving wallet state
+    if (status === 'connecting' || status === 'reconnecting') return;
     setLoading(true);
     const params = new URLSearchParams({ limit: "50", type: filter });
     if (isConnected && walletAddress) params.set("checker", walletAddress);
@@ -48,7 +50,7 @@ export default function HistoryPage() {
         if (json.success) setRows(json.data);
       })
       .finally(() => setLoading(false));
-  }, [walletAddress, isConnected, filter]);
+  }, [walletAddress, isConnected, status, filter]);
 
   return (
     <div className="space-y-8">
