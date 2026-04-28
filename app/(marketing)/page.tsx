@@ -703,7 +703,7 @@ function OpenSource() {
               for real-time phishing detection and in-page address scanning.
             </p>
             <a
-              href="https://github.com/your-org/doman"
+              href="https://github.com/domanprotocol/extension/releases"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-5 inline-flex items-center gap-1.5 text-xs text-accent opacity-80 transition-opacity hover:opacity-100"
