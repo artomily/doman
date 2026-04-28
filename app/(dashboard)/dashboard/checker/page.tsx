@@ -314,7 +314,10 @@ function VoteButtons({
   const [myVoteType, setMyVoteType] = useState<"FOR" | "AGAINST" | null>(null);
   const [voteError, setVoteError] = useState<string | null>(null);
   const [showAlreadyVotedPopup, setShowAlreadyVotedPopup] = useState(false);
+  const [showRateLimitBanner, setShowRateLimitBanner] = useState(false);
   const [counts, setCounts] = useState({ for: votesFor, against: votesAgainst });
+  const [pendingVote, setPendingVote] = useState<"up" | "down" | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check if the connected wallet has already voted (once per address+wallet)
   useEffect(() => {
@@ -344,16 +347,27 @@ function VoteButtons({
     return () => clearTimeout(t);
   }, [showAlreadyVotedPopup]);
 
-  const handleVote = async (type: "up" | "down") => {
+  // Auto-dismiss rate limit banner after 5 seconds
+  useEffect(() => {
+    if (!showRateLimitBanner) return;
+    const t = setTimeout(() => setShowRateLimitBanner(false), 5000);
+    return () => clearTimeout(t);
+  }, [showRateLimitBanner]);
+
+  const submitVote = async (type: "up" | "down") => {
     if (voted) {
       setShowAlreadyVotedPopup(true);
+      setPendingVote(null);
       return;
     }
     setVoteError(null);
+    setIsSubmitting(true);
 
     if (!isConnected || !walletAddress) {
       const connector = connectors[0];
       if (connector) connect({ connector });
+      setPendingVote(null);
+      setIsSubmitting(false);
       return;
     }
 
@@ -365,6 +379,8 @@ function VoteButtons({
 
       if (!reportsJson.success || !reportsJson.data?.length) {
         setVoteError("No reports exist for this address yet.");
+        setIsSubmitting(false);
+        setPendingVote(null);
         return;
       }
 
@@ -383,10 +399,26 @@ function VoteButtons({
         setVoted(true);
         setMyVoteType(vote);
         setShowAlreadyVotedPopup(true);
+        setPendingVote(null);
+        setIsSubmitting(false);
+        return;
+      }
+      if (voteRes.status === 429) {
+        const retryAfter = voteJson.error?.details?.retryAfter as number | undefined;
+        setVoteError(
+          retryAfter
+            ? `Terlalu banyak permintaan. Coba lagi dalam ${retryAfter} detik.`
+            : "Terlalu banyak permintaan. Coba lagi sebentar."
+        );
+        setShowRateLimitBanner(true);
+        setIsSubmitting(false);
+        setPendingVote(null);
         return;
       }
       if (!voteRes.ok || !voteJson.success) {
-        setVoteError(voteJson.error?.message ?? "Vote failed. Please try again.");
+        setVoteError(voteJson.error?.message ?? "Vote gagal. Silakan coba lagi.");
+        setIsSubmitting(false);
+        setPendingVote(null);
         return;
       }
 
@@ -395,6 +427,9 @@ function VoteButtons({
       setCounts({ for: voteJson.data.votesFor, against: voteJson.data.votesAgainst });
     } catch {
       setVoteError("Network error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+      setPendingVote(null);
     }
   };
 
@@ -432,7 +467,7 @@ function VoteButtons({
         </div>
       )}
 
-      {/* Vote buttons */}
+      {/* Vote buttons / confirmation / voted state */}
       <div className="flex flex-wrap items-center gap-3">
         {voted ? (
           <div className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm text-muted">
@@ -446,10 +481,40 @@ function VoteButtons({
               {myVoteType === "FOR" ? "Scam" : "Safe"}
             </span>
           </div>
+        ) : pendingVote !== null ? (
+          // Confirmation dialog
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-card-border bg-surface px-4 py-3 text-sm w-full">
+            <span className="flex-1 font-medium">
+              {pendingVote === "up"
+                ? "✅ Confirm this address is Safe?"
+                : "🚨 Confirm this address is a Scam?"}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPendingVote(null)}
+                disabled={isSubmitting}
+                className="rounded-lg border border-card-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-muted hover:text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => submitVote(pendingVote)}
+                disabled={isSubmitting}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  pendingVote === "up"
+                    ? "bg-green-900/60 text-green-400 hover:bg-green-900"
+                    : "bg-red-900/60 text-red-400 hover:bg-red-900"
+                }`}
+              >
+                {isSubmitting ? <Loader2 size={12} className="animate-spin" /> : null}
+                {pendingVote === "up" ? "Yes, Safe" : "Yes, Scam"}
+              </button>
+            </div>
+          </div>
         ) : (
           <>
             <button
-              onClick={() => handleVote("up")}
+              onClick={() => setPendingVote("up")}
               className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm transition-colors hover:border-green-500 hover:text-green-400"
               title="Mark as safe"
             >
@@ -462,7 +527,7 @@ function VoteButtons({
               )}
             </button>
             <button
-              onClick={() => handleVote("down")}
+              onClick={() => setPendingVote("down")}
               className="flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm transition-colors hover:border-red-500 hover:text-red-400"
               title="Confirm scam"
             >
@@ -494,7 +559,26 @@ function VoteButtons({
         </div>
       )}
 
-      {voteError && <p className="text-xs text-red-400">{voteError}</p>}
+      {/* Rate limit banner */}
+      {showRateLimitBanner && voteError && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-yellow-900 bg-yellow-950/20 px-4 py-2.5 text-sm">
+          <span className="flex items-center gap-2 text-yellow-400">
+            <AlertTriangle size={14} />
+            {voteError}
+          </span>
+          <button
+            onClick={() => { setShowRateLimitBanner(false); setVoteError(null); }}
+            className="shrink-0 text-muted hover:text-foreground"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Generic error (non-rate-limit) */}
+      {voteError && !showRateLimitBanner && (
+        <p className="text-xs text-red-400">{voteError}</p>
+      )}
     </div>
   );
 }

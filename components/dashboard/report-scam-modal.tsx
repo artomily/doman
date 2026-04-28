@@ -9,7 +9,7 @@ import { Steps } from '@/components/ui/steps';
 import { Button } from '@/components/ui/button';
 import { hashReasonData, type ReasonData } from '@/lib/hash';
 import { useReportScam } from '@/hooks/use-report-scam';
-import { SUPPORTED_CHAIN_IDS } from '@/config/contracts';
+import { SUPPORTED_CHAIN_IDS, CONTRACT_ADDRESSES } from '@/config/contracts';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -164,7 +164,9 @@ function Step2Preview({ targetAddress, selectedReasons, customText, chainId, isD
     customText,
   };
   const hash = hashReasonData(reasonData);
-  const isSupported = isDomain || (SUPPORTED_CHAIN_IDS as readonly number[]).includes(chainId);
+  // On mainnet without a deployed contract, require switching to testnet first
+  const mainnetMissingContract = !isDomain && chainId === base.id && !CONTRACT_ADDRESSES[base.id];
+  const isSupported = isDomain || ((SUPPORTED_CHAIN_IDS as readonly number[]).includes(chainId) && !mainnetMissingContract);
 
   return (
     <div className="space-y-5">
@@ -175,7 +177,7 @@ function Step2Preview({ targetAddress, selectedReasons, customText, chainId, isD
       </p>
 
       {/* Report summary */}
-      <div className="space-y-3 rounded-xl border border-card-border bg-surface p-4 text-sm">
+      <div className="space-y-3 rounded-xl border border-card-border bg-surface px-4 py-3 text-sm">
         <div>
           <p className="text-xs text-muted">{isDomain ? 'Target website' : 'Target address'}</p>
           <p className="mt-0.5 font-mono text-xs">{targetAddress}</p>
@@ -210,20 +212,30 @@ function Step2Preview({ targetAddress, selectedReasons, customText, chainId, isD
 
       {/* Network check — address only */}
       {!isDomain && (
-        <div className="flex items-center justify-between rounded-xl border border-card-border bg-surface px-4 py-3">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted">Network</span>
-            <NetworkBadge chainId={chainId} />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between rounded-xl border border-card-border bg-surface px-4 py-3">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted">Network</span>
+              <NetworkBadge chainId={chainId} />
+            </div>
+            {(!isSupported || mainnetMissingContract) && (
+              <Button
+                onClick={() => switchChain({ chainId: baseSepolia.id })}
+                disabled={isSwitching}
+                variant="secondary"
+                size="sm"
+              >
+                {isSwitching ? <Loader2 size={12} className="animate-spin" /> : 'Switch to Base Sepolia'}
+              </Button>
+            )}
           </div>
-          {!isSupported && (
-            <Button
-              onClick={() => switchChain({ chainId: baseSepolia.id })}
-              disabled={isSwitching}
-              variant="secondary"
-              size="sm"
-            >
-              {isSwitching ? <Loader2 size={12} className="animate-spin" /> : 'Switch to Base Sepolia'}
-            </Button>
+          {mainnetMissingContract && (
+            <div className="flex items-start gap-2 rounded-xl border border-yellow-900 bg-yellow-950/20 px-4 py-3 text-xs text-yellow-400">
+              <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+              <span>
+                Kontrak belum di-deploy ke mainnet. Gunakan <strong>Base Sepolia</strong> (testnet) untuk mencoba fitur ini terlebih dahulu.
+              </span>
+            </div>
           )}
         </div>
       )}
@@ -398,7 +410,7 @@ function Step3Confirm({ targetAddress, selectedReasons, customText, chainId, isD
       )}
 
       {/* Info note */}
-      <div className="flex items-start gap-2 rounded-xl bg-surface px-4 py-3 text-xs text-muted">
+      <div className="flex items-start gap-2 rounded-xl border border-card-border bg-surface px-4 py-3 text-xs text-muted">
         <AlertTriangle size={13} className="mt-0.5 shrink-0" />
         <span>
           {isDomain

@@ -97,20 +97,20 @@ export function getRateLimitIdentifier(request: Request): string {
  * Rate limit configuration for different endpoint types
  */
 export const rateLimitConfig = {
-  // Strict limits for write operations
+  // Strict limits for write operations (10s window — testing mode)
   strict: {
     requests: 5,
-    windowMs: 60 * 60 * 1000, // 1 hour
+    windowMs: 10 * 1000, // 10 seconds
   },
-  // Medium limits for expensive read operations
+  // Medium limits for expensive read operations (10s window — testing mode)
   medium: {
     requests: 20,
-    windowMs: 60 * 1000, // 1 minute
+    windowMs: 10 * 1000, // 10 seconds
   },
-  // Loose limits for cheap read operations
+  // Loose limits for cheap read operations (10s window — testing mode)
   loose: {
     requests: 100,
-    windowMs: 60 * 1000, // 1 minute
+    windowMs: 10 * 1000, // 10 seconds
   },
 } as const;
 

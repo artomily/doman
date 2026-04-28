@@ -145,6 +145,14 @@ export function withErrorHandler<T>(
       return errors.notFound('Record');
     }
 
+    if (error.code === 'P2000') {
+      return errors.validation('Input value too long for field', { field: error.meta?.column_name });
+    }
+
+    if (error.code === 'P2003') {
+      return errors.validation('Related record not found', { field: error.meta?.field_name });
+    }
+
     // Handle Zod validation errors
     if (error.name === 'ZodError') {
       return errors.validation('Invalid input format', error.errors);

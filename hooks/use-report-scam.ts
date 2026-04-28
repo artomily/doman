@@ -153,7 +153,7 @@ export function useReportScam(): UseReportScamReturn {
 
         if (!contractAddress) {
           if (chainId === base.id) {
-            throw new Error('Mainnet contract address is not configured. Set NEXT_PUBLIC_SCAM_REPORTER_BASE_ADDRESS.');
+            throw new Error('Kontrak belum di-deploy ke Base mainnet. Silakan switch ke Base Sepolia (testnet) untuk mencoba.');
           }
 
           // Deploy the contract — user approves in wallet
