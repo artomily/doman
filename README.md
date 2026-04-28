@@ -1,6 +1,6 @@
 <div align="center">
 
-# DOMAN
+<img src="public/logo2.png" alt="DOMAN" width="120" />
 
 **Community-Powered Security & Decision Engine for Base Chain**
 
@@ -12,7 +12,7 @@ _Scan before you send. Trust before you transact._
 [![Prisma](https://img.shields.io/badge/Prisma-7.7.0-2D3748?logo=prisma)](https://www.prisma.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-[Quick Start](#-quick-start) · [Architecture](#-architecture) · [API Docs](#-api-overview) · [Contributing](#-contributing) · [Docs](./docs/DOCUMENTATION.md)
+[Quick Start](#-quick-start) · [Architecture](#-architecture) · [API Docs](#-api-overview) · [Contributing](#-contributing) · [Full Docs](https://doman-docs.vercel.app)
 
 </div>
 
@@ -47,7 +47,7 @@ DOMAN consists of three main components:
 | Component             | Description                                                               |
 | --------------------- | ------------------------------------------------------------------------- |
 | **Web Dashboard**     | Interactive dashboard for scanning, voting, watchlist, and tag management |
-| **REST API**          | 24+ endpoints serving the dashboard and browser extension                 |
+| **REST API**          | 27+ endpoints serving the dashboard and browser extension                 |
 | **Browser Extension** | Real-time scanning directly in your browser _(live)_                      |
 
 ---
@@ -55,16 +55,16 @@ DOMAN consists of three main components:
 ## Why DOMAN?
 
 > **$14.0 billion** lost to crypto fraud in 2024. Security shouldn't be a privilege for technical users alone.
-> 
+>
 > _Source: [Chainalysis 2024 Crypto Crime Report](https://www.chainalysis.com/blog/2024-crypto-crime-report/); [FBI IC3 2024 Report](https://www.ic3.gov/)_
 
-| Problem | DOMAN Solution |
-|---------|----------------|
-| Hard to distinguish legitimate vs scam addresses | **Trust Score 0-100** with multi-factor analysis |
-| Dangerous contracts look normal | **Bytecode inspection** + pattern matching (opcodes, selectors) |
-| Phishing domains impersonate popular dApps | **Domain checker** with integrated scam domain database |
-| Decisions rely on single sources | **Community voting** — community verifies together |
-| Developers need security integration | **Public REST API** for programmatic access |
+| Problem                                          | DOMAN Solution                                                  |
+| ------------------------------------------------ | --------------------------------------------------------------- |
+| Hard to distinguish legitimate vs scam addresses | **Trust Score 0-100** with multi-factor analysis                |
+| Dangerous contracts look normal                  | **Bytecode inspection** + pattern matching (opcodes, selectors) |
+| Phishing domains impersonate popular dApps       | **Domain checker** with integrated scam domain database         |
+| Decisions rely on single sources                 | **Community voting** — community verifies together              |
+| Developers need security integration             | **Public REST API** for programmatic access                     |
 
 **Core Principles of DOMAN:**
 
@@ -132,12 +132,12 @@ flowchart TB
 
 ### Risk Level Classification
 
-| Score  | Level      | Badge | Meaning                                               |
-| ------ | ---------- | ----- | ----------------------------------------------------- |
-| 0-40   | `LOW`      | 🟢    | Address is safe, no dangerous patterns detected      |
-| 41-60  | `MEDIUM`   | 🟡    | Some suspicious patterns detected, proceed with care |
+| Score  | Level      | Badge | Meaning                                                |
+| ------ | ---------- | ----- | ------------------------------------------------------ |
+| 0-40   | `LOW`      | 🟢    | Address is safe, no dangerous patterns detected        |
+| 41-60  | `MEDIUM`   | 🟡    | Some suspicious patterns detected, proceed with care   |
 | 61-80  | `HIGH`     | 🟠    | Dangerous patterns detected, strongly advised to avoid |
-| 81-100 | `CRITICAL` | 🔴    | Critical patterns detected, likely a scam            |
+| 81-100 | `CRITICAL` | 🔴    | Critical patterns detected, likely a scam              |
 
 ---
 
@@ -221,7 +221,7 @@ graph TB
         WP["Wagmi Provider<br/>(Wallet Connection)"]
     end
 
-    subgraph "API Layer — 24+ Endpoints"
+    subgraph "API Layer — 27+ Endpoints"
         SCAN["/scan/&#123;address&#125;"]
         ADDR["/address/&#123;address&#125;"]
         REP["/reports + /vote"]
@@ -347,43 +347,43 @@ sequenceDiagram
 
 ## Tech Stack
 
-| Component | Technology | Version |
-|-----------|-----------|---------|
-| Framework | **Next.js** (App Router) | 16.2.3 |
-| UI Library | **React** | 19.2.4 |
-| Language | **TypeScript** | 5.x |
-| Styling | **Tailwind CSS** | 4.x |
-| ORM | **Prisma** | 7.7.0 |
-| Database | **PostgreSQL** (Supabase) | — |
-| Blockchain Client | **Viem** | 2.48.0 |
-| Wallet Integration | **Wagmi** | 3.6.4 |
-| Data Fetching | **TanStack React Query** | 5.100.1 |
-| Validation | **Zod** | 3.25.76 |
-| Icons | **Lucide React** | 1.8.0 |
-| Chain | **Base** (8453) / **Base Sepolia** (84532) | — |
+| Component          | Technology                                 | Version |
+| ------------------ | ------------------------------------------ | ------- |
+| Framework          | **Next.js** (App Router)                   | 16.2.3  |
+| UI Library         | **React**                                  | 19.2.4  |
+| Language           | **TypeScript**                             | 5.x     |
+| Styling            | **Tailwind CSS**                           | 4.x     |
+| ORM                | **Prisma**                                 | 7.7.0   |
+| Database           | **PostgreSQL** (Supabase)                  | —       |
+| Blockchain Client  | **Viem**                                   | 2.48.0  |
+| Wallet Integration | **Wagmi**                                  | 3.6.4   |
+| Data Fetching      | **TanStack React Query**                   | 5.100.1 |
+| Validation         | **Zod**                                    | 3.25.76 |
+| Icons              | **Lucide React**                           | 1.8.0   |
+| Chain              | **Base** (8453) / **Base Sepolia** (84532) | —       |
 
 ---
 
 ## Features
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Address Scanner | ✅ | Scan 0x addresses with bytecode analysis + pattern matching |
-| ENS Resolution | ✅ | Resolve .eth names via Ethereum Mainnet + caching |
-| Domain Checker | ✅ | Check if domain is phishing/scam |
-| Community Reporting | ✅ | Report scams with multi-step wizard |
-| Community Voting | ✅ | Vote FOR/AGAINST with wallet-based validation |
-| Trust Score Engine | ✅ | Multi-factor risk scoring (0-100) |
-| Watchlist | ✅ | Monitor addresses with score tracking |
-| Tag Management | ✅ | Tag addresses as LEGIT/SUSPICIOUS/SCAM |
-| Reputation System | ✅ | Points + levels (Beginner → Master) |
-| Smart Contract Deploy | ✅ | Deploy ScamReporter contract to Base |
-| External Data Sync | ✅ | Sync from DeFiLlama, ScamSniffer, CryptoScamDB |
-| dApps Directory | ✅ | Browse and search verified dApps |
-| 24+ REST API Endpoints | ✅ | Full-featured API for extension and integrations |
-| Browser Extension | ✅ | Real-time scanning in browser _(live)_ |
-| Rate Limiting | 🔜 | Upstash Redis-based rate limiting |
-| Authentication | 🔜 | Wallet-based login (SIWE) |
+| Feature                | Status | Description                                                 |
+| ---------------------- | ------ | ----------------------------------------------------------- |
+| Address Scanner        | ✅     | Scan 0x addresses with bytecode analysis + pattern matching |
+| ENS Resolution         | ✅     | Resolve .eth names via Ethereum Mainnet + caching           |
+| Domain Checker         | ✅     | Check if domain is phishing/scam                            |
+| Community Reporting    | ✅     | Report scams with multi-step wizard                         |
+| Community Voting       | ✅     | Vote FOR/AGAINST with wallet-based validation               |
+| Trust Score Engine     | ✅     | Multi-factor risk scoring (0-100)                           |
+| Watchlist              | ✅     | Monitor addresses with score tracking                       |
+| Tag Management         | ✅     | Tag addresses as LEGIT/SUSPICIOUS/SCAM                      |
+| Reputation System      | ✅     | Points + levels (Beginner → Master)                         |
+| Smart Contract Deploy  | ✅     | Deploy ScamReporter contract to Base                        |
+| External Data Sync     | ✅     | Sync from DeFiLlama, ScamSniffer, CryptoScamDB              |
+| dApps Directory        | ✅     | Browse and search verified dApps                            |
+| 27+ REST API Endpoints | ✅     | Full-featured API for extension and integrations            |
+| Browser Extension      | ✅     | Real-time scanning in browser _(live)_                      |
+| Rate Limiting          | 🔜     | Upstash Redis-based rate limiting                           |
+| Authentication         | 🔜     | Wallet-based login (SIWE)                                   |
 
 ---
 
@@ -399,8 +399,8 @@ sequenceDiagram
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/<your-org>/doman.git
-cd doman
+git clone  https://github.com/artomily/wallo.git
+cd wallo
 npm install
 ```
 
@@ -445,18 +445,18 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### NPM Scripts
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| `npm run dev` | `next dev` | Development server with hot reload |
-| `npm run build` | `prisma generate && next build` | Production build |
-| `npm run start` | `next start` | Start production server |
-| `npm run lint` | `eslint` | Run ESLint |
-| `npm run db:generate` | `prisma generate` | Generate Prisma Client |
-| `npm run db:push` | `prisma db push` | Push schema to database |
-| `npm run db:migrate` | `prisma migrate dev` | Run migrations |
-| `npm run db:seed` | `prisma db seed` | Seed database |
-| `npm run db:studio` | `prisma studio` | Visual database browser |
-| `npm run db:reset` | `prisma migrate reset` | Reset database |
+| Script                | Command                         | Description                        |
+| --------------------- | ------------------------------- | ---------------------------------- |
+| `npm run dev`         | `next dev`                      | Development server with hot reload |
+| `npm run build`       | `prisma generate && next build` | Production build                   |
+| `npm run start`       | `next start`                    | Start production server            |
+| `npm run lint`        | `eslint`                        | Run ESLint                         |
+| `npm run db:generate` | `prisma generate`               | Generate Prisma Client             |
+| `npm run db:push`     | `prisma db push`                | Push schema to database            |
+| `npm run db:migrate`  | `prisma migrate dev`            | Run migrations                     |
+| `npm run db:seed`     | `prisma db seed`                | Seed database                      |
+| `npm run db:studio`   | `prisma studio`                 | Visual database browser            |
+| `npm run db:reset`    | `prisma migrate reset`          | Reset database                     |
 
 ---
 
@@ -480,7 +480,7 @@ doman/
 │   │       ├── watchlist/        # Watchlist management
 │   │       ├── tags/             # Tag management
 │   │       └── settings/         # Settings
-│   └── api/                      # REST API (24+ endpoints)
+│   └── api/                      # REST API (27+ endpoints)
 │       ├── health/
 │       └── v1/
 │
@@ -495,8 +495,7 @@ doman/
 ├── services/                     # Business logic (8 services)
 ├── types/                        # TypeScript types (API + Models)
 ├── prisma/                       # Schema, migrations, seed
-├── public/                       # Static assets
-└── docs/                         # Documentation
+└── public/                       # Static assets
 ```
 
 ---
@@ -505,60 +504,30 @@ doman/
 
 All APIs use envelope format `{ success, data, meta }` with consistent pagination and error codes.
 
-### Core Endpoints
+| Category      | Endpoints                                                                                                                                                                         |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Core**      | `GET /scan/{address}` · `GET /address/{address}` · `GET /check-domain` · `GET /resolve/{ens}` · `GET /stats` · `GET /history` · `GET /dapps` · `POST /scan-batch` · `GET /search` |
+| **Community** | `POST /reports` · `GET /reports` · `POST /reports/{id}/vote` · `GET /reports/vote-status`                                                                                         |
+| **User**      | `GET/POST /watchlist` · `DELETE /watchlist/{address}` · `GET/POST /address-tags` · `POST /tags`                                                                                   |
+| **System**    | `POST /sync` · `GET /leaderboard` · `GET /leaderboard/{address}` · `GET /health`                                                                                                  |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/scan/{address}` | Scan address/ENS/domain — full analysis |
-| `GET` | `/api/v1/address/{address}` | Address details with tags + reports |
-| `GET` | `/api/v1/check-domain?domain=x` | Check if domain is scam |
-| `GET` | `/api/v1/resolve/{ens}` | ENS name → address resolution |
-| `GET` | `/api/v1/stats` | Platform statistics |
-| `GET` | `/api/v1/history` | Scan history |
-| `GET` | `/api/v1/dapps` | dApps directory with filters |
-
-### Community Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v1/reports` | Create new scam report |
-| `GET` | `/api/v1/reports` | List reports with filters |
-| `POST` | `/api/v1/reports/{id}/vote` | Vote FOR/AGAINST on report |
-| `GET` | `/api/v1/reports/vote-status` | Check if user already voted |
-
-### User Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET/POST` | `/api/v1/watchlist` | Manage watchlist |
-| `DELETE` | `/api/v1/watchlist/{address}` | Remove from watchlist |
-| `GET/POST` | `/api/v1/address-tags` | Tag CRUD + reputation |
-| `POST` | `/api/v1/tags` | Simplified tag creation |
-
-### System Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v1/sync` | Sync external data (DeFiLlama, ScamSniffer, etc) |
-| `GET` | `/api/health` | Health check (DB + Blockchain + External APIs) |
-
-> Full API documentation: [`docs/DOCUMENTATION.md`](./docs/DOCUMENTATION.md) and [`docs/postman-collection.json`](./docs/postman-collection.json)
+> For the full API reference with request/response schemas and examples, see **[API Reference](https://domanprotocol.vercel.app/api-reference)**.
 
 ---
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_URL` | ✅ | — | PostgreSQL connection string (Supabase pooler) |
-| `DIRECT_URL` | — | `DATABASE_URL` | Direct connection (bypass pooler) |
-| `NEXT_PUBLIC_BASE_RPC_URL` | ✅ | `https://sepolia.base.org` | Base RPC URL |
-| `NEXT_PUBLIC_BASE_CHAIN_ID` | — | `84532` | 84532 = Sepolia, 8453 = Mainnet |
-| `NEXT_PUBLIC_BASESCAN_URL` | — | `https://sepolia.basescan.org` | Block explorer URL |
-| `ETHEREUM_RPC_URL` | ✅ | — | Ethereum Mainnet RPC (for ENS) |
-| `WALLET_PRIVATE_KEY` | — | — | Server-side wallet key (0x prefixed) |
-| `CRON_SECRET` | — | — | Secret for cron/sync endpoints |
-| `BASESCAN_API_KEY` | — | — | BaseScan API key |
+| Variable                    | Required | Default                        | Description                                    |
+| --------------------------- | -------- | ------------------------------ | ---------------------------------------------- |
+| `DATABASE_URL`              | ✅       | —                              | PostgreSQL connection string (Supabase pooler) |
+| `DIRECT_URL`                | —        | `DATABASE_URL`                 | Direct connection (bypass pooler)              |
+| `NEXT_PUBLIC_BASE_RPC_URL`  | ✅       | `https://sepolia.base.org`     | Base RPC URL                                   |
+| `NEXT_PUBLIC_BASE_CHAIN_ID` | —        | `84532`                        | 84532 = Sepolia, 8453 = Mainnet                |
+| `NEXT_PUBLIC_BASESCAN_URL`  | —        | `https://sepolia.basescan.org` | Block explorer URL                             |
+| `ETHEREUM_RPC_URL`          | ✅       | —                              | Ethereum Mainnet RPC (for ENS)                 |
+| `WALLET_PRIVATE_KEY`        | —        | —                              | Server-side wallet key (0x prefixed)           |
+| `CRON_SECRET`               | —        | —                              | Secret for cron/sync endpoints                 |
+| `BASESCAN_API_KEY`          | —        | —                              | BaseScan API key                               |
 
 ---
 
@@ -575,6 +544,7 @@ erDiagram
     Address ||--o{ Watchlist : "watched by"
     Address ||--o{ EnsRecord : "resolved to"
     Address ||--o{ ContractSignature : "contains"
+    Address ||--o{ SearchHistory : "checked by"
     Report ||--o{ Vote : "receives"
     Report }o--|| UserProfile : "reported by"
     UserProfile ||--o{ Watchlist : "created by"
@@ -624,11 +594,20 @@ erDiagram
         int reputation
         int reportsVerified
     }
+
+    SearchHistory {
+        string id PK
+        string checkerAddress
+        string searchType
+        string query
+        int riskScore
+        string riskLevel
+    }
 ```
 
-### 13 Models
+### 14 Models
 
-`Address` · `Report` · `Vote` · `OnchainVoteEvent` · `ContractScan` · `AddressTag` · `ExternalSource` · `Watchlist` · `UserProfile` · `ScamDomain` · `EnsRecord` · `ContractSignature` · `SyncLog`
+`Address` · `Report` · `Vote` · `OnchainVoteEvent` · `ContractScan` · `AddressTag` · `ExternalSource` · `Watchlist` · `UserProfile` · `ScamDomain` · `EnsRecord` · `ContractSignature` · `SyncLog` · `SearchHistory`
 
 ---
 
@@ -641,8 +620,8 @@ We appreciate all forms of contribution! Here's a guide to get started.
 ```bash
 # 1. Fork repository
 # 2. Clone your fork
-git clone https://github.com/<username>/doman.git
-cd doman
+git clone https://github.com/<username>/wallo.git
+cd wallo
 
 # 3. Create branch for your feature/fix
 git checkout -b feat/my-feature
@@ -672,13 +651,13 @@ git push origin feat/my-feature
 
 ### Branch Naming Convention
 
-| Type | Format | Example |
-|------|--------|---------|
-| Feature | `feat/description` | `feat/add-rate-limiting` |
-| Bug Fix | `fix/description` | `fix/scan-timeout-error` |
-| Documentation | `docs/description` | `docs/update-api-reference` |
-| Refactor | `refactor/description` | `refactor/scanner-service` |
-| Chore | `chore/description` | `chore/update-dependencies` |
+| Type          | Format                 | Example                     |
+| ------------- | ---------------------- | --------------------------- |
+| Feature       | `feat/description`     | `feat/add-rate-limiting`    |
+| Bug Fix       | `fix/description`      | `fix/scan-timeout-error`    |
+| Documentation | `docs/description`     | `docs/update-api-reference` |
+| Refactor      | `refactor/description` | `refactor/scanner-service`  |
+| Chore         | `chore/description`    | `chore/update-dependencies` |
 
 ### Commit Convention
 
@@ -693,6 +672,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 **Types:**
+
 - `feat` — New feature
 - `fix` — Bug fix
 - `docs` — Documentation changes
@@ -704,6 +684,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 **Scope:** `scanner`, `report`, `api`, `ui`, `db`, `auth`, `sync`, `config`
 
 **Examples:**
+
 ```bash
 feat(scanner): add proxy pattern detection for ERC1967
 fix(api): handle timeout on large contract bytecode
@@ -731,18 +712,16 @@ refactor(db): optimize address query with composite indexes
 
 ### Areas That Need Contribution
 
-| Area | Priority | Description | How to Get Started |
-|------|----------|-------------|-------------------|
-| Test Suite | 🔴 HIGH | Unit tests for services and API routes | Check `__tests__/` folder and add tests for untested services |
-| Authentication | 🔴 HIGH | Wallet-based login (SIWE) | Implement Sign-In with Ethereum flow |
-| Rate Limiting | 🔴 HIGH | Upstash Redis middleware | Add Redis client and rate limiting middleware |
-| CI/CD Pipeline | 🟡 MEDIUM | GitHub Actions for lint, build, test | Create `.github/workflows/` actions |
-| API Docs (OpenAPI) | 🟡 MEDIUM | Swagger/OpenAPI specification | Generate OpenAPI schema from code |
-| Multi-chain Support | 🟢 LOW | Support chains beyond Base | Add chain configs and update services |
-| i18n | 🟢 LOW | Multi-language support | Use `next-intl` or similar library |
-| Data Visualization | 🟢 LOW | Risk trend charts, analytics dashboards | Add charting library and new dashboard views |
-
-> **Browser Extension**: We have a dedicated browser extension with full documentation at [DOMAN Extension Docs](https://doman-docs.vercel.app/extension/). Check it out to contribute to the extension!
+| Area                | Priority  | Description                             | How to Get Started                                            |
+| ------------------- | --------- | --------------------------------------- | ------------------------------------------------------------- |
+| Test Suite          | 🔴 HIGH   | Unit tests for services and API routes  | Check `__tests__/` folder and add tests for untested services |
+| Authentication      | 🔴 HIGH   | Wallet-based login (SIWE)               | Implement Sign-In with Ethereum flow                          |
+| Rate Limiting       | 🔴 HIGH   | Upstash Redis middleware                | Add Redis client and rate limiting middleware                 |
+| CI/CD Pipeline      | 🟡 MEDIUM | GitHub Actions for lint, build, test    | Create `.github/workflows/` actions                           |
+| API Docs (OpenAPI)  | 🟡 MEDIUM | Swagger/OpenAPI specification           | Generate OpenAPI schema from code                             |
+| Multi-chain Support | 🟢 LOW    | Support chains beyond Base              | Add chain configs and update services                         |
+| i18n                | 🟢 LOW    | Multi-language support                  | Use `next-intl` or similar library                            |
+| Data Visualization  | 🟢 LOW    | Risk trend charts, analytics dashboards | Add charting library and new dashboard views                  |
 
 ---
 
@@ -756,6 +735,6 @@ This project is licensed under the **MIT License** — see the [LICENSE](./LICEN
 
 **Built with love for the Base community.**
 
-[Report Bug](../../issues) · [Request Feature](../../issues) · [Read Full Docs](./docs/DOCUMENTATION.md)
+[Report Bug](../../issues) · [Request Feature](../../issues)
 
 </div>
