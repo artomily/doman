@@ -99,7 +99,7 @@ flowchart LR
 
 ### Scam Detection Engine
 
-DOMAN detects scam patterns through four layers of analysis:
+DOMAN detects scam patterns through three layers of analysis:
 
 ```mermaid
 flowchart TB
@@ -122,13 +122,14 @@ flowchart TB
         B3["Beacon Proxy<br/>+15 risk"]
     end
 
-    subgraph "Layer 4: External Checks"
-        E1["Unverified Source<br/>+10 risk"]
-        E2["Recently Deployed<br/>+5 risk"]
-    end
-
-    O1 & O2 & O3 & S1 & S2 & S3 & S4 & B1 & B2 & B3 & E1 & E2 --> R["Total Risk Score<br/>= Sum(matched patterns)<br/>Max: 100"]
+    O1 & O2 & O3 & S1 & S2 & S3 & S4 & B1 & B2 & B3 --> R["Total Risk Score<br/>= Sum(riskAdd per pattern)<br/>Max: 100"]
 ```
+
+**Implementation notes**
+1. **Opcode parsing is hardened** — detection skips PUSH data to reduce false positives from embedded constants.
+2. **Weighted scoring** — risk score uses `riskAdd` from `config/scam-patterns`.
+3. **Governance/voting contracts** — ScamReporter selectors are classified as `GOVERNANCE`.
+4. **Similar scams** — only returned when `bytecodeHash` matches existing scans.
 
 ### Risk Level Classification
 
