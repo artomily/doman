@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { Card } from "@/components/ui/card";
 import { TrustScoreBadge } from "@/components/ui/badge";
@@ -13,44 +13,62 @@ import {
   Loader2,
 } from "lucide-react";
 
+interface RecentScan {
+  id: string;
+  riskScore: number;
+  riskLevel: string;
+  searchType: string;
+  query: string;
+  createdAt: string;
+  meta?: { chain?: string; category?: string };
+}
+
 interface DashboardData {
   totalChecks: number;
   myChecks: number;
   flaggedCount: number;
   watchlistCount: number;
   trustScoreAvg: number;
-  recentScans: { id: string; riskScore: number; createdAt: string; address: { address: string; chain: string; category: string } }[];
+  recentScans: RecentScan[];
 }
 
 export default function DashboardPage() {
-  const { address: walletAddress, isConnected } = useAccount();
+  const { address: walletAddress, isConnected, isConnecting } = useAccount();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const fetchIdRef = useRef(0);
+  const prevAddressRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
+    // Skip during wallet connection transition
+    if (isConnecting) return;
+    // Only refetch when address actually changes
+    if (walletAddress === prevAddressRef.current) return;
+    prevAddressRef.current = walletAddress;
+
+    const fetchId = ++fetchIdRef.current;
     setLoading(true);
-    const params = new URLSearchParams();
-    if (isConnected && walletAddress) params.set("checker", walletAddress);
 
     Promise.all([
-      fetch(`/api/v1/stats`).then((r) => r.json()),
+      fetch("/api/v1/stats").then((r) => r.json()),
       fetch(`/api/v1/history?limit=5${isConnected && walletAddress ? `&checker=${walletAddress}` : ""}`).then((r) => r.json()),
       isConnected && walletAddress
-        ? fetch(`/api/v1/watchlist?owner=${walletAddress}`).then((r) => r.json())
+        ? fetch(`/api/v1/watchlist?userAddress=${walletAddress}`).then((r) => r.json())
         : Promise.resolve({ data: [] }),
-    ])
-      .then(([stats, history, watchlist]) => {
-        setData({
-          totalChecks: stats.data?.totalScans ?? stats.data?.scansToday ?? 0,
-          myChecks: history.data?.length ?? 0,
-          flaggedCount: stats.data?.scamCount ?? 0,
-          watchlistCount: Array.isArray(watchlist.data) ? watchlist.data.length : 0,
-          trustScoreAvg: stats.data?.trustScoreAvg ?? 0,
-          recentScans: history.data ?? [],
-        });
-      })
-      .finally(() => setLoading(false));
-  }, [walletAddress, isConnected]);
+    ]).then(([statsRes, historyRes, watchlistRes]) => {
+      if (fetchId !== fetchIdRef.current) return;
+
+      setData({
+        totalChecks: statsRes.data?.totalScans ?? statsRes.data?.scansToday ?? 0,
+        myChecks: historyRes.data?.length ?? 0,
+        flaggedCount: statsRes.data?.scamCount ?? 0,
+        watchlistCount: Array.isArray(watchlistRes.data) ? watchlistRes.data.length : 0,
+        trustScoreAvg: statsRes.data?.trustScoreAvg ?? 0,
+        recentScans: historyRes.data ?? [],
+      });
+      setLoading(false);
+    });
+  }, [walletAddress, isConnected, isConnecting]);
 
   const stats = [
     {
@@ -132,11 +150,11 @@ export default function DashboardPage() {
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-mono text-sm">
-                    {scan.address.address}
+                    {scan.query}
                   </p>
                   <p className="mt-0.5 text-xs text-muted capitalize">
-                    {scan.address.category.toLowerCase().replace("_", " ")} ·{" "}
-                    {scan.address.chain}
+                    {scan.searchType} ·{" "}
+                    {scan.meta?.chain ?? "—"}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
