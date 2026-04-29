@@ -241,6 +241,11 @@ export type ScanInputType = 'address' | 'ens' | 'domain';
 /**
  * Detect whether the user input is a 0x address, ENS name, or plain domain.
  */
+/** Base58 Solana address: 32–44 chars, only base58 alphabet (no 0, O, I, l) */
+export function isSolanaAddress(input: string): boolean {
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(input.trim());
+}
+
 export function detectInputType(input: string): ScanInputType {
   const trimmed = input.trim().toLowerCase();
   if (/^0x[a-f0-9]{1,40}$/.test(trimmed)) return 'address';

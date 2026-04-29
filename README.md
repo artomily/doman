@@ -621,8 +621,8 @@ We appreciate all forms of contribution! Here's a guide to get started.
 ```bash
 # 1. Fork repository
 # 2. Clone your fork
-git clone https://github.com/<username>/wallo.git
-cd wallo
+git clone https://github.com/<username>/doman.git
+cd doman
 
 # 3. Create branch for your feature/fix
 git checkout -b feat/my-feature

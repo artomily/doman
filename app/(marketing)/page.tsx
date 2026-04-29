@@ -66,29 +66,7 @@ function Hero() {
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-accent/30"
         style={{ animation: "hero-scan 6s linear infinite" }}
       />
-
-      {/* Floating geometric accents */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div
-          className="absolute top-[15%] right-[8%] h-28 w-28 rounded-full border border-accent/10"
-          style={{ animation: "hero-float 7s ease-in-out infinite" }}
-        />
-        <div
-          className="absolute top-[60%] left-[5%] h-16 w-16 rounded-full border border-accent/8"
-          style={{ animation: "hero-float 5s ease-in-out infinite 1s" }}
-        />
-        <div
-          className="absolute bottom-[20%] right-[15%] h-3 w-3 rounded-full bg-accent/40"
-          style={{ animation: "hero-pulse 3s ease-in-out infinite" }}
-        />
-        <div
-          className="absolute top-[30%] left-[12%] h-2 w-2 rounded-full bg-accent/30"
-          style={{ animation: "hero-pulse 4s ease-in-out infinite 0.5s" }}
-        />
-        <div className="absolute top-[8%] left-[30%] h-px w-24 bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
-        <div className="absolute bottom-[35%] right-[5%] h-px w-32 bg-gradient-to-r from-transparent via-accent/15 to-transparent" />
-      </div>
-
+      
       {/* Content */}
       <div className="relative mx-auto flex min-h-[90vh] max-w-7xl flex-col items-center justify-center px-6 py-32 md:py-40">
         {/* Headline */}
@@ -98,10 +76,6 @@ function Hero() {
             <br />
             <span className="relative inline-block">
               YOU SEND
-              <span
-                className="absolute -right-6 -top-2 h-3 w-3 rounded-full bg-accent md:-right-8 md:h-4 md:w-4"
-                style={{ animation: "hero-pulse 2s ease-in-out infinite" }}
-              />
             </span>
             <span className="text-accent">.</span>
             <br />

@@ -11,7 +11,8 @@
 import { NextRequest } from 'next/server';
 import { apiSuccess, errors, withErrorHandler } from '@/lib/api-response';
 import { scanContract, scanDomain } from '@/services/scanner-service';
-import { resolveInput } from '@/lib/viem';
+import { resolveInput, isSolanaAddress } from '@/lib/viem';
+import prisma from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
@@ -38,10 +39,30 @@ export async function GET(
       return errors.validation('Input too long', { maxLength: 253 });
     }
 
+    // Detect non-EVM chains before resolving
+    if (isSolanaAddress(input)) {
+      return errors.validation(
+        'Solana addresses are not supported. DOMAN is designed for Base chain (EVM) only.',
+        { chain: 'solana', supported: ['base', 'base-sepolia'] }
+      );
+    }
+
     const { inputType, resolvedAddress } = await resolveInput(input);
 
     if (inputType === 'domain') {
       const result = await scanDomain(input, checkerAddress);
+      // Record domain search in SearchHistory
+      prisma.searchHistory.create({
+        data: {
+          checkerAddress: checkerAddress ?? null,
+          searchType: 'domain',
+          query: input,
+          resolvedTo: null,
+          riskScore: result.riskScore,
+          riskLevel: result.riskLevel,
+          result: result as any,
+        },
+      }).catch(() => {});
       return apiSuccess(result);
     }
 
@@ -56,6 +77,22 @@ export async function GET(
     }
 
     const result = await scanContract(address, checkerAddress, chainId);
+
+    // Record ENS query in SearchHistory
+    if (inputType === 'ens') {
+      prisma.searchHistory.create({
+        data: {
+          checkerAddress: checkerAddress ?? null,
+          searchType: 'ens',
+          query: input,
+          resolvedTo: address,
+          riskScore: result.riskScore,
+          riskLevel: result.riskLevel,
+          result: result as any,
+        },
+      }).catch(() => {});
+    }
+
     return apiSuccess({
       ...result,
       inputType,

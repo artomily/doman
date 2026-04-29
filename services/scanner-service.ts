@@ -140,7 +140,8 @@ export async function scanContract(
   if (!hasCode) {
     // EOA (Externally Owned Account) - low risk but not a contract
     // Update address record with EOA type
-    await prisma.address.upsert({
+    if (checkerAddress) await trackChecker(checkerAddress);
+    const eoaRecord = await prisma.address.upsert({
       where: { address },
       update: { addressType: 'EOA' },
       create: {
@@ -149,6 +150,20 @@ export async function scanContract(
         status: 'UNKNOWN',
         riskScore: 0,
         source: 'SCANNER',
+      },
+    });
+
+    await prisma.contractScan.create({
+      data: {
+        addressId: eoaRecord.id,
+        checkerAddress: checkerAddress ?? null,
+        riskScore: 0,
+        riskLevel: 'LOW',
+        patterns: [],
+        isVerified: false,
+        isProxy: false,
+        scannerVersion: '1.0.0',
+        scanDuration: Date.now() - startTime,
       },
     });
 
@@ -224,6 +239,7 @@ export async function scanContract(
     await prisma.contractScan.create({
       data: {
         addressId: addressRecord.id,
+        checkerAddress: checkerAddress ?? null,
         bytecodeHash,
         bytecodeLength: bytecode.length / 2 - 1, // Convert hex length to bytes
         riskScore,
