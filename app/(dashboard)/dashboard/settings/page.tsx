@@ -123,15 +123,6 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted mt-0.5">Reputation</p>
               </div>
             </div>
-            <div>
-              <label className="text-xs text-muted">Plan</label>
-              <div className="mt-1 flex items-center gap-3">
-                <p className="text-sm font-medium">Free</p>
-                <Button size="sm" variant="secondary">
-                  Upgrade
-                </Button>
-              </div>
-            </div>
           </div>
         )}
       </Card>
@@ -171,21 +162,6 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
-      </Card>
-
-      {/* API Keys */}
-      <Card>
-        <div className="flex items-center gap-3 mb-6">
-          <Key size={18} className="text-muted" />
-          <h2 className="text-lg font-semibold">API Keys</h2>
-        </div>
-        <p className="text-sm text-muted">
-          Generate API keys to integrate Doman trust scores into your own
-          applications. Available on Pro plan.
-        </p>
-        <Button size="sm" variant="secondary" className="mt-4">
-          Generate API Key
-        </Button>
       </Card>
 
       {/* Security */}
